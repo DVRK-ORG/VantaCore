@@ -51,7 +51,7 @@ export function Header() {
             <span>100% Client-Side</span>
           </div>
           <a
-            href="https://github.com"
+            href="https://github.com/DVRK-ORG/VantaCore"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-2 px-4 py-2 rounded-[10px] font-orbitron text-[11px] font-semibold tracking-[1px] uppercase text-silver-white cursor-pointer"
