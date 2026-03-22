@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="Logo's/LOGO400.png" alt="VantaCore Logo" width="200" />
+<img src="assets/logo.png" alt="VantaCore Logo" width="200" />
 
 # VantaCore
 
