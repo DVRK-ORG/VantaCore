@@ -36,6 +36,13 @@
 - Product Hunt scheduled for **March 24th, 2026 — 12:01 AM PDT**
 - Tags: Open Source, Developer Tools, Artificial Intelligence
 
+### 📲 Progressive Web App (PWA)
+- **Installable as desktop app** — own window, no browser chrome
+- `manifest.json` — app name, icons (40/192/512px), standalone display mode
+- Service worker (`sw.js`) — network-first caching with offline fallback
+- Works offline after first visit
+- Auto-updates on new deployments
+
 ---
 
 ## [4.0.0-dev] — 2026-03-21 — THE ULTIMATE REBIRTH
