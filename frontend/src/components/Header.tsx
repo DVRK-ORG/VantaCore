@@ -1,7 +1,11 @@
 import { useEffect, useState } from 'react'
-import { Github, Zap } from 'lucide-react'
+import { Github, Zap, Clock } from 'lucide-react'
 
-export function Header() {
+interface HeaderProps {
+  onHistoryToggle?: () => void
+}
+
+export function Header({ onHistoryToggle }: HeaderProps) {
   const [scrolled, setScrolled] = useState(false)
 
   useEffect(() => {
@@ -45,11 +49,35 @@ export function Header() {
         </div>
 
         {/* Right */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
           <div className="hidden sm:flex items-center gap-1.5 font-mono text-[11px] text-obsidian-silver tracking-[0.5px]">
             <Zap size={14} className="text-blood-ruby" />
             <span>100% Client-Side</span>
           </div>
+          {/* History Button */}
+          <button
+            onClick={onHistoryToggle}
+            className="flex items-center gap-2 px-3 py-2 rounded-[10px] font-orbitron text-[11px] font-semibold tracking-[1px] uppercase text-silver-white cursor-pointer"
+            style={{
+              background: 'linear-gradient(135deg, rgba(17,17,17,0.9), rgba(10,10,10,0.95))',
+              border: '1px solid rgba(112,112,112,0.2)',
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+            }}
+            onMouseEnter={e => {
+              e.currentTarget.style.borderColor = 'rgba(196,30,58,0.4)'
+              e.currentTarget.style.boxShadow = '0 0 20px rgba(196,30,58,0.2), 0 0 40px rgba(196,30,58,0.08)'
+              e.currentTarget.style.transform = 'translateY(-1px)'
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.borderColor = 'rgba(112,112,112,0.2)'
+              e.currentTarget.style.boxShadow = 'none'
+              e.currentTarget.style.transform = 'translateY(0)'
+            }}
+          >
+            <Clock size={14} />
+            <span className="hidden sm:inline">History</span>
+          </button>
+          {/* GitHub Button */}
           <a
             href="https://github.com/DVRK-ORG/VantaCore"
             target="_blank"
@@ -79,3 +107,4 @@ export function Header() {
     </header>
   )
 }
+

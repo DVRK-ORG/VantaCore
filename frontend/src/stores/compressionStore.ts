@@ -7,6 +7,8 @@ interface HistoryEntry {
   originalChars: number
   compressedChars: number
   reductionPercent: number
+  processingTimeMs: number
+  codeBlocksProtected: number
   timestamp: number
 }
 
@@ -42,7 +44,7 @@ const loadHistory = (): HistoryEntry[] => {
 
 const saveHistory = (history: HistoryEntry[]) => {
   try {
-    localStorage.setItem('vantacore_history', JSON.stringify(history.slice(0, 20)))
+    localStorage.setItem('vantacore_history', JSON.stringify(history.slice(0, 25)))
   } catch { /* ignore storage errors */ }
 }
 
@@ -66,7 +68,7 @@ export const useCompressionStore = create<CompressionStore>((set, get) => ({
       id: crypto.randomUUID(),
       timestamp: Date.now(),
     }
-    const updated = [newEntry, ...get().history].slice(0, 20)
+    const updated = [newEntry, ...get().history].slice(0, 25)
     saveHistory(updated)
     set({ history: updated })
   },

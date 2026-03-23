@@ -21,6 +21,8 @@ export function CompressButton() {
       originalChars: result.originalChars,
       compressedChars: result.compressedChars,
       reductionPercent: result.reductionPercent,
+      processingTimeMs: result.processingTimeMs,
+      codeBlocksProtected: 0,
     })
   }
 

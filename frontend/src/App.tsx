@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Header } from './components/Header'
 import { HeroSection } from './components/HeroSection'
 import { DropZone } from './components/DropZone'
@@ -8,11 +9,14 @@ import { OutputSection } from './components/OutputSection'
 import { HowItWorks } from './components/HowItWorks'
 import { WhoIsItFor } from './components/WhoIsItFor'
 import { Footer } from './components/Footer'
+import { HistorySidebar } from './components/HistorySidebar'
 
 function App() {
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false)
+
   return (
     <div style={{ minHeight: '100vh', background: '#050505', color: '#E8E8E8', position: 'relative' }}>
-      <Header />
+      <Header onHistoryToggle={() => setIsHistoryOpen(prev => !prev)} />
       <HeroSection />
 
       {/* Tool Section */}
@@ -38,8 +42,12 @@ function App() {
       <HowItWorks />
       <WhoIsItFor />
       <Footer />
+
+      {/* History Sidebar */}
+      <HistorySidebar isOpen={isHistoryOpen} onClose={() => setIsHistoryOpen(false)} />
     </div>
   )
 }
 
 export default App
+
