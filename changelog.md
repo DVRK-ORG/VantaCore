@@ -2,6 +2,45 @@
 
 ---
 
+## [4.1.0] -- 2026-05-30 -- MEMORY CAPSULE ENGINE
+> *VantaCore graduates from dense memory packets to LLM-directable continuity capsules.*
+
+### Engine Upgrade
+- Added a structured **Memory Capsule** header before the compressed stream:
+  - Session map
+  - Current final state
+  - Open loops / next actions
+  - Do not repeat / do not change
+  - Decision log
+  - Key commands / files / artifacts
+- Added topic clustering for merged multi-session inputs, with compact cluster summaries, key actions, decisions, open loops, important artifacts, and compressed detail streams.
+- Added lightweight chronology markers: `early-session`, `mid-session`, `late-session`, and `final-known-state`.
+- Added repeated block folding with a reference dictionary for repeated commands, prompts, and fenced code blocks.
+- Preserved LLM continuity signals such as `user_wants`, `agent_should`, `already_fixed`, `verified`, `pending`, `blocked`, `commit`, `pushed`, `deployed`, `Chrome Web Store`, `Cloudflare`, `privacy_policy`, `landing_page`, `VantaCore`, and `C.H.P`.
+- Tightened repetition thresholds so dictionary entries only fold high-value repeated blocks instead of bloating the capsule with twice-seen paragraphs.
+
+### Validation
+- Added `npm run validate:compression` for repeatable engine checks from the CLI.
+- Validation reports input/output characters, approximate token estimates, reduction percentage, repeated blocks folded, dictionary references created, clusters detected, and code block fence balance.
+- Approximate token estimates are clearly labeled as `ceil(characters / 4)`.
+
+### Real-World Result
+- Re-tested the same merged multi-session file:
+  - **Before**: 1,607,470 chars (~401,868 estimated tokens)
+  - **Previous output**: 233,359 chars (~58,340 estimated tokens), **85.48%** reduction
+  - **New output**: 61,109 chars (~15,278 estimated tokens), **96.20%** reduction
+  - **Detected**: 6 clusters, 17 dictionary references, 114 folded repetitions, 398 protected code blocks
+
+### Deployment / Cache Fix
+- Bumped the service worker cache name to `vantacore-v4.1.0-memory-capsule` so browsers flush the old app shell.
+- Added Cloudflare Pages `_headers`:
+  - `/` and `/index.html` now revalidate
+  - `/sw.js` is `no-cache, no-store`
+  - hashed assets remain immutable
+- Confirmed the live app now serves the Memory Capsule engine and displays the new 96.20% result on the test file.
+
+---
+
 ## [4.0.0] — 2026-03-22 — THE WORLD LAUNCH 🌍
 > *VantaCore goes global. The Singularity is live.*
 
