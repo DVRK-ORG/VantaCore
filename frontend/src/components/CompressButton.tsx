@@ -22,7 +22,10 @@ export function CompressButton() {
       compressedChars: result.compressedChars,
       reductionPercent: result.reductionPercent,
       processingTimeMs: result.processingTimeMs,
-      codeBlocksProtected: 0,
+      codeBlocksProtected: result.codeBlocksProtected,
+      repeatedBlocksFolded: result.repeatedBlocksFolded,
+      dictionaryReferencesCreated: result.dictionaryReferencesCreated,
+      clustersDetected: result.clustersDetected,
     })
   }
 

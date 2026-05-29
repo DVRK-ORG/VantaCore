@@ -9,6 +9,9 @@ interface HistoryEntry {
   reductionPercent: number
   processingTimeMs: number
   codeBlocksProtected: number
+  repeatedBlocksFolded: number
+  dictionaryReferencesCreated: number
+  clustersDetected: number
   timestamp: number
 }
 

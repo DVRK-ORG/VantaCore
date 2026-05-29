@@ -13,7 +13,22 @@ export function OutputSection() {
 
   const downloadAs = (ext: string) => {
     const content = ext === '.json'
-      ? JSON.stringify({ compressed: result.compressed, stats: { originalChars: result.originalChars, compressedChars: result.compressedChars, reductionPercent: result.reductionPercent } }, null, 2)
+      ? JSON.stringify({
+        compressed: result.compressed,
+        stats: {
+          originalChars: result.originalChars,
+          compressedChars: result.compressedChars,
+          reductionPercent: result.reductionPercent,
+          estimatedTokensBefore: result.estimatedTokensBefore,
+          estimatedTokensAfter: result.estimatedTokensAfter,
+          tokenEstimationMethod: result.tokenEstimationMethod,
+          repeatedBlocksFolded: result.repeatedBlocksFolded,
+          dictionaryReferencesCreated: result.dictionaryReferencesCreated,
+          clustersDetected: result.clustersDetected,
+          codeBlocksProtected: result.codeBlocksProtected,
+          codeBlocksIntegrityOk: result.codeBlocksIntegrityOk,
+        },
+      }, null, 2)
       : ext === '.md'
       ? `# VantaCore Compressed Output\n\n${result.compressed}`
       : result.compressed

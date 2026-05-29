@@ -6,7 +6,18 @@ export function MetricsDashboard() {
   const { result, hasResult } = useCompressionStore()
   if (!hasResult || !result) return null
 
-  const { originalChars, compressedChars, reductionPercent, processingTimeMs, estimatedTokensBefore, estimatedTokensAfter } = result
+  const {
+    originalChars,
+    compressedChars,
+    reductionPercent,
+    processingTimeMs,
+    estimatedTokensBefore,
+    estimatedTokensAfter,
+    repeatedBlocksFolded,
+    dictionaryReferencesCreated,
+    clustersDetected,
+    codeBlocksProtected,
+  } = result
 
   return (
     <motion.div
@@ -71,7 +82,10 @@ export function MetricsDashboard() {
         </div>
         <div className="flex items-center gap-1.5 font-mono text-[12px] text-obsidian-silver">
           <Lock size={14} className="text-obsidian-silver" />
-          Protected: code blocks
+          Protected: {codeBlocksProtected} code blocks
+        </div>
+        <div className="font-mono text-[12px] text-obsidian-silver">
+          {clustersDetected} clusters / {dictionaryReferencesCreated} refs / {repeatedBlocksFolded} folds
         </div>
       </div>
     </motion.div>
