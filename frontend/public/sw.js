@@ -1,4 +1,4 @@
-const CACHE_NAME = 'vantacore-v4.0.0';
+const CACHE_NAME = 'vantacore-v4.1.0-memory-capsule';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
