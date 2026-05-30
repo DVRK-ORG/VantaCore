@@ -8,6 +8,9 @@ export function TextInput() {
   return (
     <div className="relative mb-6">
       <textarea
+        id="vantacore-source-input"
+        name="vantacore-source-input"
+        aria-label="Source text to compress"
         value={inputText}
         onChange={(e) => { setInputText(e.target.value); setInputFileName('') }}
         placeholder="Paste an AI session, dev log, research note, or knowledge-base source..."
@@ -38,7 +41,7 @@ export function TextInput() {
       />
       {charCount > 0 && (
         <div className="absolute bottom-4 right-5 font-mono text-[11px] text-muted-steel pointer-events-none">
-          {charCount.toLocaleString()} chars • ~{tokenEstimate.toLocaleString()} tokens
+          {charCount.toLocaleString()} chars - ~{tokenEstimate.toLocaleString()} tokens
         </div>
       )}
     </div>

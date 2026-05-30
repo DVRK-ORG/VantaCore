@@ -62,7 +62,7 @@ export function DropZone() {
           </div>
           <div>
             <p className="text-silver-white text-sm font-orbitron font-semibold tracking-[1px]">{inputFileName}</p>
-            <p className="text-muted-steel text-xs font-crimson">File loaded • Ready to compress</p>
+            <p className="text-muted-steel text-xs font-crimson">File loaded - Ready to compress</p>
           </div>
         </div>
         <button onClick={clearFile} className="p-2 rounded-lg text-muted-steel hover:text-blood-ruby transition-colors cursor-pointer" style={{ background: 'transparent', border: 'none' }}>
@@ -73,6 +73,7 @@ export function DropZone() {
   }
 
   const stateClass = isDragging ? 'dragging' : isHovering ? 'hovering' : ''
+  const orbitDelay = isDragging ? '-1.5s' : '-3s'
 
   return (
     <div className="relative mb-8">
@@ -124,8 +125,7 @@ export function DropZone() {
           position: 'absolute', width: '12px', height: '12px', border: '1.5px solid rgba(196,30,58,0.6)', borderRadius: '2px',
           pointerEvents: 'none', zIndex: 5,
           opacity: isDragging ? 0.9 : isHovering ? 0.7 : 0,
-          animation: (isHovering || isDragging) ? `orbitScan ${isDragging ? '3s' : '6s'} linear infinite reverse, orbitGlow ${isDragging ? '1.5s' : '2.5s'} ease-in-out infinite` : 'none',
-          animationDelay: isDragging ? '-1.5s' : '-3s',
+          animation: (isHovering || isDragging) ? `orbitScan ${isDragging ? '3s' : '6s'} linear ${orbitDelay} infinite reverse, orbitGlow ${isDragging ? '1.5s' : '2.5s'} ease-in-out ${orbitDelay} infinite` : 'none',
           transition: 'opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
         }} />
 
