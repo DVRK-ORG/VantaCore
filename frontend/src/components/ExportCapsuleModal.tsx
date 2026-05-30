@@ -139,45 +139,57 @@ function ExportCapsuleModalInner({ entry, onClose }: { entry: ExportEntry; onClo
   }, [entry, selectedFormat, filename, onClose])
 
   return (
-    <>
-          {/* Backdrop */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.15 }}
-            onClick={onClose}
-            style={{
-              position: 'fixed',
-              inset: 0,
-              background: 'rgba(0, 0, 0, 0.6)',
-              backdropFilter: 'blur(4px)',
-              zIndex: 2000,
-            }}
-          />
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.15 }}
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 9999,
+        display: 'grid',
+        placeItems: 'center',
+        padding: '16px',
+      }}
+    >
+      {/* Backdrop — absolute fill behind the centered modal */}
+      <motion.button
+        type="button"
+        aria-label="Close export dialog"
+        onClick={onClose}
+        style={{
+          position: 'absolute',
+          inset: 0,
+          background: 'rgba(0, 0, 0, 0.75)',
+          backdropFilter: 'blur(4px)',
+          border: 'none',
+          cursor: 'default',
+        }}
+      />
 
-          {/* Modal */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 10 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 10 }}
-            transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
-            style={{
-              position: 'fixed',
-              top: '50%',
-              left: '50%',
-              transform: 'translate(-50%, -50%)',
-              width: 'min(420px, calc(100vw - 32px))',
-              maxHeight: 'calc(100vh - 48px)',
-              overflowY: 'auto',
-              background: 'linear-gradient(180deg, rgb(18, 18, 18), rgb(12, 12, 12))',
-              border: '1px solid rgba(196, 30, 58, 0.2)',
-              borderRadius: '14px',
-              boxShadow: '0 24px 80px rgba(0, 0, 0, 0.7), 0 0 40px rgba(196, 30, 58, 0.06)',
-              zIndex: 2001,
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
+      {/* Modal card — grid-centered, no manual top/left/translate */}
+      <motion.div
+        role="dialog"
+        aria-modal="true"
+        initial={{ opacity: 0, scale: 0.95, y: 10 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.95, y: 10 }}
+        transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          position: 'relative',
+          zIndex: 10,
+          width: '100%',
+          maxWidth: '420px',
+          maxHeight: '90vh',
+          overflowY: 'auto',
+          background: 'linear-gradient(180deg, rgb(18, 18, 18), rgb(12, 12, 12))',
+          border: '1px solid rgba(196, 30, 58, 0.2)',
+          borderRadius: '14px',
+          boxShadow: '0 24px 80px rgba(0, 0, 0, 0.7), 0 0 40px rgba(196, 30, 58, 0.06)',
+        }}
+      >
             {/* Header */}
             <div style={{
               display: 'flex',
@@ -476,7 +488,7 @@ function ExportCapsuleModalInner({ entry, onClose }: { entry: ExportEntry; onClo
                 </button>
               </div>
             </div>
-          </motion.div>
-    </>
+      </motion.div>
+    </motion.div>
   )
 }
