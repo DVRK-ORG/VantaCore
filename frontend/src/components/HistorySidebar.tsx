@@ -38,12 +38,15 @@ export function HistorySidebar({ isOpen, onClose }: HistorySidebarProps) {
   const [showClearConfirm, setShowClearConfirm] = useState(false)
   const [copiedId, setCopiedId] = useState<string | null>(null)
   const [downloadMenuId, setDownloadMenuId] = useState<string | null>(null)
+  const [downloadMenuPos, setDownloadMenuPos] = useState<{ top: number; left: number; width: number } | null>(null)
   const copyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const downloadBtnRefs = useRef<Map<string, HTMLButtonElement>>(new Map())
   const sidebarRef = useRef<HTMLDivElement>(null)
 
   const handleClose = useCallback(() => {
     setShowClearConfirm(false)
     setDownloadMenuId(null)
+    setDownloadMenuPos(null)
     if (copyTimeoutRef.current) clearTimeout(copyTimeoutRef.current)
     setCopiedId(null)
     onClose()
@@ -235,7 +238,7 @@ export function HistorySidebar({ isOpen, onClose }: HistorySidebarProps) {
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: i * 0.03, duration: 0.2 }}
-                        onClick={() => { setDownloadMenuId(null); setExpandedId(isExpanded ? null : entry.id) }}
+                        onClick={() => { setDownloadMenuId(null); setDownloadMenuPos(null); setExpandedId(isExpanded ? null : entry.id) }}
                         className="cursor-pointer"
                         style={{
                           padding: '14px 16px',
@@ -352,74 +355,35 @@ export function HistorySidebar({ isOpen, onClose }: HistorySidebarProps) {
                                   {copiedId === entry.id ? <Check size={11} /> : <Copy size={11} />}
                                   {copiedId === entry.id ? 'Copied' : 'Copy'}
                                 </button>
-                                {/* Download with format dropdown */}
-                                <div style={{ position: 'relative', gridColumn: 'span 1' }}>
-                                  <button
-                                    onClick={(event) => {
-                                      event.stopPropagation()
-                                      setDownloadMenuId(downloadMenuId === entry.id ? null : entry.id)
-                                    }}
-                                    disabled={!entry.compressed}
-                                    className="flex items-center justify-center gap-1.5 py-2 rounded-[8px] font-orbitron text-[9px] font-semibold tracking-[1px] uppercase cursor-pointer"
-                                    style={{
-                                      width: '100%',
-                                      background: downloadMenuId === entry.id
-                                        ? 'rgba(196, 30, 58, 0.08)'
-                                        : 'rgba(255, 255, 255, 0.03)',
-                                      border: `1px solid ${downloadMenuId === entry.id ? 'rgba(196, 30, 58, 0.24)' : 'rgba(112, 112, 112, 0.15)'}`,
-                                      color: entry.compressed ? 'var(--silver-white)' : 'var(--muted-steel)',
-                                      transition: 'all 0.25s ease',
-                                    }}
-                                  >
-                                    <Download size={11} />
-                                    Download
-                                    <ChevronDown size={9} style={{ marginLeft: '2px', opacity: 0.6 }} />
-                                  </button>
-                                  <AnimatePresence>
-                                    {downloadMenuId === entry.id && (
-                                      <motion.div
-                                        initial={{ opacity: 0, y: -4, scaleY: 0.95 }}
-                                        animate={{ opacity: 1, y: 0, scaleY: 1 }}
-                                        exit={{ opacity: 0, y: -4, scaleY: 0.95 }}
-                                        transition={{ duration: 0.15 }}
-                                        style={{
-                                          position: 'absolute',
-                                          top: '100%',
-                                          left: 0,
-                                          right: 0,
-                                          marginTop: '4px',
-                                          background: 'rgba(18, 18, 18, 0.98)',
-                                          border: '1px solid rgba(196, 30, 58, 0.2)',
-                                          borderRadius: '8px',
-                                          overflow: 'hidden',
-                                          zIndex: 20,
-                                          backdropFilter: 'blur(12px)',
-                                          boxShadow: '0 8px 24px rgba(0, 0, 0, 0.5)',
-                                        }}
-                                        onClick={(event) => event.stopPropagation()}
-                                      >
-                                        {[{ ext: '.md', label: 'MD' }, { ext: '.txt', label: 'TXT' }, { ext: '.json', label: 'JSON' }].map(({ ext, label }) => (
-                                          <button
-                                            key={ext}
-                                            onClick={() => downloadHistoryEntry(entry, ext)}
-                                            className="flex items-center gap-2 w-full py-2 px-3 font-orbitron text-[9px] font-semibold tracking-[1px] uppercase cursor-pointer"
-                                            style={{
-                                              background: 'transparent',
-                                              border: 'none',
-                                              color: 'var(--silver-white)',
-                                              transition: 'background 0.15s',
-                                            }}
-                                            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(196, 30, 58, 0.12)' }}
-                                            onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
-                                          >
-                                            <Download size={10} style={{ opacity: 0.6 }} />
-                                            {label}
-                                          </button>
-                                        ))}
-                                      </motion.div>
-                                    )}
-                                  </AnimatePresence>
-                                </div>
+                                {/* Download with format dropdown — fixed-position popover to escape overflow:hidden */}
+                                <button
+                                  ref={(el) => { if (el) downloadBtnRefs.current.set(entry.id, el); else downloadBtnRefs.current.delete(entry.id) }}
+                                  onClick={(event) => {
+                                    event.stopPropagation()
+                                    if (downloadMenuId === entry.id) {
+                                      setDownloadMenuId(null)
+                                      setDownloadMenuPos(null)
+                                    } else {
+                                      const rect = event.currentTarget.getBoundingClientRect()
+                                      setDownloadMenuPos({ top: rect.top, left: rect.left, width: rect.width })
+                                      setDownloadMenuId(entry.id)
+                                    }
+                                  }}
+                                  disabled={!entry.compressed}
+                                  className="flex items-center justify-center gap-1.5 py-2 rounded-[8px] font-orbitron text-[9px] font-semibold tracking-[1px] uppercase cursor-pointer"
+                                  style={{
+                                    background: downloadMenuId === entry.id
+                                      ? 'rgba(196, 30, 58, 0.08)'
+                                      : 'rgba(255, 255, 255, 0.03)',
+                                    border: `1px solid ${downloadMenuId === entry.id ? 'rgba(196, 30, 58, 0.24)' : 'rgba(112, 112, 112, 0.15)'}`,
+                                    color: entry.compressed ? 'var(--silver-white)' : 'var(--muted-steel)',
+                                    transition: 'all 0.25s ease',
+                                  }}
+                                >
+                                  <Download size={11} />
+                                  Download
+                                  <ChevronDown size={9} style={{ marginLeft: '2px', opacity: 0.6 }} />
+                                </button>
                                 <button
                                   onClick={(event) => {
                                     event.stopPropagation()
@@ -491,6 +455,61 @@ export function HistorySidebar({ isOpen, onClose }: HistorySidebarProps) {
               </div>
             )}
           </motion.div>
+
+          {/* Fixed-position download format popover — escapes all overflow:hidden parents */}
+          <AnimatePresence>
+            {downloadMenuId && downloadMenuPos && (() => {
+              const menuEntry = history.find((h) => h.id === downloadMenuId)
+              if (!menuEntry) return null
+              return (
+                <>
+                  {/* Invisible click-away backdrop */}
+                  <div
+                    onClick={(event) => { event.stopPropagation(); setDownloadMenuId(null); setDownloadMenuPos(null) }}
+                    style={{ position: 'fixed', inset: 0, zIndex: 9998 }}
+                  />
+                  <motion.div
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 6 }}
+                    transition={{ duration: 0.15 }}
+                    style={{
+                      position: 'fixed',
+                      top: downloadMenuPos.top - 4,
+                      left: downloadMenuPos.left,
+                      width: downloadMenuPos.width,
+                      transform: 'translateY(-100%)',
+                      background: 'rgb(16, 16, 16)',
+                      border: '1px solid rgba(196, 30, 58, 0.25)',
+                      borderRadius: '8px',
+                      overflow: 'hidden',
+                      zIndex: 9999,
+                      boxShadow: '0 -4px 24px rgba(0, 0, 0, 0.6), 0 0 12px rgba(196, 30, 58, 0.08)',
+                    }}
+                  >
+                    {[{ ext: '.md', label: 'MD' }, { ext: '.txt', label: 'TXT' }, { ext: '.json', label: 'JSON' }].map(({ ext, label }) => (
+                      <button
+                        key={ext}
+                        onClick={(event) => { event.stopPropagation(); downloadHistoryEntry(menuEntry, ext) }}
+                        className="flex items-center gap-2 w-full py-2 px-3 font-orbitron text-[9px] font-semibold tracking-[1px] uppercase cursor-pointer"
+                        style={{
+                          background: 'transparent',
+                          border: 'none',
+                          color: 'var(--silver-white)',
+                          transition: 'background 0.15s',
+                        }}
+                        onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(196, 30, 58, 0.12)' }}
+                        onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
+                      >
+                        <Download size={10} style={{ opacity: 0.6 }} />
+                        {label}
+                      </button>
+                    ))}
+                  </motion.div>
+                </>
+              )
+            })()}
+          </AnimatePresence>
         </>
       )}
     </AnimatePresence>
