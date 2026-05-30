@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import type { CompressionResult } from '../engine/types'
+import type { InputMode } from '../utils/agentTranscript'
 
 export const FREE_DAILY_COMPRESSION_LIMIT = 5
 export const FREE_HISTORY_LIMIT = 20
@@ -21,14 +22,17 @@ interface HistoryEntry {
   clustersDetected: number
   codeBlocksIntegrityOk: boolean
   timestamp: number
+  sourceMode?: InputMode
 }
 
 interface CompressionStore {
   // Input
   inputText: string
   inputFileName: string
+  inputMode: InputMode
   setInputText: (text: string) => void
   setInputFileName: (name: string) => void
+  setInputMode: (mode: InputMode) => void
 
   // Compression state
   isCompressing: boolean
@@ -106,6 +110,7 @@ const loadHistory = (): HistoryEntry[] => {
         clustersDetected: entry.clustersDetected ?? 0,
         codeBlocksIntegrityOk: entry.codeBlocksIntegrityOk ?? true,
         timestamp: entry.timestamp ?? Date.now(),
+        sourceMode: (entry as Partial<HistoryEntry>).sourceMode ?? 'memory-capsule',
       }))
       .slice(0, FREE_HISTORY_LIMIT)
   } catch {
@@ -124,8 +129,10 @@ const initialUsage = readDailyUsage()
 export const useCompressionStore = create<CompressionStore>((set, get) => ({
   inputText: '',
   inputFileName: '',
+  inputMode: 'memory-capsule',
   setInputText: (text) => set({ inputText: text }),
   setInputFileName: (name) => set({ inputFileName: name }),
+  setInputMode: (mode) => set({ inputMode: mode }),
 
   isCompressing: false,
   hasResult: false,

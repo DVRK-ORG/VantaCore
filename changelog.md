@@ -2,6 +2,25 @@
 
 ---
 
+## [4.3.0] -- Unreleased -- AGENT TRANSCRIPT MODE
+> *VantaCore learns to clean noisy coding-agent logs before compressing them into Memory Capsules.*
+
+### Agent Transcript Mode
+- Added optional **Agent Transcript** input mode alongside the default **Memory Capsule** mode.
+- Added conservative client-side transcript preprocessor (`agentTranscript.ts`):
+  - Normalizes line endings (CRLF → LF).
+  - Collapses excessive blank lines and duplicate consecutive non-critical lines.
+  - Removes low-value assistant filler (apologies, generic confirmations, thinking markers).
+  - Preserves commands, file paths, URLs, errors, warnings, build/test output, git signals, continuity constraints, and fenced code blocks.
+  - Prepends a VantaCore source marker header for engine context.
+- Added compact mode selector pills in the input area (Orbitron pill-style UI).
+- Added `inputMode` state to the compression store with `'memory-capsule'` default.
+- Added optional `sourceMode` metadata to history entries (backward-compatible).
+- Kept Singularity engine completely untouched.
+- Preserved default Memory Capsule behavior — no changes to the existing compression path.
+
+---
+
 ## [4.1.0] -- 2026-05-30 -- MEMORY CAPSULE ENGINE
 > *VantaCore graduates from dense memory packets to LLM-directable continuity capsules.*
 

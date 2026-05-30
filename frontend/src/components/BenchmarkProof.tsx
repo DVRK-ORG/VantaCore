@@ -29,12 +29,12 @@ export function BenchmarkProof() {
           initial={{ opacity: 0, y: 40 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.8 }}
-          className="text-center mb-12"
+          className="text-center mb-14"
         >
-          <h2 className="font-orbitron font-bold tracking-[3px] uppercase mb-3" style={{ fontSize: 'clamp(20px, 3vw, 32px)' }}>
+          <h2 className="font-orbitron font-bold tracking-[3px] uppercase mb-4" style={{ fontSize: 'clamp(20px, 3vw, 32px)' }}>
             Battlefield <span className="text-blood-ruby">Proof</span>
           </h2>
-          <p className="font-crimson text-muted-steel max-w-[720px] mx-auto leading-[1.6]" style={{ fontSize: 'clamp(15px, 1.6vw, 18px)' }}>
+          <p className="font-crimson text-obsidian-silver max-w-[640px] mx-auto leading-[1.7]" style={{ fontSize: 'clamp(15px, 1.6vw, 18px)' }}>
             The current official benchmark compresses a merged multi-session AI export into a portable Memory Capsule ready for the next LLM.
           </p>
         </motion.div>

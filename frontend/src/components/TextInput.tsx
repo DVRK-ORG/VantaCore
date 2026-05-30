@@ -1,4 +1,5 @@
 import { useCompressionStore } from '../stores/compressionStore'
+import { InputModeSelector } from './InputModeSelector'
 
 export function TextInput() {
   const { inputText, setInputText, setInputFileName } = useCompressionStore()
@@ -7,6 +8,7 @@ export function TextInput() {
 
   return (
     <div className="relative mb-6">
+      <InputModeSelector />
       <textarea
         id="vantacore-source-input"
         name="vantacore-source-input"

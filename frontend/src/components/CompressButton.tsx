@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react'
 import { FREE_DAILY_COMPRESSION_LIMIT, useCompressionStore } from '../stores/compressionStore'
 import { Singularity } from '../engine/singularity'
+import { preprocessAgentTranscript } from '../utils/agentTranscript'
 
 const engine = new Singularity()
 
 export function CompressButton() {
   const {
     inputText,
+    inputMode,
     isCompressing,
     setCompressing,
     setResult,
@@ -32,7 +34,14 @@ export function CompressButton() {
 
     setCompressing(true)
     await new Promise(r => setTimeout(r, 300))
-    const result = engine.process(inputText)
+
+    // Route through preprocessor when in agent-transcript mode
+    const sourceText =
+      inputMode === 'agent-transcript'
+        ? preprocessAgentTranscript(inputText).cleanedText
+        : inputText
+
+    const result = engine.process(sourceText)
     setResult(result)
     addHistory({
       fileName: inputFileName || 'Pasted text',
@@ -49,6 +58,7 @@ export function CompressButton() {
       dictionaryReferencesCreated: result.dictionaryReferencesCreated,
       clustersDetected: result.clustersDetected,
       codeBlocksIntegrityOk: result.codeBlocksIntegrityOk,
+      sourceMode: inputMode,
     })
   }
 
