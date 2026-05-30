@@ -10,7 +10,7 @@ export function TextInput() {
       <textarea
         value={inputText}
         onChange={(e) => { setInputText(e.target.value); setInputFileName('') }}
-        placeholder="Paste your AI session, log, or knowledge base..."
+        placeholder="Paste an AI session, dev log, research note, or knowledge-base source..."
         className="text-input"
         style={{
           width: '100%',

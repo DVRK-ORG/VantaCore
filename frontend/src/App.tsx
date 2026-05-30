@@ -6,8 +6,10 @@ import { TextInput } from './components/TextInput'
 import { CompressButton } from './components/CompressButton'
 import { MetricsDashboard } from './components/MetricsDashboard'
 import { OutputSection } from './components/OutputSection'
+import { BenchmarkProof } from './components/BenchmarkProof'
 import { HowItWorks } from './components/HowItWorks'
 import { WhoIsItFor } from './components/WhoIsItFor'
+import { ProductPromise } from './components/ProductPromise'
 import { Footer } from './components/Footer'
 import { HistorySidebar } from './components/HistorySidebar'
 
@@ -39,8 +41,10 @@ function App() {
         </div>
       </section>
 
-      <HowItWorks />
+      <BenchmarkProof />
       <WhoIsItFor />
+      <HowItWorks />
+      <ProductPromise />
       <Footer />
 
       {/* History Sidebar */}
@@ -50,4 +54,3 @@ function App() {
 }
 
 export default App
-

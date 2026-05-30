@@ -4,147 +4,152 @@
 
 # VantaCore
 
-### The Singularity Engine
+### Portable Memory Capsules for LLMs
 
-*"In the era of infinite context, noise is the enemy of reason."*
+**Compress massive AI sessions into portable memory capsules. 100% client-side.**
 
 [![MIT License](https://img.shields.io/badge/License-MIT-c41e3a.svg?style=for-the-badge)](LICENSE)
 [![100% Client-Side](https://img.shields.io/badge/Privacy-100%25_Client--Side-c41e3a?style=for-the-badge)](https://vantacore.net)
-[![Open Source](https://img.shields.io/badge/Open_Source-Free_Forever-c41e3a?style=for-the-badge)](https://github.com/DVRK-ORG/VantaCore)
+[![Open Core](https://img.shields.io/badge/Open_Core-Free_Demo-c41e3a?style=for-the-badge)](https://github.com/DVRK-ORG/VantaCore)
 
-**Compress massive AI chat sessions, logs, and knowledge bases into hyper-dense logic streams.**
-**90-99% reduction. Zero data leaves your browser. Free forever.**
+VantaCore turns long chats, dev logs, research notes, and knowledge-base material into LLM-ready memory capsules that preserve final state, decisions, open loops, commands, artifacts, and do-not-repeat constraints.
 
-[🌐 Live App](https://vantacore.net) · [📋 Changelog](changelog.md) · [⭐ Star on GitHub](https://github.com/DVRK-ORG/VantaCore)
+[Live App](https://vantacore.net) - [Changelog](changelog.md) - [Upgrade Plan](VANTACORE_UPGRADE_PLAN_v1.md)
 
 </div>
 
 ---
 
-## 🔥 Real-World Results
+## Current Benchmark Proof
 
-> **500K+ token AI session → compressed in 68ms**
+> Same merged multi-session AI export, now compressed into a structured Memory Capsule.
 
 <div align="center">
 
-<img src="Preview.png" alt="VantaCore Compression Results — 93.26% reduction" width="900" />
+<img src="Preview.png" alt="VantaCore Memory Capsule benchmark showing 96.2% reduction" width="900" />
 
 </div>
 
-| Metric | Value |
-|--------|-------|
-| **Before** | 2,058,596 chars (~514,649 tokens) |
-| **After** | 138,729 chars (~34,683 tokens) |
-| **Reduction** | **93.26%** |
-| **Processing Time** | 68.3ms |
-| **Code Blocks** | ✅ Protected |
+| Metric | Before | After |
+|--------|-------:|------:|
+| **Characters** | 1,607,470 | 61,109 |
+| **Estimated tokens** | ~401,868 | ~15,278 |
+| **Reduction** | - | **96.20%** |
+| **Protected code blocks** | - | 398 |
+| **Topic clusters** | - | 6 |
+| **Dictionary refs** | - | 17 |
+| **Repeated blocks folded** | - | 114 |
 
 ---
 
-## 🧬 What Is VantaCore?
+## What VantaCore Is
 
-VantaCore is a **client-side AI session compression engine** that strips every molecule of conversational waste from your AI chat logs, documentation, and knowledge bases — leaving only the raw DNA of the logic.
+VantaCore is a client-side compression and Memory Capsule engine for LLM continuity. It is built for:
 
-### The Problem
-AI sessions accumulate massive amounts of noise:
-- Model thinking blocks and system metadata
-- Conversational filler ("Sure!", "Great question!", "Let me help you with that...")
-- Repetitive explanations and emotional padding
-- UI artifacts, UUIDs, URLs, timestamps
+- AI chat continuation
+- RAG / Knowledge Base preparation
+- Dev logs and coding-agent sessions
+- Research notes
+- API/token cost reduction
+- MCP and agent workflows
 
-### The Solution
-VantaCore's **Singularity Engine** runs 5 sequential operations that obliterate noise while protecting code blocks, technical identifiers, and actionable content:
-
-1. **Universal Lowercase** — Normalizes text for consistent processing
-2. **Nuclear Metadata Purge** — Eradicates UI elements, model blocks, UUIDs, URLs
-3. **Punctuation Dissolving** — Strips formatting noise, preserves technical identifiers
-4. **The Black Wolf Guillotine** — 400+ category lexicon eliminates conversational filler
-5. **Absolute Global Shredder** — Sliding-window N-Gram deduplication
+It is not a generic summarizer or text shortener. The goal is continuity: help the next model know what happened, what was completed, what remains open, what decisions were made, and where to continue.
 
 ---
 
-## ⚡ Key Features
+## Free Web Demo
 
-- 🔒 **100% Client-Side** — Your data never leaves your browser. Zero servers. Zero tracking.
-- 📁 **File Upload** — Drag & drop `.txt`, `.md`, `.json`, `.csv`, `.log` files
-- 📋 **Paste & Compress** — Paste text directly into the editor
-- 📊 **Real-Time Metrics** — Before/after comparison, token counts, processing time
-- 💾 **Multi-Format Export** — Download as `.TXT`, `.MD`, `.PDF`, or `.JSON`
-- 📑 **Copy to Clipboard** — One-click copy of compressed output
-- 🛡️ **Code Block Protection** — Fenced code blocks survive compression intact
-- 🎨 **Premium UI** — Vantablack dark theme with blood ruby accents
+- 100% client-side browser processing
+- Paste text or upload `.txt`, `.md`, `.json`, `.csv`, `.log`
+- Memory Capsule output with session map, final state, open loops, decision log, reference dictionary, and compressed detail stream
+- Approximate token estimates
+- Code block protection
+- Clusters / refs / folds metrics
+- 5 local compressions per day
+- Last 20 local history entries stored only in browser storage
+- Branded free exports for TXT/MD/JSON
+
+VantaCore does not claim ownership of your input or output content. Free exports include VantaCore attribution as the generator of the memory-capsule format.
 
 ---
 
-## 🚀 Quick Start
+## Product Direction
 
-### Use Online
-Visit **[vantacore.net](https://vantacore.net)** — no installation required.
+Core principle:
 
-### Run Locally
+> Free core. Paid power.
+
+The free web demo stays useful, private, and client-side. Future Pro tracks are planned for power users and developers:
+
+- CLI workflows
+- MCP server tools
+- batch/folder compression
+- compression profiles
+- advanced export formats
+- project/workspace history
+- no-branding exports
+- API later, after CLI/MCP validation
+
+No signup, backend, cloud sync, payment, or API is required for the current free demo.
+
+---
+
+## Run Locally
 
 ```bash
-# Clone the repository
 git clone https://github.com/DVRK-ORG/VantaCore.git
 cd VantaCore/frontend
-
-# Install dependencies
 npm install
-
-# Start development server
 npm run dev
 ```
 
-Open `http://localhost:5173` in your browser.
+Open `http://localhost:5173`.
 
-### Build for Production
+## Validate Compression
+
+```powershell
+cd C:\Users\DARK\Desktop\Projects\VantaCore\frontend
+npm run validate:compression -- "C:\Users\DARK\Desktop\0Energy Check-in.md"
+```
+
+Expected current benchmark:
+
+```text
+input characters: 1,607,470
+output characters: 61,109
+input estimated tokens: 401,868
+output estimated tokens: 15,278
+reduction: 96.20%
+repeated blocks folded: 114
+dictionary references created: 17
+clusters detected: 6
+code blocks protected: yes (398 fenced; output balanced: yes)
+```
+
+## Build
 
 ```bash
 npm run build
 ```
 
-Output will be in the `dist/` directory, ready for static hosting.
-
 ---
 
-## 🏗️ Tech Stack
+## Tech Stack
 
 | Layer | Technology |
-|-------|-----------|
-| **Framework** | React 19 + TypeScript 5 |
-| **Build** | Vite 6 |
-| **Styling** | Tailwind CSS + Custom CSS |
-| **Animations** | Framer Motion |
-| **State** | Zustand |
-| **Engine** | Custom TypeScript (ported from Python) |
-| **Hosting** | Cloudflare Pages |
+|-------|------------|
+| Framework | React 19 + TypeScript 5 |
+| Build | Vite |
+| Styling | Tailwind CSS + custom CSS |
+| Animations | Framer Motion |
+| State | Zustand |
+| Engine | Custom TypeScript Singularity engine |
+| Hosting | Cloudflare Pages |
 
 ---
 
-## 🎯 Who Is It For?
+## License
 
-| Audience | Use Case |
-|----------|----------|
-| 🤖 **AI Power Users** | Restart sessions with full context. 100K tokens → 2K tokens. |
-| 💻 **Developers** | Compress debug sessions into dense reference docs. |
-| 🔬 **Researchers** | Process massive research conversations into compact knowledge bases. |
-| 🏢 **Enterprises** | Reduce AI API costs by 90-99% on batch pipelines. |
-| 🌍 **Everyone** | If you've ever lost context because a session got too long — this is for you. |
+MIT License.
 
----
-
-## 📄 License
-
-This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details.
-
----
-
-<div align="center">
-
-Built with 🖤 by **DARK**
-
-**V4.0 — The Singularity Engine**
-
-*We are the filter that leaves only the truth.*
-
-</div>
+Built by DARK.

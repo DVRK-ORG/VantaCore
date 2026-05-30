@@ -184,4 +184,5 @@ body::before {
 /* ========== RESPONSIVE ========== */
 @media (max-width: 768px) {
   .container-main, .container-text { width: 92%; }
+  .proof-grid, .promise-grid { grid-template-columns: 1fr !important; }
 }

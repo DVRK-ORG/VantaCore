@@ -43,7 +43,7 @@ export function Header({ onHistoryToggle }: HeaderProps) {
               Vanta<span className="text-blood-ruby">Core</span>
             </div>
             <div className="font-orbitron text-[9px] font-medium text-muted-steel tracking-[4px] uppercase leading-[1.2]">
-              THE SINGULARITY V4.0
+              MEMORY CAPSULE V4.2
             </div>
           </div>
         </div>
@@ -107,4 +107,3 @@ export function Header({ onHistoryToggle }: HeaderProps) {
     </header>
   )
 }
-

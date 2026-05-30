@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Trash2, Clock, FileText, Zap, ChevronDown, ChevronUp } from 'lucide-react'
-import { useCompressionStore } from '../stores/compressionStore'
+import { X, Trash2, Clock, FileText, Zap, ChevronDown, ChevronUp, Copy, RotateCcw } from 'lucide-react'
+import { FREE_HISTORY_LIMIT, useCompressionStore } from '../stores/compressionStore'
 
 function formatDate(timestamp: number) {
   const d = new Date(timestamp)
@@ -30,17 +30,30 @@ interface HistorySidebarProps {
 }
 
 export function HistorySidebar({ isOpen, onClose }: HistorySidebarProps) {
-  const { history, clearHistory } = useCompressionStore()
+  const { history, clearHistory, restoreHistoryEntry, deleteHistoryEntry } = useCompressionStore()
   const [width, setWidth] = useState(340)
   const [isResizing, setIsResizing] = useState(false)
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [showClearConfirm, setShowClearConfirm] = useState(false)
   const sidebarRef = useRef<HTMLDivElement>(null)
 
-  const minWidth = 280
-  const maxWidth = 520
+  const handleClose = useCallback(() => {
+    setShowClearConfirm(false)
+    onClose()
+  }, [onClose])
 
-  // Handle drag resize
+  const copyHistoryEntry = useCallback(async (compressed: string) => {
+    if (!compressed) return
+    try { await navigator.clipboard.writeText(compressed) } catch {
+      const textarea = document.createElement('textarea')
+      textarea.value = compressed
+      document.body.appendChild(textarea)
+      textarea.select()
+      document.execCommand('copy')
+      document.body.removeChild(textarea)
+    }
+  }, [])
+
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     e.preventDefault()
     setIsResizing(true)
@@ -48,10 +61,9 @@ export function HistorySidebar({ isOpen, onClose }: HistorySidebarProps) {
     const startX = e.clientX
     const startWidth = width
 
-    const handleMouseMove = (e: MouseEvent) => {
-      const delta = startX - e.clientX
-      const newWidth = Math.min(maxWidth, Math.max(minWidth, startWidth + delta))
-      setWidth(newWidth)
+    const handleMouseMove = (event: MouseEvent) => {
+      const delta = startX - event.clientX
+      setWidth(Math.min(520, Math.max(280, startWidth + delta)))
     }
 
     const handleMouseUp = () => {
@@ -68,31 +80,24 @@ export function HistorySidebar({ isOpen, onClose }: HistorySidebarProps) {
     document.addEventListener('mouseup', handleMouseUp)
   }, [width])
 
-  // Close on Escape
   useEffect(() => {
-    const handleKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isOpen) onClose()
+    const handleKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && isOpen) handleClose()
     }
     window.addEventListener('keydown', handleKey)
     return () => window.removeEventListener('keydown', handleKey)
-  }, [isOpen, onClose])
-
-  // Reset confirm on close
-  useEffect(() => {
-    if (!isOpen) setShowClearConfirm(false)
-  }, [isOpen])
+  }, [isOpen, handleClose])
 
   return (
     <AnimatePresence>
       {isOpen && (
         <>
-          {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            onClick={onClose}
+            onClick={handleClose}
             style={{
               position: 'fixed',
               inset: 0,
@@ -102,7 +107,6 @@ export function HistorySidebar({ isOpen, onClose }: HistorySidebarProps) {
             }}
           />
 
-          {/* Sidebar */}
           <motion.div
             ref={sidebarRef}
             initial={{ x: '100%' }}
@@ -124,7 +128,6 @@ export function HistorySidebar({ isOpen, onClose }: HistorySidebarProps) {
               boxShadow: '-8px 0 40px rgba(0, 0, 0, 0.6), -2px 0 20px rgba(196, 30, 58, 0.05)',
             }}
           >
-            {/* Drag handle (left edge) */}
             <div
               onMouseDown={handleMouseDown}
               style={{
@@ -142,12 +145,7 @@ export function HistorySidebar({ isOpen, onClose }: HistorySidebarProps) {
               onMouseLeave={(e) => { if (!isResizing) e.currentTarget.style.background = 'transparent' }}
             />
 
-            {/* Header */}
-            <div style={{
-              padding: '20px 20px 16px',
-              borderBottom: '1px solid rgba(112, 112, 112, 0.1)',
-              flexShrink: 0,
-            }}>
+            <div style={{ padding: '20px 20px 16px', borderBottom: '1px solid rgba(112, 112, 112, 0.1)', flexShrink: 0 }}>
               <div className="flex items-center justify-between mb-1">
                 <div className="flex items-center gap-2.5">
                   <Clock size={16} className="text-blood-ruby" />
@@ -168,7 +166,7 @@ export function HistorySidebar({ isOpen, onClose }: HistorySidebarProps) {
                   )}
                 </div>
                 <button
-                  onClick={onClose}
+                  onClick={handleClose}
                   className="flex items-center justify-center w-[30px] h-[30px] rounded-[8px] cursor-pointer"
                   style={{
                     background: 'rgba(255, 255, 255, 0.05)',
@@ -176,29 +174,16 @@ export function HistorySidebar({ isOpen, onClose }: HistorySidebarProps) {
                     color: 'var(--muted-steel)',
                     transition: 'all 0.2s',
                   }}
-                  onMouseEnter={e => {
-                    e.currentTarget.style.borderColor = 'rgba(196, 30, 58, 0.3)'
-                    e.currentTarget.style.color = 'var(--blood-ruby)'
-                  }}
-                  onMouseLeave={e => {
-                    e.currentTarget.style.borderColor = 'rgba(112, 112, 112, 0.1)'
-                    e.currentTarget.style.color = 'var(--muted-steel)'
-                  }}
                 >
                   <X size={14} />
                 </button>
               </div>
-              <p className="font-crimson text-[12px] text-obsidian-silver" style={{ opacity: 0.6 }}>
-                Last {history.length} compression{history.length !== 1 ? 's' : ''} • stored locally
+              <p className="font-crimson text-[12px] text-obsidian-silver" style={{ opacity: 0.7 }}>
+                Free local history keeps the last {FREE_HISTORY_LIMIT} compressions in this browser only.
               </p>
             </div>
 
-            {/* History entries */}
-            <div style={{
-              flex: 1,
-              overflowY: 'auto',
-              padding: '12px',
-            }}>
+            <div style={{ flex: 1, overflowY: 'auto', padding: '12px' }}>
               {history.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full text-center" style={{ opacity: 0.4 }}>
                   <FileText size={40} className="text-muted-steel mb-4" />
@@ -206,7 +191,7 @@ export function HistorySidebar({ isOpen, onClose }: HistorySidebarProps) {
                     No compressions yet
                   </p>
                   <p className="font-crimson text-[13px] text-obsidian-silver italic">
-                    Feed the engine.
+                    Capsules stay local.
                   </p>
                 </div>
               ) : (
@@ -230,32 +215,13 @@ export function HistorySidebar({ isOpen, onClose }: HistorySidebarProps) {
                           border: `1px solid ${isExpanded ? 'rgba(196, 30, 58, 0.2)' : 'rgba(112, 112, 112, 0.08)'}`,
                           transition: 'all 0.25s ease',
                         }}
-                        onMouseEnter={e => {
-                          if (!isExpanded) {
-                            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)'
-                            e.currentTarget.style.borderColor = 'rgba(112, 112, 112, 0.15)'
-                          }
-                        }}
-                        onMouseLeave={e => {
-                          if (!isExpanded) {
-                            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.02)'
-                            e.currentTarget.style.borderColor = 'rgba(112, 112, 112, 0.08)'
-                          }
-                        }}
                       >
-                        {/* Main row */}
                         <div className="flex items-center justify-between mb-1.5">
                           <span className="font-mono text-[12px] text-silver-white truncate" style={{ maxWidth: '60%' }}>
                             {entry.fileName}
                           </span>
                           <div className="flex items-center gap-2">
-                            <span
-                              className="font-orbitron font-bold text-[13px]"
-                              style={{
-                                color: 'var(--blood-ruby)',
-                                textShadow: '0 0 8px rgba(196, 30, 58, 0.3)',
-                              }}
-                            >
+                            <span className="font-orbitron font-bold text-[13px]" style={{ color: 'var(--blood-ruby)' }}>
                               {entry.reductionPercent}%
                             </span>
                             {isExpanded ? (
@@ -266,17 +232,15 @@ export function HistorySidebar({ isOpen, onClose }: HistorySidebarProps) {
                           </div>
                         </div>
 
-                        {/* Sub row */}
                         <div className="flex items-center justify-between">
                           <span className="font-mono text-[10px] text-obsidian-silver">
-                            {formatChars(entry.originalChars)} → {formatChars(entry.compressedChars)}
+                            {formatChars(entry.originalChars)} to {formatChars(entry.compressedChars)}
                           </span>
                           <span className="font-mono text-[10px] text-obsidian-silver" style={{ opacity: 0.6 }}>
                             {formatDate(entry.timestamp)}
                           </span>
                         </div>
 
-                        {/* Expanded details */}
                         <AnimatePresence>
                           {isExpanded && (
                             <motion.div
@@ -308,17 +272,65 @@ export function HistorySidebar({ isOpen, onClose }: HistorySidebarProps) {
                                   <div className="font-orbitron text-[8px] tracking-[2px] uppercase text-muted-steel mb-1">Speed</div>
                                   <div className="font-mono text-[12px] text-silver-white flex items-center gap-1">
                                     <Zap size={10} className="text-blood-ruby" />
-                                    {entry.processingTimeMs ? `${entry.processingTimeMs}ms` : '—'}
+                                    {entry.processingTimeMs ? `${entry.processingTimeMs}ms` : '-'}
                                   </div>
                                 </div>
                                 <div>
                                   <div className="font-orbitron text-[8px] tracking-[2px] uppercase text-muted-steel mb-1">Date</div>
                                   <div className="font-mono text-[12px] text-silver-white">
                                     {new Date(entry.timestamp).toLocaleDateString('en-US', {
-                                      month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+                                      month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit',
                                     })}
                                   </div>
                                 </div>
+                                <button
+                                  onClick={(event) => {
+                                    event.stopPropagation()
+                                    restoreHistoryEntry(entry.id)
+                                  }}
+                                  disabled={!entry.compressed}
+                                  className="flex items-center justify-center gap-1.5 py-2 rounded-[8px] font-orbitron text-[9px] font-semibold tracking-[1px] uppercase cursor-pointer"
+                                  style={{
+                                    gridColumn: 'span 2',
+                                    background: 'rgba(196, 30, 58, 0.12)',
+                                    border: '1px solid rgba(196, 30, 58, 0.24)',
+                                    color: entry.compressed ? 'var(--blood-ruby)' : 'var(--muted-steel)',
+                                  }}
+                                >
+                                  <RotateCcw size={11} />
+                                  Restore Capsule
+                                </button>
+                                <button
+                                  onClick={(event) => {
+                                    event.stopPropagation()
+                                    void copyHistoryEntry(entry.compressed)
+                                  }}
+                                  disabled={!entry.compressed}
+                                  className="flex items-center justify-center gap-1.5 py-2 rounded-[8px] font-orbitron text-[9px] font-semibold tracking-[1px] uppercase cursor-pointer"
+                                  style={{
+                                    background: 'rgba(255, 255, 255, 0.03)',
+                                    border: '1px solid rgba(112, 112, 112, 0.15)',
+                                    color: entry.compressed ? 'var(--silver-white)' : 'var(--muted-steel)',
+                                  }}
+                                >
+                                  <Copy size={11} />
+                                  Copy
+                                </button>
+                                <button
+                                  onClick={(event) => {
+                                    event.stopPropagation()
+                                    deleteHistoryEntry(entry.id)
+                                  }}
+                                  className="flex items-center justify-center gap-1.5 py-2 rounded-[8px] font-orbitron text-[9px] font-semibold tracking-[1px] uppercase cursor-pointer"
+                                  style={{
+                                    background: 'rgba(255, 255, 255, 0.03)',
+                                    border: '1px solid rgba(112, 112, 112, 0.15)',
+                                    color: 'var(--muted-steel)',
+                                  }}
+                                >
+                                  <Trash2 size={11} />
+                                  Delete
+                                </button>
                               </div>
                             </motion.div>
                           )}
@@ -330,13 +342,8 @@ export function HistorySidebar({ isOpen, onClose }: HistorySidebarProps) {
               )}
             </div>
 
-            {/* Footer */}
             {history.length > 0 && (
-              <div style={{
-                padding: '16px 20px',
-                borderTop: '1px solid rgba(112, 112, 112, 0.1)',
-                flexShrink: 0,
-              }}>
+              <div style={{ padding: '16px 20px', borderTop: '1px solid rgba(112, 112, 112, 0.1)', flexShrink: 0 }}>
                 {!showClearConfirm ? (
                   <button
                     onClick={() => setShowClearConfirm(true)}
@@ -346,14 +353,6 @@ export function HistorySidebar({ isOpen, onClose }: HistorySidebarProps) {
                       border: '1px solid rgba(112, 112, 112, 0.1)',
                       color: 'var(--muted-steel)',
                       transition: 'all 0.2s',
-                    }}
-                    onMouseEnter={e => {
-                      e.currentTarget.style.borderColor = 'rgba(196, 30, 58, 0.3)'
-                      e.currentTarget.style.color = 'var(--blood-ruby)'
-                    }}
-                    onMouseLeave={e => {
-                      e.currentTarget.style.borderColor = 'rgba(112, 112, 112, 0.1)'
-                      e.currentTarget.style.color = 'var(--muted-steel)'
                     }}
                   >
                     <Trash2 size={12} />
