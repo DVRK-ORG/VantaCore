@@ -23,18 +23,28 @@ export function BenchmarkProof() {
   const isInView = useInView(ref, { once: true, margin: '-40px' })
 
   return (
-    <section ref={ref} style={{ padding: '96px 0', background: 'rgba(10,10,10,0.45)' }}>
+    <section ref={ref} style={{ padding: '64px 0 96px 0', background: 'rgba(10,10,10,0.45)' }}>
       <div className="container-main">
         <motion.div
           initial={{ opacity: 0, y: 40 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.8 }}
-          className="text-center mb-14"
+          className="glass-panel mb-10 flex flex-col md:flex-row md:items-center justify-between gap-6 md:gap-10"
+          style={{ padding: '32px 40px', borderRadius: '16px' }}
         >
-          <h2 className="font-orbitron font-bold tracking-[3px] uppercase mb-4" style={{ fontSize: 'clamp(20px, 3vw, 32px)' }}>
-            Battlefield <span className="text-blood-ruby">Proof</span>
-          </h2>
-          <p className="font-crimson text-obsidian-silver max-w-[640px] mx-auto leading-[1.7]" style={{ fontSize: 'clamp(15px, 1.6vw, 18px)' }}>
+          <div className="shrink-0">
+            <h2 className="font-orbitron font-bold tracking-[3px] uppercase mb-2" style={{ fontSize: 'clamp(22px, 3vw, 28px)' }}>
+              Battlefield <span className="text-blood-ruby">Proof</span>
+            </h2>
+            <div className="font-orbitron text-[11px] font-semibold tracking-[2px] uppercase text-blood-ruby flex items-center gap-2">
+              <div className="w-1.5 h-1.5 rounded-full bg-blood-ruby" style={{ boxShadow: '0 0 8px rgba(196,30,58,0.8)' }} />
+              Verified Telemetry
+            </div>
+          </div>
+          
+          <div className="hidden md:block w-[1px] h-[60px]" style={{ background: 'rgba(255,255,255,0.1)' }}></div>
+          
+          <p className="font-crimson text-obsidian-silver max-w-[500px] leading-[1.7]" style={{ fontSize: 'clamp(15px, 1.6vw, 17px)' }}>
             The current official benchmark compresses a merged multi-session AI export into a portable Memory Capsule ready for the next LLM.
           </p>
         </motion.div>
