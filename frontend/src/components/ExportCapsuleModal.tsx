@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Download, FileText, FileCode, Braces } from 'lucide-react'
 import { getExportContent, downloadStringAsFile } from '../utils/exportBranding'
@@ -52,12 +53,13 @@ function formatNum(n: number): string {
 const supportsFilePicker = typeof window !== 'undefined' && 'showSaveFilePicker' in window
 
 export function ExportCapsuleModal({ entry, onClose }: ExportCapsuleModalProps) {
-  return (
+  return createPortal(
     <AnimatePresence>
       {entry && (
         <ExportCapsuleModalInner key={entry.id} entry={entry} onClose={onClose} />
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   )
 }
 
