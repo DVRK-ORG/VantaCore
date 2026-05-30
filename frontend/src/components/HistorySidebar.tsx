@@ -2,7 +2,8 @@ import { useState, useRef, useCallback, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Trash2, Clock, FileText, Zap, ChevronDown, ChevronUp, Copy, RotateCcw, Download, Check } from 'lucide-react'
 import { FREE_HISTORY_LIMIT, useCompressionStore } from '../stores/compressionStore'
-import { getExportContent, downloadStringAsFile } from '../utils/exportBranding'
+import { ExportCapsuleModal } from './ExportCapsuleModal'
+import type { ExportEntry } from './ExportCapsuleModal'
 
 function formatDate(timestamp: number) {
   const d = new Date(timestamp)
@@ -37,18 +38,15 @@ export function HistorySidebar({ isOpen, onClose }: HistorySidebarProps) {
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [showClearConfirm, setShowClearConfirm] = useState(false)
   const [copiedId, setCopiedId] = useState<string | null>(null)
-  const [downloadMenuId, setDownloadMenuId] = useState<string | null>(null)
-  const [downloadMenuPos, setDownloadMenuPos] = useState<{ top: number; left: number; width: number } | null>(null)
+  const [exportEntry, setExportEntry] = useState<ExportEntry | null>(null)
   const copyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const downloadBtnRefs = useRef<Map<string, HTMLButtonElement>>(new Map())
   const sidebarRef = useRef<HTMLDivElement>(null)
 
   const handleClose = useCallback(() => {
     setShowClearConfirm(false)
-    setDownloadMenuId(null)
-    setDownloadMenuPos(null)
     if (copyTimeoutRef.current) clearTimeout(copyTimeoutRef.current)
     setCopiedId(null)
+    setExportEntry(null)
     onClose()
   }, [onClose])
 
@@ -66,26 +64,6 @@ export function HistorySidebar({ isOpen, onClose }: HistorySidebarProps) {
     if (copyTimeoutRef.current) clearTimeout(copyTimeoutRef.current)
     setCopiedId(entryId)
     copyTimeoutRef.current = setTimeout(() => setCopiedId(null), 2000)
-  }, [])
-
-  const downloadHistoryEntry = useCallback((entry: { fileName: string; compressed: string; originalChars: number; compressedChars: number; reductionPercent: number; estimatedTokensBefore: number; estimatedTokensAfter: number; tokenEstimationMethod: string; repeatedBlocksFolded: number; dictionaryReferencesCreated: number; clustersDetected: number; codeBlocksProtected: number; codeBlocksIntegrityOk: boolean }, ext: string) => {
-    if (!entry.compressed) return
-    const baseName = entry.fileName ? entry.fileName.replace(/\.[^/.]+$/, '') : 'capsule'
-    const content = getExportContent(ext, entry.compressed, {
-      originalChars: entry.originalChars,
-      compressedChars: entry.compressedChars,
-      reductionPercent: entry.reductionPercent,
-      estimatedTokensBefore: entry.estimatedTokensBefore,
-      estimatedTokensAfter: entry.estimatedTokensAfter,
-      tokenEstimationMethod: entry.tokenEstimationMethod,
-      repeatedBlocksFolded: entry.repeatedBlocksFolded,
-      dictionaryReferencesCreated: entry.dictionaryReferencesCreated,
-      clustersDetected: entry.clustersDetected,
-      codeBlocksProtected: entry.codeBlocksProtected,
-      codeBlocksIntegrityOk: entry.codeBlocksIntegrityOk,
-    })
-    downloadStringAsFile(content, `${baseName}_SHRUNK${ext}`, ext)
-    setDownloadMenuId(null)
   }, [])
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
@@ -123,6 +101,7 @@ export function HistorySidebar({ isOpen, onClose }: HistorySidebarProps) {
   }, [isOpen, handleClose])
 
   return (
+    <>
     <AnimatePresence>
       {isOpen && (
         <>
@@ -238,7 +217,7 @@ export function HistorySidebar({ isOpen, onClose }: HistorySidebarProps) {
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: i * 0.03, duration: 0.2 }}
-                        onClick={() => { setDownloadMenuId(null); setDownloadMenuPos(null); setExpandedId(isExpanded ? null : entry.id) }}
+                        onClick={() => setExpandedId(isExpanded ? null : entry.id)}
                         className="cursor-pointer"
                         style={{
                           padding: '14px 16px',
@@ -355,34 +334,21 @@ export function HistorySidebar({ isOpen, onClose }: HistorySidebarProps) {
                                   {copiedId === entry.id ? <Check size={11} /> : <Copy size={11} />}
                                   {copiedId === entry.id ? 'Copied' : 'Copy'}
                                 </button>
-                                {/* Download with format dropdown — fixed-position popover to escape overflow:hidden */}
                                 <button
-                                  ref={(el) => { if (el) downloadBtnRefs.current.set(entry.id, el); else downloadBtnRefs.current.delete(entry.id) }}
                                   onClick={(event) => {
                                     event.stopPropagation()
-                                    if (downloadMenuId === entry.id) {
-                                      setDownloadMenuId(null)
-                                      setDownloadMenuPos(null)
-                                    } else {
-                                      const rect = event.currentTarget.getBoundingClientRect()
-                                      setDownloadMenuPos({ top: rect.top, left: rect.left, width: rect.width })
-                                      setDownloadMenuId(entry.id)
-                                    }
+                                    setExportEntry(entry)
                                   }}
                                   disabled={!entry.compressed}
                                   className="flex items-center justify-center gap-1.5 py-2 rounded-[8px] font-orbitron text-[9px] font-semibold tracking-[1px] uppercase cursor-pointer"
                                   style={{
-                                    background: downloadMenuId === entry.id
-                                      ? 'rgba(196, 30, 58, 0.08)'
-                                      : 'rgba(255, 255, 255, 0.03)',
-                                    border: `1px solid ${downloadMenuId === entry.id ? 'rgba(196, 30, 58, 0.24)' : 'rgba(112, 112, 112, 0.15)'}`,
+                                    background: 'rgba(255, 255, 255, 0.03)',
+                                    border: '1px solid rgba(112, 112, 112, 0.15)',
                                     color: entry.compressed ? 'var(--silver-white)' : 'var(--muted-steel)',
-                                    transition: 'all 0.25s ease',
                                   }}
                                 >
                                   <Download size={11} />
-                                  Download
-                                  <ChevronDown size={9} style={{ marginLeft: '2px', opacity: 0.6 }} />
+                                  Export
                                 </button>
                                 <button
                                   onClick={(event) => {
@@ -391,6 +357,7 @@ export function HistorySidebar({ isOpen, onClose }: HistorySidebarProps) {
                                   }}
                                   className="flex items-center justify-center gap-1.5 py-2 rounded-[8px] font-orbitron text-[9px] font-semibold tracking-[1px] uppercase cursor-pointer"
                                   style={{
+                                    gridColumn: 'span 2',
                                     background: 'rgba(255, 255, 255, 0.03)',
                                     border: '1px solid rgba(112, 112, 112, 0.15)',
                                     color: 'var(--muted-steel)',
@@ -455,63 +422,15 @@ export function HistorySidebar({ isOpen, onClose }: HistorySidebarProps) {
               </div>
             )}
           </motion.div>
-
-          {/* Fixed-position download format popover — escapes all overflow:hidden parents */}
-          <AnimatePresence>
-            {downloadMenuId && downloadMenuPos && (() => {
-              const menuEntry = history.find((h) => h.id === downloadMenuId)
-              if (!menuEntry) return null
-              return (
-                <>
-                  {/* Invisible click-away backdrop */}
-                  <div
-                    onClick={(event) => { event.stopPropagation(); setDownloadMenuId(null); setDownloadMenuPos(null) }}
-                    style={{ position: 'fixed', inset: 0, zIndex: 9998 }}
-                  />
-                  <motion.div
-                    initial={{ opacity: 0, y: 6 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 6 }}
-                    transition={{ duration: 0.15 }}
-                    style={{
-                      position: 'fixed',
-                      top: downloadMenuPos.top - 4,
-                      left: downloadMenuPos.left,
-                      width: downloadMenuPos.width,
-                      transform: 'translateY(-100%)',
-                      background: 'rgb(16, 16, 16)',
-                      border: '1px solid rgba(196, 30, 58, 0.25)',
-                      borderRadius: '8px',
-                      overflow: 'hidden',
-                      zIndex: 9999,
-                      boxShadow: '0 -4px 24px rgba(0, 0, 0, 0.6), 0 0 12px rgba(196, 30, 58, 0.08)',
-                    }}
-                  >
-                    {[{ ext: '.md', label: 'MD' }, { ext: '.txt', label: 'TXT' }, { ext: '.json', label: 'JSON' }].map(({ ext, label }) => (
-                      <button
-                        key={ext}
-                        onClick={(event) => { event.stopPropagation(); downloadHistoryEntry(menuEntry, ext) }}
-                        className="flex items-center gap-2 w-full py-2 px-3 font-orbitron text-[9px] font-semibold tracking-[1px] uppercase cursor-pointer"
-                        style={{
-                          background: 'transparent',
-                          border: 'none',
-                          color: 'var(--silver-white)',
-                          transition: 'background 0.15s',
-                        }}
-                        onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(196, 30, 58, 0.12)' }}
-                        onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
-                      >
-                        <Download size={10} style={{ opacity: 0.6 }} />
-                        {label}
-                      </button>
-                    ))}
-                  </motion.div>
-                </>
-              )
-            })()}
-          </AnimatePresence>
         </>
       )}
     </AnimatePresence>
+
+    {/* Export Memory Capsule modal — renders outside sidebar z-context */}
+    <ExportCapsuleModal
+      entry={exportEntry}
+      onClose={() => setExportEntry(null)}
+    />
+    </>
   )
 }
