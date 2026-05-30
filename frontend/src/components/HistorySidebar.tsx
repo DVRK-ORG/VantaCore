@@ -1,7 +1,8 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Trash2, Clock, FileText, Zap, ChevronDown, ChevronUp, Copy, RotateCcw } from 'lucide-react'
+import { X, Trash2, Clock, FileText, Zap, ChevronDown, ChevronUp, Copy, RotateCcw, Download, Check } from 'lucide-react'
 import { FREE_HISTORY_LIMIT, useCompressionStore } from '../stores/compressionStore'
+import { getExportContent, downloadStringAsFile } from '../utils/exportBranding'
 
 function formatDate(timestamp: number) {
   const d = new Date(timestamp)
@@ -35,14 +36,20 @@ export function HistorySidebar({ isOpen, onClose }: HistorySidebarProps) {
   const [isResizing, setIsResizing] = useState(false)
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [showClearConfirm, setShowClearConfirm] = useState(false)
+  const [copiedId, setCopiedId] = useState<string | null>(null)
+  const [downloadMenuId, setDownloadMenuId] = useState<string | null>(null)
+  const copyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const sidebarRef = useRef<HTMLDivElement>(null)
 
   const handleClose = useCallback(() => {
     setShowClearConfirm(false)
+    setDownloadMenuId(null)
+    if (copyTimeoutRef.current) clearTimeout(copyTimeoutRef.current)
+    setCopiedId(null)
     onClose()
   }, [onClose])
 
-  const copyHistoryEntry = useCallback(async (compressed: string) => {
+  const copyHistoryEntry = useCallback(async (entryId: string, compressed: string) => {
     if (!compressed) return
     try { await navigator.clipboard.writeText(compressed) } catch {
       const textarea = document.createElement('textarea')
@@ -52,6 +59,30 @@ export function HistorySidebar({ isOpen, onClose }: HistorySidebarProps) {
       document.execCommand('copy')
       document.body.removeChild(textarea)
     }
+    // Show "COPIED" feedback for 2 seconds
+    if (copyTimeoutRef.current) clearTimeout(copyTimeoutRef.current)
+    setCopiedId(entryId)
+    copyTimeoutRef.current = setTimeout(() => setCopiedId(null), 2000)
+  }, [])
+
+  const downloadHistoryEntry = useCallback((entry: { fileName: string; compressed: string; originalChars: number; compressedChars: number; reductionPercent: number; estimatedTokensBefore: number; estimatedTokensAfter: number; tokenEstimationMethod: string; repeatedBlocksFolded: number; dictionaryReferencesCreated: number; clustersDetected: number; codeBlocksProtected: number; codeBlocksIntegrityOk: boolean }, ext: string) => {
+    if (!entry.compressed) return
+    const baseName = entry.fileName ? entry.fileName.replace(/\.[^/.]+$/, '') : 'capsule'
+    const content = getExportContent(ext, entry.compressed, {
+      originalChars: entry.originalChars,
+      compressedChars: entry.compressedChars,
+      reductionPercent: entry.reductionPercent,
+      estimatedTokensBefore: entry.estimatedTokensBefore,
+      estimatedTokensAfter: entry.estimatedTokensAfter,
+      tokenEstimationMethod: entry.tokenEstimationMethod,
+      repeatedBlocksFolded: entry.repeatedBlocksFolded,
+      dictionaryReferencesCreated: entry.dictionaryReferencesCreated,
+      clustersDetected: entry.clustersDetected,
+      codeBlocksProtected: entry.codeBlocksProtected,
+      codeBlocksIntegrityOk: entry.codeBlocksIntegrityOk,
+    })
+    downloadStringAsFile(content, `${baseName}_SHRUNK${ext}`, ext)
+    setDownloadMenuId(null)
   }, [])
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
@@ -204,7 +235,7 @@ export function HistorySidebar({ isOpen, onClose }: HistorySidebarProps) {
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: i * 0.03, duration: 0.2 }}
-                        onClick={() => setExpandedId(isExpanded ? null : entry.id)}
+                        onClick={() => { setDownloadMenuId(null); setExpandedId(isExpanded ? null : entry.id) }}
                         className="cursor-pointer"
                         style={{
                           padding: '14px 16px',
@@ -303,19 +334,92 @@ export function HistorySidebar({ isOpen, onClose }: HistorySidebarProps) {
                                 <button
                                   onClick={(event) => {
                                     event.stopPropagation()
-                                    void copyHistoryEntry(entry.compressed)
+                                    void copyHistoryEntry(entry.id, entry.compressed)
                                   }}
                                   disabled={!entry.compressed}
                                   className="flex items-center justify-center gap-1.5 py-2 rounded-[8px] font-orbitron text-[9px] font-semibold tracking-[1px] uppercase cursor-pointer"
                                   style={{
-                                    background: 'rgba(255, 255, 255, 0.03)',
-                                    border: '1px solid rgba(112, 112, 112, 0.15)',
-                                    color: entry.compressed ? 'var(--silver-white)' : 'var(--muted-steel)',
+                                    background: copiedId === entry.id
+                                      ? 'rgba(34, 197, 94, 0.12)'
+                                      : 'rgba(255, 255, 255, 0.03)',
+                                    border: `1px solid ${copiedId === entry.id ? 'rgba(34, 197, 94, 0.3)' : 'rgba(112, 112, 112, 0.15)'}`,
+                                    color: copiedId === entry.id
+                                      ? 'rgb(34, 197, 94)'
+                                      : entry.compressed ? 'var(--silver-white)' : 'var(--muted-steel)',
+                                    transition: 'all 0.25s ease',
                                   }}
                                 >
-                                  <Copy size={11} />
-                                  Copy
+                                  {copiedId === entry.id ? <Check size={11} /> : <Copy size={11} />}
+                                  {copiedId === entry.id ? 'Copied' : 'Copy'}
                                 </button>
+                                {/* Download with format dropdown */}
+                                <div style={{ position: 'relative', gridColumn: 'span 1' }}>
+                                  <button
+                                    onClick={(event) => {
+                                      event.stopPropagation()
+                                      setDownloadMenuId(downloadMenuId === entry.id ? null : entry.id)
+                                    }}
+                                    disabled={!entry.compressed}
+                                    className="flex items-center justify-center gap-1.5 py-2 rounded-[8px] font-orbitron text-[9px] font-semibold tracking-[1px] uppercase cursor-pointer"
+                                    style={{
+                                      width: '100%',
+                                      background: downloadMenuId === entry.id
+                                        ? 'rgba(196, 30, 58, 0.08)'
+                                        : 'rgba(255, 255, 255, 0.03)',
+                                      border: `1px solid ${downloadMenuId === entry.id ? 'rgba(196, 30, 58, 0.24)' : 'rgba(112, 112, 112, 0.15)'}`,
+                                      color: entry.compressed ? 'var(--silver-white)' : 'var(--muted-steel)',
+                                      transition: 'all 0.25s ease',
+                                    }}
+                                  >
+                                    <Download size={11} />
+                                    Download
+                                    <ChevronDown size={9} style={{ marginLeft: '2px', opacity: 0.6 }} />
+                                  </button>
+                                  <AnimatePresence>
+                                    {downloadMenuId === entry.id && (
+                                      <motion.div
+                                        initial={{ opacity: 0, y: -4, scaleY: 0.95 }}
+                                        animate={{ opacity: 1, y: 0, scaleY: 1 }}
+                                        exit={{ opacity: 0, y: -4, scaleY: 0.95 }}
+                                        transition={{ duration: 0.15 }}
+                                        style={{
+                                          position: 'absolute',
+                                          top: '100%',
+                                          left: 0,
+                                          right: 0,
+                                          marginTop: '4px',
+                                          background: 'rgba(18, 18, 18, 0.98)',
+                                          border: '1px solid rgba(196, 30, 58, 0.2)',
+                                          borderRadius: '8px',
+                                          overflow: 'hidden',
+                                          zIndex: 20,
+                                          backdropFilter: 'blur(12px)',
+                                          boxShadow: '0 8px 24px rgba(0, 0, 0, 0.5)',
+                                        }}
+                                        onClick={(event) => event.stopPropagation()}
+                                      >
+                                        {[{ ext: '.md', label: 'MD' }, { ext: '.txt', label: 'TXT' }, { ext: '.json', label: 'JSON' }].map(({ ext, label }) => (
+                                          <button
+                                            key={ext}
+                                            onClick={() => downloadHistoryEntry(entry, ext)}
+                                            className="flex items-center gap-2 w-full py-2 px-3 font-orbitron text-[9px] font-semibold tracking-[1px] uppercase cursor-pointer"
+                                            style={{
+                                              background: 'transparent',
+                                              border: 'none',
+                                              color: 'var(--silver-white)',
+                                              transition: 'background 0.15s',
+                                            }}
+                                            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(196, 30, 58, 0.12)' }}
+                                            onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
+                                          >
+                                            <Download size={10} style={{ opacity: 0.6 }} />
+                                            {label}
+                                          </button>
+                                        ))}
+                                      </motion.div>
+                                    )}
+                                  </AnimatePresence>
+                                </div>
                                 <button
                                   onClick={(event) => {
                                     event.stopPropagation()
