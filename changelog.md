@@ -2,6 +2,17 @@
 
 ---
 
+## [4.5.0] -- Unreleased -- IMPORT CAPSULE V1
+> *VantaCore closes the local capsule loop with safe client-side restore.*
+
+### Import Capsule
+- Added client-side Memory Capsule import flow for `.md`, `.txt`, and `.json` exports.
+- Added safe preview-before-restore behavior so imports do not mutate the workspace until confirmed.
+- Restored imported capsules directly into the output workspace without consuming the daily compression counter.
+- Preserved the 100% client-side free demo and left the Singularity engine untouched.
+
+---
+
 ## [4.4.0] -- 2026-05-31 -- COMPRESSION PROFILES V1
 > *VantaCore expands its arsenal with targeted profiles and robust export capabilities.*
 

@@ -3,6 +3,7 @@ import { Header } from './components/Header'
 import { HeroSection } from './components/HeroSection'
 import { DropZone } from './components/DropZone'
 import { TextInput } from './components/TextInput'
+import { ImportCapsuleButton } from './components/ImportCapsuleButton'
 import { CompressButton } from './components/CompressButton'
 import { MetricsDashboard } from './components/MetricsDashboard'
 import { OutputSection } from './components/OutputSection'
@@ -33,6 +34,7 @@ function App() {
 
           <DropZone />
           <TextInput />
+          <ImportCapsuleButton />
           <CompressButton />
           <MetricsDashboard />
           <OutputSection />

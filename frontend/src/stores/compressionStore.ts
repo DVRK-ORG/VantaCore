@@ -40,6 +40,7 @@ interface CompressionStore {
   result: CompressionResult | null
   setCompressing: (state: boolean) => void
   setResult: (result: CompressionResult) => void
+  restoreImportedCapsule: (fileName: string, result: CompressionResult) => void
   reset: () => void
 
   // Free demo usage
@@ -139,6 +140,12 @@ export const useCompressionStore = create<CompressionStore>((set, get) => ({
   result: null,
   setCompressing: (state) => set({ isCompressing: state }),
   setResult: (result) => set({ result, hasResult: true, isCompressing: false }),
+  restoreImportedCapsule: (fileName, result) => set({
+    inputFileName: fileName || 'Imported capsule',
+    result,
+    hasResult: true,
+    isCompressing: false,
+  }),
   reset: () => set({ inputText: '', inputFileName: '', hasResult: false, result: null }),
 
   dailyUsageDate: initialUsage.date,
