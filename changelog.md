@@ -2,71 +2,100 @@
 
 ---
 
-## [4.4.0] -- Unreleased -- COMPRESSION PROFILES
+## [4.4.0] -- 2026-05-31 -- COMPRESSION PROFILES V1
+> *VantaCore expands its arsenal with targeted profiles and robust export capabilities.*
 
-- Expanded input mode into lightweight Compression Profiles v1.
-- Added profiles for RAG / KB Prep, Dev Logs, Research Notes, and Legal / Policy.
-- Preserved Memory Capsule as the default behavior.
-- Kept Agent Transcript Mode as a conservative client-side preprocessor.
-- Kept Singularity engine untouched.
-
----
-
-## [4.3.0] -- Unreleased -- AGENT TRANSCRIPT MODE
-> *VantaCore learns to clean noisy coding-agent logs before compressing them into Memory Capsules.*
+### Compression Profiles
+- **Compression Profiles v1 added**: Memory Capsule (default), Agent Transcript, RAG / KB, Dev Logs, Research, and Legal / Policy.
+- Memory Capsule remains the default behavior.
+- Agent Transcript mode preserves its conservative preprocessor.
+- New profiles use lightweight client-side profile headers/hints.
+- No engine rewrite, and no backend/auth/payment/API/CLI/MCP/cloud sync introduced.
+- **UI Polish included**: Profile selector wraps cleanly, loaded file card spacing cleaned up, redundant helper copy removed, and loaded file source bar simplified.
 
 ### Agent Transcript Mode
-- Added optional **Agent Transcript** input mode alongside the default **Memory Capsule** mode.
-- Added conservative client-side transcript preprocessor (`agentTranscript.ts`):
-  - Normalizes line endings (CRLF → LF).
-  - Collapses excessive blank lines and duplicate consecutive non-critical lines.
-  - Removes low-value assistant filler (apologies, generic confirmations, thinking markers).
-  - Preserves commands, file paths, URLs, errors, warnings, build/test output, git signals, continuity constraints, and fenced code blocks.
-  - Prepends a VantaCore source marker header for engine context.
-- Added compact mode selector pills in the input area (Orbitron pill-style UI).
-- Added `inputMode` state to the compression store with `'memory-capsule'` default.
-- Added optional `sourceMode` metadata to history entries (backward-compatible).
-- Kept Singularity engine completely untouched.
-- Preserved default Memory Capsule behavior — no changes to the existing compression path.
+- **Agent Transcript Mode added** as a client-side input mode.
+- Includes a conservative preprocessor utility to clean raw coding-agent transcripts before compression.
+- Supports Codex / Antigravity / Cursor / Claude / ChatGPT-style logs.
+- Preserves commands, errors, files changed, decisions, tests, next steps, and do-not-repeat signals.
+- Preserves the default Memory Capsule behavior safely.
+- Added PRD: `docs/VANTACORE_AGENT_TRANSCRIPT_MODE_PRD_v1.md`.
+
+### Export / History System
+- **Local History System:**
+  - Retains the last 20 local compression history entries.
+  - Supports restore, copy, delete, and clear history actions.
+  - Expanded history details with visible copied feedback.
+  - History stays local in browser storage.
+- **Export Memory Capsule Modal:**
+  - Upgraded history export from clipped sidebar dropdown behavior into a proper modal.
+  - Portal mounted to `document.body` with a fixed viewport centered layout.
+  - Escape/backdrop/X/Cancel close behavior supported.
+  - Format cards available for `.md`, `.txt`, and `.json`.
+  - Editable filename supported.
+  - Export directly from history without restoring or mutating the current workspace.
+- **Export Destination Modes:**
+  - **Downloads mode:** Uses default browser download without OS picker.
+  - **Folder mode:** Uses File System Access API directory picker where supported. Folder handle persisted via IndexedDB (not localStorage). Folder permission checked before writing.
+  - **Save As mode:** Opens picker only when explicitly selected.
+  - Unsupported browsers accurately communicate Folder limitations.
+- **Export Branding / Ownership Disclaimer:**
+  - Free exports include VantaCore attribution.
+  - MD/TXT/JSON exports use shared branding utilities.
+  - Ownership disclaimer included: VantaCore does not claim ownership of user input/output.
+
+### Freemium / Client-Side Guardrails
+- **Product Repositioning / Phase 1-2 Foundation:**
+  - Repositioned from generic compression framing into: Portable Memory Capsules for LLM continuity, AI chat continuation, RAG / KB prep, Dev logs, Research notes, MCP/agent workflows, and token cost control.
+  - README/docs/landing positioning aligned around: *Compress massive AI sessions into portable memory capsules. 100% client-side.*
+- **Freemium Guardrails:**
+  - 5/day local free compression counter via localStorage-based soft demo limit.
+  - 100% client-side free demo preserved: no login, no backend, no auth, no payment.
+
+### Validation
+- `npm run build` passed.
+- `npm run lint` passed.
+- `npm run validate:compression` passed.
+- Official benchmark remained exactly 96.20%.
+- `singularity.ts` untouched.
+- `validate-compression.ts` untouched.
+
+### Deferred
+- Export profile metadata.
+- Deeper profile-specific cleaners.
+- Full Benchmark Proof visual polish.
+- CLI PRD / MCP PRD.
 
 ---
 
 ## [4.1.0] -- 2026-05-30 -- MEMORY CAPSULE ENGINE
 > *VantaCore graduates from dense memory packets to LLM-directable continuity capsules.*
 
-### Engine Upgrade
-- Added a structured **Memory Capsule** header before the compressed stream:
+### Memory Capsule Engine / Battlefield Benchmark
+- The compression engine was validated and protected to produce structured Memory Capsules with:
   - Session map
   - Current final state
   - Open loops / next actions
   - Do not repeat / do not change
   - Decision log
   - Key commands / files / artifacts
-- Added topic clustering for merged multi-session inputs, with compact cluster summaries, key actions, decisions, open loops, important artifacts, and compressed detail streams.
-- Added lightweight chronology markers: `early-session`, `mid-session`, `late-session`, and `final-known-state`.
-- Added repeated block folding with a reference dictionary for repeated commands, prompts, and fenced code blocks.
-- Preserved LLM continuity signals such as `user_wants`, `agent_should`, `already_fixed`, `verified`, `pending`, `blocked`, `commit`, `pushed`, `deployed`, `Chrome Web Store`, `Cloudflare`, `privacy_policy`, `landing_page`, `VantaCore`, and `C.H.P`.
-- Tightened repetition thresholds so dictionary entries only fold high-value repeated blocks instead of bloating the capsule with twice-seen paragraphs.
+  - Reference dictionary
+  - Clustered compressed detail stream
+- **Official Battlefield Benchmark Result:**
+  - 1,607,470 chars input
+  - 61,109 chars output
+  - ~401,868 estimated tokens input
+  - ~15,278 estimated tokens output
+  - **96.20% reduction**
+  - 398 protected fenced code blocks
+  - 6 clusters
+  - 17 dictionary refs
+  - 114 repeated folds
 
-### Validation
-- Added `npm run validate:compression` for repeatable engine checks from the CLI.
-- Validation reports input/output characters, approximate token estimates, reduction percentage, repeated blocks folded, dictionary references created, clusters detected, and code block fence balance.
-- Approximate token estimates are clearly labeled as `ceil(characters / 4)`.
-
-### Real-World Result
-- Re-tested the same merged multi-session file:
-  - **Before**: 1,607,470 chars (~401,868 estimated tokens)
-  - **Previous output**: 233,359 chars (~58,340 estimated tokens), **85.48%** reduction
-  - **New output**: 61,109 chars (~15,278 estimated tokens), **96.20%** reduction
-  - **Detected**: 6 clusters, 17 dictionary references, 114 folded repetitions, 398 protected code blocks
-
-### Deployment / Cache Fix
-- Bumped the service worker cache name to `vantacore-v4.1.0-memory-capsule` so browsers flush the old app shell.
-- Added Cloudflare Pages `_headers`:
-  - `/` and `/index.html` now revalidate
-  - `/sw.js` is `no-cache, no-store`
-  - hashed assets remain immutable
-- Confirmed the live app now serves the Memory Capsule engine and displays the new 96.20% result on the test file.
+### Benchmark Proof UI Polish
+- Benchmark Proof header spacing adjusted.
+- Proof section polish improved.
+- Visual issue deferred for a later full polish pass if needed.
 
 ---
 
