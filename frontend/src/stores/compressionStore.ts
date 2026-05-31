@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import type { CompressionResult } from '../engine/types'
-import type { InputMode } from '../utils/agentTranscript'
+import type { CompressionProfile } from '../utils/compressionProfiles'
 
 export const FREE_DAILY_COMPRESSION_LIMIT = 5
 export const FREE_HISTORY_LIMIT = 20
@@ -22,17 +22,17 @@ interface HistoryEntry {
   clustersDetected: number
   codeBlocksIntegrityOk: boolean
   timestamp: number
-  sourceMode?: InputMode
+  sourceMode?: CompressionProfile
 }
 
 interface CompressionStore {
   // Input
   inputText: string
   inputFileName: string
-  inputMode: InputMode
+  inputMode: CompressionProfile
   setInputText: (text: string) => void
   setInputFileName: (name: string) => void
-  setInputMode: (mode: InputMode) => void
+  setInputMode: (mode: CompressionProfile) => void
 
   // Compression state
   isCompressing: boolean

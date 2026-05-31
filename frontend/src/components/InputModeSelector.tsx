@@ -1,25 +1,23 @@
 import { useCompressionStore } from '../stores/compressionStore'
-import type { InputMode } from '../utils/agentTranscript'
-
-const modes: { key: InputMode; label: string }[] = [
-  { key: 'memory-capsule', label: 'Memory Capsule' },
-  { key: 'agent-transcript', label: 'Agent Transcript' },
-]
+import { COMPRESSION_PROFILES } from '../utils/compressionProfiles'
 
 export function InputModeSelector() {
   const { inputMode, setInputMode } = useCompressionStore()
+  
+  const selectedProfile = COMPRESSION_PROFILES.find(p => p.id === inputMode)
 
   return (
-    <div style={{ marginBottom: '16px' }}>
+    <div style={{ marginTop: '24px', marginBottom: '24px' }}>
       <div
         className="font-orbitron text-[10px] tracking-[2px] uppercase text-muted-steel"
         style={{ marginBottom: '8px', paddingLeft: '2px' }}
       >
-        Mode
+        Compression Profile
       </div>
       <div
         style={{
           display: 'inline-flex',
+          flexWrap: 'wrap',
           borderRadius: '10px',
           background: 'rgba(255, 255, 255, 0.03)',
           border: '1px solid rgba(112, 112, 112, 0.15)',
@@ -27,12 +25,12 @@ export function InputModeSelector() {
           gap: '2px',
         }}
       >
-        {modes.map(({ key, label }) => {
-          const isActive = inputMode === key
+        {COMPRESSION_PROFILES.map(({ id, shortLabel }) => {
+          const isActive = inputMode === id
           return (
             <button
-              key={key}
-              onClick={() => setInputMode(key)}
+              key={id}
+              onClick={() => setInputMode(id)}
               className="font-orbitron text-[10px] font-semibold tracking-[1.5px] uppercase cursor-pointer"
               style={{
                 padding: '8px 18px',
@@ -67,14 +65,13 @@ export function InputModeSelector() {
                 }
               }}
             >
-              {label}
+              {shortLabel}
             </button>
           )
         })}
       </div>
 
-      {/* Helper text for Agent Transcript mode */}
-      {inputMode === 'agent-transcript' && (
+      {selectedProfile && selectedProfile.helperText && (
         <div
           className="font-crimson text-[12px]"
           style={{
@@ -85,7 +82,7 @@ export function InputModeSelector() {
             lineHeight: '1.5',
           }}
         >
-          Best for Codex, Antigravity, Cursor, Claude, ChatGPT exports, terminal logs, build output, and repo handoff transcripts.
+          {selectedProfile.helperText}
         </div>
       )}
     </div>

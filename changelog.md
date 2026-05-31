@@ -2,6 +2,16 @@
 
 ---
 
+## [4.4.0] -- Unreleased -- COMPRESSION PROFILES
+
+- Expanded input mode into lightweight Compression Profiles v1.
+- Added profiles for RAG / KB Prep, Dev Logs, Research Notes, and Legal / Policy.
+- Preserved Memory Capsule as the default behavior.
+- Kept Agent Transcript Mode as a conservative client-side preprocessor.
+- Kept Singularity engine untouched.
+
+---
+
 ## [4.3.0] -- Unreleased -- AGENT TRANSCRIPT MODE
 > *VantaCore learns to clean noisy coding-agent logs before compressing them into Memory Capsules.*
 

@@ -28,9 +28,7 @@ function App() {
             <h2 className="font-orbitron font-bold tracking-[3px] uppercase mb-3" style={{ fontSize: 'clamp(20px, 3vw, 32px)' }}>
               Feed The <span className="text-blood-ruby">Singularity</span>
             </h2>
-            <p className="font-crimson text-muted-steel max-w-[600px] mx-auto leading-[1.6]" style={{ fontSize: 'clamp(15px, 1.6vw, 18px)' }}>
-              Drop a file or paste your text below
-            </p>
+
           </div>
 
           <DropZone />

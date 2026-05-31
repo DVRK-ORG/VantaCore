@@ -14,7 +14,7 @@
  *    user constraints, continuity signals, and git context
  */
 
-export type InputMode = 'memory-capsule' | 'agent-transcript'
+
 
 export interface AgentTranscriptPreprocessResult {
   cleanedText: string

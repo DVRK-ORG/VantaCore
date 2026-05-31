@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { FREE_DAILY_COMPRESSION_LIMIT, useCompressionStore } from '../stores/compressionStore'
 import { Singularity } from '../engine/singularity'
 import { preprocessAgentTranscript } from '../utils/agentTranscript'
+import { prependProfileHeader } from '../utils/compressionProfiles'
 
 const engine = new Singularity()
 
@@ -35,11 +36,13 @@ export function CompressButton() {
     setCompressing(true)
     await new Promise(r => setTimeout(r, 300))
 
-    // Route through preprocessor when in agent-transcript mode
-    const sourceText =
-      inputMode === 'agent-transcript'
-        ? preprocessAgentTranscript(inputText).cleanedText
-        : inputText
+    // Route through preprocessor when in agent-transcript mode or add lightweight header for new profiles
+    let sourceText = inputText
+    if (inputMode === 'agent-transcript') {
+      sourceText = preprocessAgentTranscript(inputText).cleanedText
+    } else if (inputMode !== 'memory-capsule') {
+      sourceText = prependProfileHeader(inputText, inputMode)
+    }
 
     const result = engine.process(sourceText)
     setResult(result)

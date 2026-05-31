@@ -1,5 +1,5 @@
 import { useCallback, useState, useRef } from 'react'
-import { Upload, FileText, X } from 'lucide-react'
+import { Upload, X } from 'lucide-react'
 import { useCompressionStore } from '../stores/compressionStore'
 
 const ACCEPTED_TYPES = ['.txt', '.md', '.json', '.csv', '.log']
@@ -55,13 +55,10 @@ export function DropZone() {
 
   if (inputFileName) {
     return (
-      <div className="glass-panel-ruby p-5 flex items-center justify-between mb-8">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-[10px] flex items-center justify-center" style={{ background: 'rgba(196,30,58,0.2)' }}>
-            <FileText size={20} className="text-blood-ruby" />
-          </div>
-          <div>
-            <p className="text-silver-white text-sm font-orbitron font-semibold tracking-[1px]">{inputFileName}</p>
+      <div className="glass-panel-ruby p-5 flex items-center justify-between mb-12 gap-4">
+        <div className="flex items-center min-w-0">
+          <div className="min-w-0">
+            <p className="text-silver-white text-sm font-orbitron font-semibold tracking-[1px] truncate">{inputFileName}</p>
             <p className="text-muted-steel text-xs font-crimson">File loaded - Ready to compress</p>
           </div>
         </div>
