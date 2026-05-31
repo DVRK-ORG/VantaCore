@@ -9,7 +9,7 @@ export function Footer() {
         MIT License - Open Core - 100% Client-Side Free Demo
       </div>
       <div className="font-crimson italic text-[11px]" style={{ opacity: 0.3, marginTop: '8px' }}>
-        V4.2 - Portable Memory Capsules for LLMs
+        V4.4 - Portable Memory Capsules for LLMs
       </div>
     </footer>
   )
