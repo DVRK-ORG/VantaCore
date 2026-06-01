@@ -232,6 +232,10 @@ const parseJsonCapsule = (fileName: string, rawContent: string): ImportedCapsule
   const trustedStats = readTrustedStats(parsed.stats, compressed.length)
   const warnings: string[] = []
 
+  if (parsed.import_compatible === false) {
+    warnings.push('This capsule is not marked import-compatible, so restore it only if the preview looks correct.')
+  }
+
   if (parsed.stats && !trustedStats) {
     warnings.push('Imported JSON stats were incomplete or inconsistent.')
   }

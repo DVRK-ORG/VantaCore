@@ -11,6 +11,10 @@
 - Restored imported capsules directly into the output workspace without consuming the daily compression counter.
 - Preserved the 100% client-side free demo and left the Singularity engine untouched.
 
+### Export Metadata
+- Added richer import-compatible capsule metadata for TXT/MD/JSON exports, including app/version, capsule/schema versions, export format, generated timestamp, profile/source mode, token estimation method, import notes, ownership note, license note, and stats.
+- Kept legacy capsule imports backward-compatible and preserved safe restore behavior.
+
 ---
 
 ## [4.4.0] -- 2026-05-31 -- COMPRESSION PROFILES V1

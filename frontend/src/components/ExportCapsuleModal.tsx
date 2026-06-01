@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Download, FileText, FileCode, Braces, FolderOpen, HardDrive, FolderSearch } from 'lucide-react'
 import { getExportContent, downloadStringAsFile } from '../utils/exportBranding'
+import type { CompressionProfile } from '../utils/compressionProfiles'
 import {
   getSavedDirHandle,
   saveDirHandle,
@@ -28,6 +29,7 @@ export interface ExportEntry {
   clustersDetected: number
   codeBlocksProtected: number
   codeBlocksIntegrityOk: boolean
+  sourceMode?: CompressionProfile
 }
 
 interface ExportCapsuleModalProps {
@@ -133,6 +135,8 @@ function ExportCapsuleModalInner({ entry, onClose }: { entry: ExportEntry; onClo
   }, [destination])
 
   const buildContent = useCallback(() => {
+    const sourceMode = entry.sourceMode ?? 'memory-capsule'
+
     return getExportContent(selectedFormat, entry.compressed, {
       originalChars: entry.originalChars,
       compressedChars: entry.compressedChars,
@@ -145,6 +149,10 @@ function ExportCapsuleModalInner({ entry, onClose }: { entry: ExportEntry; onClo
       clustersDetected: entry.clustersDetected,
       codeBlocksProtected: entry.codeBlocksProtected,
       codeBlocksIntegrityOk: entry.codeBlocksIntegrityOk,
+    }, {
+      compressionProfile: sourceMode,
+      sourceProfile: sourceMode,
+      sourceMode,
     })
   }, [entry, selectedFormat])
 

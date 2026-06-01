@@ -5,7 +5,7 @@ import { useCompressionStore } from '../stores/compressionStore'
 import { getExportContent, downloadStringAsFile } from '../utils/exportBranding'
 
 export function OutputSection() {
-  const { result, hasResult, inputFileName } = useCompressionStore()
+  const { result, hasResult, inputFileName, inputMode } = useCompressionStore()
   const [copied, setCopied] = useState(false)
 
   if (!hasResult || !result) return null
@@ -13,7 +13,11 @@ export function OutputSection() {
   const baseName = inputFileName ? inputFileName.replace(/\.[^/.]+$/, '') : 'compressed'
 
   const downloadAs = (ext: string) => {
-    const content = getExportContent(ext, result.compressed, result)
+    const content = getExportContent(ext, result.compressed, result, {
+      compressionProfile: inputMode,
+      sourceProfile: inputMode,
+      sourceMode: inputMode,
+    })
     downloadStringAsFile(content, `${baseName}_SHRUNK${ext}`, ext)
   }
 
