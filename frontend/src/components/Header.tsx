@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Github, Zap, Clock } from 'lucide-react'
+import { Github, Zap, Clock, Home, BookOpen } from 'lucide-react'
 
 interface HeaderProps {
   onHistoryToggle?: () => void
@@ -9,6 +9,7 @@ interface HeaderProps {
 export function Header({ onHistoryToggle, activePath = window.location.pathname }: HeaderProps) {
   const [scrolled, setScrolled] = useState(false)
   const isMemoryLab = activePath.startsWith('/memory-lab')
+  const isHome = activePath === '/'
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 100)
@@ -29,7 +30,7 @@ export function Header({ onHistoryToggle, activePath = window.location.pathname 
     >
       <div className="flex items-center justify-between h-[72px] max-w-full">
         {/* Left */}
-        <div className="flex items-center gap-[14px]">
+        <a href="/" aria-label="Go to VantaCore home" className="header-brand-link">
           <div
             className="w-[42px] h-[42px] rounded-[10px] flex items-center justify-center shrink-0 font-orbitron font-black text-[20px] text-white"
             style={{
@@ -48,21 +49,30 @@ export function Header({ onHistoryToggle, activePath = window.location.pathname 
               MEMORY CAPSULE V4.4
             </div>
           </div>
-        </div>
+        </a>
 
-        <nav className="hidden md:flex items-center gap-2" aria-label="Primary navigation">
+        <nav className="site-nav hidden md:flex" aria-label="Primary navigation">
+          <a
+            href="/"
+            className={isHome ? 'site-nav-link active' : 'site-nav-link'}
+            aria-current={isHome ? 'page' : undefined}
+          >
+            <Home size={13} />
+            Home
+          </a>
           <a
             href="/#tool"
-            className="font-orbitron text-[10px] font-semibold tracking-[2px] uppercase no-underline transition-colors"
-            style={{ color: isMemoryLab ? 'var(--obsidian-silver)' : 'var(--blood-ruby)' }}
+            className="site-nav-link"
           >
+            <Zap size={13} />
             Tool
           </a>
           <a
             href="/memory-lab"
-            className="font-orbitron text-[10px] font-semibold tracking-[2px] uppercase no-underline transition-colors"
-            style={{ color: isMemoryLab ? 'var(--blood-ruby)' : 'var(--obsidian-silver)' }}
+            className={isMemoryLab ? 'site-nav-link memory-lab-nav active' : 'site-nav-link memory-lab-nav'}
+            aria-current={isMemoryLab ? 'page' : undefined}
           >
+            <BookOpen size={13} />
             Memory Lab
           </a>
         </nav>

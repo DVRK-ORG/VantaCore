@@ -181,6 +181,85 @@ body::before {
   pointer-events: none;
 }
 
+/* ========== HEADER NAV ========== */
+.header-brand-link {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  color: var(--silver-white);
+  text-decoration: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.header-brand-link:hover {
+  opacity: 0.92;
+  transform: translateY(-1px);
+}
+
+.header-brand-link:focus-visible,
+.site-nav-link:focus-visible {
+  outline: 1px solid rgba(196,30,58,0.8);
+  outline-offset: 4px;
+}
+
+.site-nav {
+  align-items: center;
+  gap: 8px;
+  padding: 5px;
+  border: 1px solid rgba(112,112,112,0.12);
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(17,17,17,0.56), rgba(5,5,5,0.74));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.03);
+}
+
+.site-nav-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 30px;
+  padding: 0 11px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  color: var(--obsidian-silver);
+  font-family: 'Orbitron', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-decoration: none;
+  text-transform: uppercase;
+  transition: border-color 0.2s ease, background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.site-nav-link:hover {
+  color: var(--silver-white);
+  border-color: rgba(112,112,112,0.22);
+  background: rgba(255,255,255,0.035);
+}
+
+.site-nav-link.active {
+  color: var(--blood-ruby);
+}
+
+.memory-lab-nav {
+  color: var(--silver-white);
+  border-color: rgba(196,30,58,0.34);
+  background:
+    radial-gradient(circle at 20% 0%, rgba(196,30,58,0.18), transparent 42%),
+    linear-gradient(135deg, rgba(196,30,58,0.13), rgba(17,17,17,0.92));
+  box-shadow: 0 0 18px rgba(196,30,58,0.08), inset 0 1px 0 rgba(255,255,255,0.04);
+}
+
+.memory-lab-nav:hover,
+.memory-lab-nav.active {
+  color: var(--silver-white);
+  border-color: rgba(196,30,58,0.62);
+  background:
+    radial-gradient(circle at 20% 0%, rgba(196,30,58,0.28), transparent 42%),
+    linear-gradient(135deg, rgba(196,30,58,0.24), rgba(17,17,17,0.96));
+  box-shadow: 0 0 28px rgba(196,30,58,0.16), inset 0 1px 0 rgba(255,255,255,0.05);
+  transform: translateY(-1px);
+}
+
 /* ========== RESPONSIVE ========== */
 @media (max-width: 768px) {
   .container-main, .container-text { width: 92%; }
