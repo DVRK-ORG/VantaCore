@@ -71,21 +71,67 @@ function App() {
 
     window.addEventListener('popstate', handleNavigation)
 
+    const handleLinkClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement
+      const anchor = target.closest('a')
+      if (!anchor) return
+
+      const href = anchor.getAttribute('href')
+      if (!href) return
+
+      // Ignore external links, targets that open in new tab/window, and non-routing URLs
+      const targetAttr = anchor.getAttribute('target')
+      if (
+        targetAttr === '_blank' ||
+        href.startsWith('http') ||
+        href.startsWith('//') ||
+        href.startsWith('mailto:') ||
+        href.startsWith('tel:')
+      ) {
+        return
+      }
+
+      // Check if it's an internal hash link on the current page
+      if (href.startsWith('#')) {
+        return
+      }
+
+      const url = new URL(href, window.location.origin)
+      if (url.pathname === window.location.pathname) {
+        if (url.hash) {
+          e.preventDefault()
+          window.history.pushState(null, '', href)
+          const hashTarget = url.hash.slice(1)
+          document.getElementById(hashTarget)?.scrollIntoView({ block: 'start' })
+          return
+        }
+      }
+
+      e.preventDefault()
+      window.history.pushState(null, '', href)
+      window.dispatchEvent(new PopStateEvent('popstate'))
+    }
+
+    document.addEventListener('click', handleLinkClick)
+
     return () => {
       window.removeEventListener('popstate', handleNavigation)
+      document.removeEventListener('click', handleLinkClick)
     }
   }, [])
 
   useEffect(() => {
     const hashTarget = window.location.hash.slice(1)
 
-    if (!hashTarget) {
-      return
+    if (hashTarget) {
+      window.requestAnimationFrame(() => {
+        document.getElementById(hashTarget)?.scrollIntoView({ block: 'start' })
+      })
+    } else {
+      window.requestAnimationFrame(() => {
+        window.scrollTo(0, 0)
+      })
     }
-
-    window.requestAnimationFrame(() => {
-      document.getElementById(hashTarget)?.scrollIntoView({ block: 'start' })
-    })
   }, [currentPath])
 
   const renderPage = () => {
