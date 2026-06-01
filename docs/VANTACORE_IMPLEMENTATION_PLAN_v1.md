@@ -166,6 +166,50 @@ Acceptance criteria:
 - Profile work must preserve current default Memory Capsule behavior.
 - Profile output changes must be validated against the current benchmark.
 
+## Phase 4.6 - Memory Lab Notes / Content SEO Foundation
+
+Do not build in this pass.
+
+Goal: plan a future static content and education section called **Memory Lab**, with page/headline framing as **Memory Lab Notes**, for search discovery, product trust, and user education.
+
+Suggested future route:
+
+```text
+/memory-lab
+```
+
+Tasks:
+
+- [ ] Plan static article/report pages, not a backend CMS.
+- [ ] Keep the section 100% static and compatible with Cloudflare Pages.
+- [ ] Define SEO-friendly routes and metadata.
+- [ ] Add Article/schema JSON-LD later where appropriate.
+- [ ] Update sitemap later when pages exist.
+- [ ] Keep the design dark, premium, technical, and aligned with VantaCore / DVRK-ORG identity.
+- [ ] Make articles educate users and lead naturally back to the compression tool.
+
+Hard boundaries:
+
+- No auth, comments, database, admin dashboard, backend CMS, or cloud publishing system.
+- No routes, components, pages, or source-code implementation until explicitly requested.
+- Do not frame this as a generic blog.
+
+Example first article ideas, not final commitments:
+
+1. What Is a Memory Capsule for LLMs?
+2. How to Continue a Long ChatGPT / Claude / Gemini Session Without Restarting
+3. VantaCore Benchmark: 1.6M Characters to 61K
+4. RAG Preprocessing: Why Raw Chat Logs Make Bad Knowledge Bases
+5. Coding Agent Handoff: Compressing Codex, Cursor, Claude, and Dev Logs
+6. How to Reduce Token Cost Before Sending Context to an LLM
+7. Memory Capsules vs Summaries: Why Continuity Needs Structure
+
+Acceptance criteria:
+
+- Memory Lab Notes remains a planning phase only.
+- Future implementation stays static/client-side and does not introduce backend complexity.
+- Content supports LLM continuity, RAG prep, agent handoff, token cost control, and Memory Capsule education.
+
 ## Phase 5 - CLI MVP
 
 Do not build in this pass.

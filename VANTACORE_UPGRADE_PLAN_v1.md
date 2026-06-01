@@ -1081,6 +1081,49 @@ Deliverables:
 - profile selector in UI
 - profile-specific capsule sections
 
+### Phase 4.6 - Memory Lab Notes / Content SEO Foundation
+
+Purpose:
+
+Create a future static education and trust layer called **Memory Lab** with page/headline framing as **Memory Lab Notes**.
+
+Suggested route:
+
+```text
+/memory-lab
+```
+
+This should not be framed as a generic blog. It should feel like premium technical field notes from VantaCore / DVRK-ORG: benchmarks, field tests, practical guides, comparisons, and reports for LLM continuity, RAG prep, agent handoffs, token cost control, and Memory Capsule workflows.
+
+Deliverables:
+
+- static article/report pages, not a backend CMS
+- SEO-friendly routes and metadata
+- Article/schema JSON-LD later where appropriate
+- sitemap update later
+- dark premium VantaCore visual design
+- articles that educate users and lead naturally back to the tool
+- Cloudflare Pages-compatible static deployment
+
+Hard boundaries:
+
+- no auth
+- no comments
+- no database
+- no admin dashboard
+- no cloud publishing system
+- no backend content pipeline
+
+Example first article ideas, not final commitments:
+
+1. What Is a Memory Capsule for LLMs?
+2. How to Continue a Long ChatGPT / Claude / Gemini Session Without Restarting
+3. VantaCore Benchmark: 1.6M Characters to 61K
+4. RAG Preprocessing: Why Raw Chat Logs Make Bad Knowledge Bases
+5. Coding Agent Handoff: Compressing Codex, Cursor, Claude, and Dev Logs
+6. How to Reduce Token Cost Before Sending Context to an LLM
+7. Memory Capsules vs Summaries: Why Continuity Needs Structure
+
 ### Phase 5 - CLI MVP
 
 Deliverables:
