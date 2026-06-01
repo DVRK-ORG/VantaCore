@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Header } from './components/Header'
 import { HeroSection } from './components/HeroSection'
 import { DropZone } from './components/DropZone'
@@ -13,13 +13,23 @@ import { WhoIsItFor } from './components/WhoIsItFor'
 import { ProductPromise } from './components/ProductPromise'
 import { Footer } from './components/Footer'
 import { HistorySidebar } from './components/HistorySidebar'
+import { MemoryLabArticle, MemoryLabIndex } from './pages/MemoryLab'
+import { usePageMeta } from './utils/pageMeta'
 
-function App() {
-  const [isHistoryOpen, setIsHistoryOpen] = useState(false)
+function getCurrentPath() {
+  const path = window.location.pathname
 
+  if (path !== '/' && path.endsWith('/')) {
+    return path.slice(0, -1)
+  }
+
+  return path || '/'
+}
+
+function HomePage({ onHistoryToggle }: { onHistoryToggle: () => void }) {
   return (
-    <div style={{ minHeight: '100vh', background: '#050505', color: '#E8E8E8', position: 'relative' }}>
-      <Header onHistoryToggle={() => setIsHistoryOpen(prev => !prev)} />
+    <>
+      <Header onHistoryToggle={onHistoryToggle} />
       <HeroSection />
 
       {/* Tool Section */}
@@ -46,6 +56,65 @@ function App() {
       <HowItWorks />
       <ProductPromise />
       <Footer />
+    </>
+  )
+}
+
+function App() {
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false)
+  const [currentPath, setCurrentPath] = useState(getCurrentPath)
+
+  usePageMeta(currentPath)
+
+  useEffect(() => {
+    const handleNavigation = () => setCurrentPath(getCurrentPath())
+
+    window.addEventListener('popstate', handleNavigation)
+
+    return () => {
+      window.removeEventListener('popstate', handleNavigation)
+    }
+  }, [])
+
+  useEffect(() => {
+    const hashTarget = window.location.hash.slice(1)
+
+    if (!hashTarget) {
+      return
+    }
+
+    window.requestAnimationFrame(() => {
+      document.getElementById(hashTarget)?.scrollIntoView({ block: 'start' })
+    })
+  }, [currentPath])
+
+  const renderPage = () => {
+    if (currentPath === '/memory-lab') {
+      return (
+        <>
+          <Header onHistoryToggle={() => setIsHistoryOpen(prev => !prev)} activePath={currentPath} />
+          <MemoryLabIndex />
+          <Footer />
+        </>
+      )
+    }
+
+    if (currentPath === '/memory-lab/what-is-a-memory-capsule') {
+      return (
+        <>
+          <Header onHistoryToggle={() => setIsHistoryOpen(prev => !prev)} activePath={currentPath} />
+          <MemoryLabArticle />
+          <Footer />
+        </>
+      )
+    }
+
+    return <HomePage onHistoryToggle={() => setIsHistoryOpen(prev => !prev)} />
+  }
+
+  return (
+    <div style={{ minHeight: '100vh', background: '#050505', color: '#E8E8E8', position: 'relative' }}>
+      {renderPage()}
 
       {/* History Sidebar */}
       <HistorySidebar isOpen={isHistoryOpen} onClose={() => setIsHistoryOpen(false)} />

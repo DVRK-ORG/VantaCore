@@ -3,10 +3,12 @@ import { Github, Zap, Clock } from 'lucide-react'
 
 interface HeaderProps {
   onHistoryToggle?: () => void
+  activePath?: string
 }
 
-export function Header({ onHistoryToggle }: HeaderProps) {
+export function Header({ onHistoryToggle, activePath = window.location.pathname }: HeaderProps) {
   const [scrolled, setScrolled] = useState(false)
+  const isMemoryLab = activePath.startsWith('/memory-lab')
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 100)
@@ -48,6 +50,23 @@ export function Header({ onHistoryToggle }: HeaderProps) {
           </div>
         </div>
 
+        <nav className="hidden md:flex items-center gap-2" aria-label="Primary navigation">
+          <a
+            href="/#tool"
+            className="font-orbitron text-[10px] font-semibold tracking-[2px] uppercase no-underline transition-colors"
+            style={{ color: isMemoryLab ? 'var(--obsidian-silver)' : 'var(--blood-ruby)' }}
+          >
+            Tool
+          </a>
+          <a
+            href="/memory-lab"
+            className="font-orbitron text-[10px] font-semibold tracking-[2px] uppercase no-underline transition-colors"
+            style={{ color: isMemoryLab ? 'var(--blood-ruby)' : 'var(--obsidian-silver)' }}
+          >
+            Memory Lab
+          </a>
+        </nav>
+
         {/* Right */}
         <div className="flex items-center gap-3">
           <div className="hidden sm:flex items-center gap-1.5 font-mono text-[11px] text-obsidian-silver tracking-[0.5px]">
@@ -56,6 +75,7 @@ export function Header({ onHistoryToggle }: HeaderProps) {
           </div>
           {/* History Button */}
           <button
+            aria-label="Open history"
             onClick={onHistoryToggle}
             className="flex items-center gap-2 px-3 py-2 rounded-[10px] font-orbitron text-[11px] font-semibold tracking-[1px] uppercase text-silver-white cursor-pointer"
             style={{
@@ -82,6 +102,7 @@ export function Header({ onHistoryToggle }: HeaderProps) {
             href="https://github.com/DVRK-ORG/VantaCore"
             target="_blank"
             rel="noopener noreferrer"
+            aria-label="Open VantaCore on GitHub"
             className="flex items-center gap-2 px-4 py-2 rounded-[10px] font-orbitron text-[11px] font-semibold tracking-[1px] uppercase text-silver-white cursor-pointer"
             style={{
               background: 'linear-gradient(135deg, rgba(17,17,17,0.9), rgba(10,10,10,0.95))',
