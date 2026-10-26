@@ -120,7 +120,7 @@ export function HeroSection() {
           <div className="w-px h-12 hidden sm:block" style={{ background: 'rgba(112,112,112,0.2)' }} />
           <div className="flex flex-col items-center px-8 py-4">
             <div className="font-orbitron font-bold text-silver-white leading-[1.2]" style={{ fontSize: 'clamp(24px, 3.4vw, 36px)' }}>398</div>
-            <div className="font-mono text-[11px] text-muted-steel tracking-[1px] uppercase mt-1">Battlefield Protected</div>
+            <div className="font-mono text-[11px] text-muted-steel tracking-[1px] uppercase mt-1">code blocks protected</div>
           </div>
         </motion.div>
 

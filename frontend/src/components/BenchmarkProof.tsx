@@ -2,16 +2,20 @@ import { motion, useInView } from 'framer-motion'
 import { useRef } from 'react'
 import { Braces, Boxes, Code2, Repeat2 } from 'lucide-react'
 
+// Official benchmark metrics (content restored from main; visual style kept)
 const metrics = [
-  { label: 'Input Tokens', value: '1,607,728', detail: 'to 61,109', segments: [1, 1, 1, 1, 1] },
-  { label: 'Net Change Removed', value: '-401,568', detail: '~15,278 remain', segments: [1, 1, 1, 1, 1] },
-  { label: 'Characters', value: '96.2%', detail: 'reduction ratio', segments: [1, 1, 1, 1, 1] },
-  { label: 'Dehydrated Code', value: '398', detail: 'fenced blocks balanced', segments: [1, 1, 1, 1, 0] },
+  { label: 'Characters', value: '1,607,470', detail: 'to 61,109', segments: [1, 1, 1, 1, 1] },
+  { label: 'Estimated Tokens', value: '~401,868', detail: 'to ~15,278', segments: [1, 1, 1, 1, 1] },
+  { label: 'Reduction', value: '96.2%', detail: 'memory capsule output', segments: [1, 1, 1, 1, 1] },
+  { label: 'Protected Code', value: '398', detail: 'fenced blocks balanced', segments: [1, 1, 1, 1, 0] },
+  { label: 'Clusters', value: '6', detail: 'topic groups detected', segments: [1, 1, 1, 0, 0] },
+  { label: 'Dictionary', value: '17 refs', detail: '114 folds', segments: [1, 1, 1, 0, 0] },
 ]
 
+// Proof signals copy restored from main
 const proofSignals = [
-  { icon: Boxes, title: 'Clusters', text: 'Smart blocks curate content chunks based instead of a flat transcript.' },
-  { icon: Repeat2, title: 'LLM Dictionary', text: 'Catalogues, correlates, identifies, and link-drops repeat near-results.' },
+  { icon: Boxes, title: 'Clusters', text: 'Topic shifts become compact session maps instead of a flat transcript.' },
+  { icon: Repeat2, title: 'Reference Dictionary', text: 'Repeated commands, prompts, and code blocks fold into stable references.' },
   { icon: Code2, title: 'Code Protection', text: 'Fenced code survives the compression pass with balanced output fences.' },
   { icon: Braces, title: 'LLM Continuity', text: 'Final state, open loops, decisions, and do-not-repeat signals stay visible.' },
 ]
@@ -37,7 +41,7 @@ export function BenchmarkProof() {
             Battlefield <span className="text-blood-ruby">Proof</span>
           </h2>
           <p className="font-crimson text-obsidian-silver max-w-[700px] leading-[1.7] mt-3" style={{ fontSize: 'clamp(15px, 1.6vw, 17px)' }}>
-            Expect the battle-tested benchmark-compact results from multi-session AI exports into LLM-ready capsule directly in your next session.
+            The current official benchmark compresses a merged multi-session AI export into a portable Memory Capsule ready for the next LLM.
           </p>
         </motion.div>
 
@@ -63,7 +67,7 @@ export function BenchmarkProof() {
             animate={isInView ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 0.8, delay: 0.18 }}
           >
-            {/* Stat tiles 2x2 with segmented progress bars — Stitch improved labels */}
+            {/* Stat tiles 3x2 with segmented progress bars — Stitch visual, official content */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '14px', marginBottom: '24px' }}>
               {metrics.map((metric) => (
                 <div

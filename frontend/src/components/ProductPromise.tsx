@@ -52,11 +52,9 @@ export function ProductPromise() {
               </div>
             </div>
 
-            {/* System status indicator - green pulse */}
-            <div className="flex items-center gap-2 mb-5 font-mono text-[10px] tracking-[2px] uppercase">
-              <span className="status-pulse-dot" />
-              <span style={{ color: 'var(--tertiary-green)' }}>System Status: Online</span>
-              <span className="text-muted-steel">— 100% Local Processing</span>
+            {/* Note: client-side processing (no status monitor claims) */}
+            <div className="mb-5 font-mono text-[10px] tracking-[2px] uppercase text-muted-steel">
+              100% Local Processing
             </div>
 
             <p className="font-crimson text-muted-steel leading-[1.65] mb-5" style={{ fontSize: '17px' }}>

@@ -38,7 +38,7 @@
 
 /* ========== RESET & BASE ========== */
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
-html { scroll-behavior: smooth; }
+html { scroll-behavior: smooth; overflow-x: hidden; }
 body {
   font-family: 'Crimson Text', serif;
   background: #050505;
@@ -1003,40 +1003,9 @@ body::after {
 }
 
 /* ========== ANIMATED BACKGROUND UTILITIES ========== */
-@media (prefers-reduced-motion: no-preference) {
-  .bg-grid-anim {
-    animation: scrollGrid 8s linear infinite;
-  }
-}
+/* removed unused .bg-grid-anim */
 
-@keyframes scrollGrid {
-  from { background-position: 0 0; }
-  to { background-position: 0 24px; }
-}
-
-/* ========== SCANLINE OVERLAY (opt-in) ==========
-   Apply class="scanline-global" to a fixed full-screen wrapper
-   inside the app. The animation is disabled under reduced motion. */
-.scanline-global {
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 1;
-  height: 18vh;
-  width: 100%;
-  background: linear-gradient(to bottom, transparent, rgba(196, 30, 58, 0.04), transparent);
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .scanline-global {
-    animation: scanlineGlobal 12s linear infinite;
-  }
-}
-
-@keyframes scanlineGlobal {
-  0% { transform: translateY(-100vh); }
-  100% { transform: translateY(100vh); }
-}
+/* removed unused .scanline-global */
 
 /* ========== BREATHE GLOW (Stitch) ==========
    Replaces/augments ruby-pulse-text. More dramatic CRT-style pulse. */
@@ -1055,24 +1024,7 @@ body::after {
   100% { text-shadow: 0 0 30px rgba(196, 30, 58, 0.9), 0 0 15px rgba(196, 30, 58, 0.6); }
 }
 
-/* ========== STITCH GLASS-PANEL VARIANTS ==========
-   Use these for new components. Existing .glass-panel and
-   .glass-panel-ruby are untouched. */
-.glass-panel-stitch {
-  background: rgba(18, 18, 21, 0.7);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(196, 30, 58, 0.2);
-  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5), inset 0 0 20px rgba(196, 30, 58, 0.05);
-  border-radius: 8px;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.glass-panel-stitch:hover {
-  border-color: rgba(196, 30, 58, 0.5);
-  box-shadow: 0 0 20px rgba(196, 30, 58, 0.15), inset 0 0 30px rgba(196, 30, 58, 0.08);
-  transform: translateY(-2px);
-}
+/* removed unused .glass-panel-stitch */
 
 .glass-panel-active {
   background: rgba(196, 30, 58, 0.04);
@@ -1127,10 +1079,7 @@ body::after {
    Apply to any container that should show the PCB trace pattern.
    Use sparingly - the homepage already gets the lighter grid
    from body::before. */
-.bg-circuit {
-  background-image: url("data:image/svg+xml,%3Csvg width='120' height='120' viewBox='0 0 120 120' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M10 10 L30 10 L30 30 L50 30 L50 50 L70 50 L70 70 L90 70 L90 90 L110 90' stroke='rgba(196,30,58,0.2)' fill='none' stroke-width='1'/%3E%3Cpath d='M0 60 L20 60 L20 80 L40 80 L40 100 L60 100' stroke='rgba(196,30,58,0.14)' fill='none' stroke-width='1'/%3E%3Ccircle cx='30' cy='30' r='2' fill='rgba(196,30,58,0.5)'/%3E%3Ccircle cx='70' cy='70' r='2' fill='rgba(196,30,58,0.5)'/%3E%3C/svg%3E");
-  background-size: 120px 120px;
-}
+/* removed unused .bg-circuit */
 
 /* ========== DARKER SURFACE TOKENS (Stitch) ========== */
 .surface-lowest { background-color: var(--color-surface-lowest); }
@@ -1141,24 +1090,7 @@ body::after {
 /* ========== FADE-UP (Stitch entry animation, opt-in) ==========
    Replaces the .fade-up-enter class from the Stitch HTML export.
    For new components only - existing framer-motion reveals stay. */
-.fade-up {
-  opacity: 0;
-  transform: translateY(30px);
-  transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.fade-up.visible {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .fade-up {
-    opacity: 1;
-    transform: none;
-    transition: none;
-  }
-}
+/* removed unused .fade-up */
 
 /* ============================================================
    COMMIT 1 - TOP FOLD UPGRADES

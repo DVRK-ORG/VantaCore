@@ -1,13 +1,15 @@
 import { motion, useInView } from 'framer-motion'
 import { useRef } from 'react'
-import { Bot, Database, FileCode2, Microscope, ReceiptText } from 'lucide-react'
+import { Bot, Database, FileCode2, Microscope, ReceiptText, Workflow } from 'lucide-react'
 
+// Restore original 6-card content from main, keep new Stitch visual style
 const useCases = [
-  { icon: Bot, title: 'AI Chat Continuation', desc: 'Custom ChatGPT, Claude, Gemini, or local model sessions retain final state, open loops, and decisions intact.' },
+  { icon: Bot, title: 'AI Chat Continuation', desc: 'Restart long ChatGPT, Claude, Gemini, or local-model sessions with final state, open loops, and decisions intact.' },
   { icon: Database, title: 'RAG / KB Prep', desc: 'Pre-compress messy chats, notes, transcripts, and docs before chunking, embedding, or indexing.' },
-  { icon: FileCode2, title: 'Dev Log / PBS', desc: 'Restructuring references and development logs, PR threads, and build output into handoff-ready capsules.' },
-  { icon: Microscope, title: 'Research Protection', desc: 'Compress literature-review chats, paper notes, interviews, and analysis sessions into compact research memory.' },
-  { icon: ReceiptText, title: 'MCP IR Cost Continuity', desc: 'Use automations to orchestrate sustained and retained LLM context beyond standard dev automations.' },
+  { icon: FileCode2, title: 'Dev Logs / Agents', desc: 'Turn coding-agent transcripts, terminal logs, PR threads, and build output into handoff-ready capsules.' },
+  { icon: Microscope, title: 'Research Notes', desc: 'Compress literature-review chats, paper notes, interviews, and analysis sessions into compact research memory.' },
+  { icon: ReceiptText, title: 'API Cost Reduction', desc: 'Remove duplicated commands, repeated prompt blocks, and filler before paid LLM or embedding calls.' },
+  { icon: Workflow, title: 'MCP / Agent Workflows', desc: 'Prepare the same Memory Capsule format that future CLI and MCP tools can hand to coding assistants.' },
 ]
 
 export function WhoIsItFor() {
