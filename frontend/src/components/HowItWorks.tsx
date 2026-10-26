@@ -4,34 +4,34 @@ import { Map, Layers, Repeat2, ShieldCheck, ClipboardCheck } from 'lucide-react'
 
 const steps = [
   {
-    icon: Map, iconColor: 'var(--obsidian-silver)', bgColor: 'rgba(112,112,112,0.15)',
-    borderColor: 'var(--obsidian-silver)',
+    icon: Map,
     title: 'Session Map',
-    desc: 'Detects major topics, project shifts, and timeline markers across merged AI sessions.',
+    desc: 'Identifies major topic shifts and builds timeline markers across merged AI sessions.',
+    detail: 'Detect topics, project shifts, and state transitions',
   },
   {
-    icon: Layers, iconColor: '#EAB308', bgColor: 'rgba(234,179,8,0.15)',
-    borderColor: '#EAB308',
+    icon: Layers,
     title: 'Memory Capsule Header',
     desc: 'Extracts final state, open loops, decisions, do-not-repeat rules, and key artifacts.',
+    detail: 'Isolate decisions, add-ons, and artifacts',
   },
   {
-    icon: Repeat2, iconColor: '#F97316', bgColor: 'rgba(249,115,22,0.15)',
-    borderColor: '#F97316',
+    icon: Repeat2,
     title: 'Reference Dictionary',
     desc: 'Folds repeated commands, prompts, validation checks, and code blocks into compact references.',
+    detail: 'Minimizes redundancies and data loss',
   },
   {
-    icon: ShieldCheck, iconColor: 'var(--blood-ruby)', bgColor: 'rgba(196,30,58,0.15)',
-    borderColor: 'var(--blood-ruby)',
+    icon: ShieldCheck,
     title: 'Code Block Protection',
     desc: 'Protects fenced code and technical identifiers so capsules stay useful for developer workflows.',
+    detail: 'Preserves syntax trees and identifiers',
   },
   {
-    icon: ClipboardCheck, iconColor: '#F87171', bgColor: 'rgba(248,113,113,0.15)',
-    borderColor: '#F87171',
+    icon: ClipboardCheck,
     title: 'Compressed Detail Stream',
     desc: 'Preserves the operational trail while stripping filler, duplicate loops, and low-value chatter.',
+    detail: 'Yield the operational trail with max fidelity',
   },
 ]
 
@@ -42,57 +42,96 @@ export function HowItWorks() {
   return (
     <section ref={ref} style={{ padding: '96px 0' }}>
       <div className="container-main">
+        {/* Stitch eyebrow with red line */}
         <motion.div
-          initial={{ opacity: 0, y: 40 }}
+          initial={{ opacity: 0, y: 20 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.8 }}
-          className="flex items-center gap-5 mb-16"
+          transition={{ duration: 0.7 }}
+          className="eyebrow-with-line mb-10"
         >
-          <div className="flex-1 h-px" style={{ background: 'rgba(112,112,112,0.15)' }} />
-          <span className="font-orbitron text-[10px] font-semibold tracking-[4px] uppercase text-muted-steel whitespace-nowrap">
-            MEMORY CAPSULE ENGINE
-          </span>
-          <div className="flex-1 h-px" style={{ background: 'rgba(112,112,112,0.15)' }} />
+          <span>Memory Capsule Design</span>
         </motion.div>
 
         <motion.div
-          initial={{ opacity: 0, y: 40 }}
+          initial={{ opacity: 0, y: 20 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.8 }}
+          transition={{ duration: 0.7 }}
           className="text-center mb-14"
         >
-          <h2 className="font-orbitron font-bold tracking-[3px] uppercase mb-3" style={{ fontSize: 'clamp(20px, 3vw, 32px)' }}>
+          <h2 className="font-orbitron font-black uppercase tracking-[3px] mb-3" style={{ fontSize: 'clamp(22px, 3.2vw, 34px)' }}>
             How <span className="text-blood-ruby">The Singularity</span> Works
           </h2>
           <p className="font-crimson text-muted-steel max-w-[660px] mx-auto leading-[1.6]" style={{ fontSize: 'clamp(15px, 1.6vw, 18px)' }}>
-            VantaCore compiles messy context into structured memory that a fresh LLM can actually continue from.
+            VantaCore compiles messy context into a structured memory capsule that a fresh LLM can actually continue from.
           </p>
         </motion.div>
 
-        <div className="flex flex-col gap-5 mt-12">
+        {/* Stitch upgrade: Rich step cards with number badges, details, and visual sections */}
+        <div className="how-steps-grid" style={{ marginTop: '48px' }}>
           {steps.map((step, i) => (
             <motion.div
               key={step.title}
-              initial={{ opacity: 0, x: -40 }}
-              animate={isInView ? { opacity: 1, x: 0 } : {}}
-              transition={{ duration: 0.8, delay: 0.05 + i * 0.1, ease: [0.4, 0, 0.2, 1] }}
-              className="glass-panel flex items-start gap-5"
-              style={{ padding: '28px 32px', borderLeft: `2px solid ${step.borderColor}`, borderRadius: '10px' }}
+              initial={{ opacity: 0, y: 24 }}
+              animate={isInView ? { opacity: 1, y: 0 } : {}}
+              transition={{ duration: 0.6, delay: 0.05 + i * 0.08, ease: [0.4, 0, 0.2, 1] }}
+              className="how-step-card top-accent-strip"
+              style={{
+                padding: '24px 22px 22px',
+                borderRadius: '8px',
+                background: 'linear-gradient(135deg, rgba(17,17,17,0.94), rgba(10,10,10,0.98))',
+                border: '1px solid rgba(196,30,58,0.18)',
+                boxShadow: 'inset 0 0 20px rgba(196,30,58,0.04)',
+                transition: 'border-color 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease',
+                cursor: 'default',
+                paddingTop: '26px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '12px',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = 'rgba(196,30,58,0.55)'
+                e.currentTarget.style.boxShadow = '0 0 20px rgba(196,30,58,0.2), inset 0 0 24px rgba(196,30,58,0.1)'
+                e.currentTarget.style.transform = 'translateY(-3px)'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = 'rgba(196,30,58,0.18)'
+                e.currentTarget.style.boxShadow = 'inset 0 0 20px rgba(196,30,58,0.04)'
+                e.currentTarget.style.transform = 'translateY(0)'
+              }}
             >
-              <div
-                className="w-10 h-10 rounded-[10px] flex items-center justify-center shrink-0"
-                style={{ background: step.bgColor, animation: 'iconBreath 3s ease-in-out infinite' }}
-              >
-                <step.icon size={18} style={{ color: step.iconColor }} />
+              {/* Step number + icon row */}
+              <div className="flex items-center gap-3 mb-1">
+                <span className="step-badge">{i + 1}</span>
+                <div className="icon-container-bordered">
+                  <step.icon size={16} className="text-blood-ruby" />
+                </div>
               </div>
-              <div className="flex-1">
-                <div className="font-mono text-[10px] text-muted-steel tracking-[2px] mb-1 flex items-center gap-2">
-                  STEP {i + 1} <span className="w-1 h-1 rounded-full bg-obsidian-silver inline-block" />
-                </div>
-                <div className="font-orbitron font-bold tracking-[2px] uppercase text-silver-white mb-2" style={{ fontSize: 'clamp(13px, 1.4vw, 16px)' }}>
-                  {step.title}
-                </div>
-                <div className="font-crimson text-[15px] text-muted-steel leading-[1.6]">{step.desc}</div>
+
+              {/* Title */}
+              <div className="font-orbitron text-[12px] font-bold tracking-[1.8px] uppercase text-silver-white">
+                {step.title}
+              </div>
+
+              {/* Description */}
+              <div className="font-crimson text-[14px] text-muted-steel leading-[1.55]">{step.desc}</div>
+
+              {/* Stitch upgrade: Visual thumbnail placeholder area */}
+              <div
+                style={{
+                  marginTop: 'auto',
+                  padding: '14px 12px',
+                  borderRadius: '6px',
+                  background: 'linear-gradient(135deg, rgba(196,30,58,0.04), rgba(5,5,5,0.9))',
+                  border: '1px solid rgba(196,30,58,0.12)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                }}
+              >
+                <step.icon size={14} className="text-blood-ruby" style={{ opacity: 0.6, flexShrink: 0 }} />
+                <span className="font-mono text-[10px] text-obsidian-silver leading-[1.4]" style={{ letterSpacing: '0.3px' }}>
+                  {step.detail}
+                </span>
               </div>
             </motion.div>
           ))}

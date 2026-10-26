@@ -2,8 +2,8 @@
 
 ---
 
-## [4.5.0] -- Unreleased -- IMPORT CAPSULE V1
-> *VantaCore closes the local capsule loop with safe client-side restore.*
+## [4.5.0] -- Unreleased -- IMPORT CAPSULE V1 + MEMORY LAB NOTES
+> *VantaCore closes the local capsule loop and opens the Memory Lab education layer.*
 
 ### Import Capsule
 - Added client-side Memory Capsule import flow for `.md`, `.txt`, and `.json` exports.
@@ -14,6 +14,14 @@
 ### Export Metadata
 - Added richer import-compatible capsule metadata for TXT/MD/JSON exports, including app/version, capsule/schema versions, export format, generated timestamp, profile/source mode, token estimation method, import notes, ownership note, license note, and stats.
 - Kept legacy capsule imports backward-compatible and preserved safe restore behavior.
+
+### Memory Lab Notes
+- Added the static Memory Lab Notes foundation as a client-side education section for LLM continuity, Memory Capsules, RAG prep, coding-agent handoff, and token cost control.
+- Added a Memory Lab notes index at `/memory-lab` with a hero, benchmark panel, featured live note, queued field-note cards, and static privacy/product-scope framing.
+- Added the first full article route at `/memory-lab/what-is-a-memory-capsule`.
+- Added Memory Lab SEO/page metadata, sitemap entry, and static-hosting redirect support.
+- Fixed Memory Lab routing so the header navigation opens the notes index instead of sending users directly into Note 001.
+- Polished the header navigation with Home, Tool, and a ruby-glass Memory Lab button; the VantaCore brand mark now links back to the home page.
 
 ---
 

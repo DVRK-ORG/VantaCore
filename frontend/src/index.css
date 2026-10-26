@@ -1,13 +1,17 @@
 /* ========== FONTS ========== */
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500;600;700&family=Rajdhani:wght@300;400;500;600;700&family=Share+Tech+Mono&family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@600;700&display=swap');
 @import "tailwindcss";
 
 /* ========== THEME ========== */
 @theme {
-  --color-vanta-black: #050505;
-  --color-vanta-surface: #111111;
-  --color-vanta-elevated: #1a1a1a;
-  --color-vanta-dark: #0a0a0a;
+  --color-vanta-black: #0a0a0c;
+  --color-vanta-dark: #121215;
+  --color-vanta-gray: #2a2a30;
+  --color-vanta-red: #ff2a40;
+  --color-vanta-redglow: rgba(255, 42, 64, 0.5);
+  --color-vanta-text: #e0e0e5;
+  --color-vanta-muted: #8a8a95;
+  
   --color-blood-ruby: #C41E3A;
   --color-ruby-deep: #8B0000;
   --color-ruby-glow: rgba(196, 30, 58, 0.3);
@@ -50,15 +54,48 @@ body {
 ::-webkit-scrollbar-thumb:hover { background: #C41E3A; }
 ::selection { background: rgba(196, 30, 58, 0.3); color: #E8E8E8; }
 
-/* ========== CARBON FIBER OVERLAY ========== */
+/* ========== LAYERED BACKGROUND SYSTEM ==========
+   Layer order (bottom -> top):
+   1. base color (#050505 on body)
+   2. cyber grid (24px, red trace, 4% opacity)
+   3. circuit pattern (PCB traces, 6% opacity, only Memory Lab opts in via .memory-lab-page::after)
+   4. carbon fiber noise (kept for texture)
+   5. animated scanline (only when reduced motion is OK, via .scanline-global opt-in class)
+*/
 body::before {
   content: '';
   position: fixed;
   inset: 0;
+  background-image:
+    linear-gradient(rgba(196, 30, 58, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(196, 30, 58, 0.04) 1px, transparent 1px);
+  background-size: 24px 24px;
+  background-position: 0 0;
+  pointer-events: none;
+  z-index: 0;
+  mask-image: linear-gradient(to bottom, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.5) 60%, rgba(0,0,0,0.25) 100%);
+  -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.5) 60%, rgba(0,0,0,0.25) 100%);
+}
+
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
   background:
-    repeating-linear-gradient(45deg, transparent, transparent 2px, rgba(255,255,255,0.01) 2px, rgba(255,255,255,0.01) 4px),
+    repeating-linear-gradient(45deg, transparent, transparent 2px, rgba(255,255,255,0.012) 2px, rgba(255,255,255,0.012) 4px),
     repeating-linear-gradient(-45deg, transparent, transparent 2px, rgba(255,255,255,0.008) 2px, rgba(255,255,255,0.008) 4px);
   pointer-events: none;
+  z-index: 0;
+}
+
+/* Memory Lab opts into the heavier PCB circuit pattern */
+.memory-lab-page::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg width='120' height='120' viewBox='0 0 120 120' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M10 10 L30 10 L30 30 L50 30 L50 50 L70 50 L70 70 L90 70 L90 90 L110 90' stroke='rgba(196,30,58,0.18)' fill='none' stroke-width='1'/%3E%3Cpath d='M0 60 L20 60 L20 80 L40 80 L40 100 L60 100' stroke='rgba(196,30,58,0.12)' fill='none' stroke-width='1'/%3E%3Cpath d='M80 0 L80 20 L100 20 L100 40 L120 40' stroke='rgba(196,30,58,0.1)' fill='none' stroke-width='1'/%3E%3Ccircle cx='30' cy='30' r='2' fill='rgba(196,30,58,0.4)'/%3E%3Ccircle cx='70' cy='70' r='2' fill='rgba(196,30,58,0.4)'/%3E%3Ccircle cx='100' cy='40' r='2' fill='rgba(196,30,58,0.3)'/%3E%3C/svg%3E");
+  opacity: 0.6;
   z-index: 0;
 }
 
@@ -926,3 +963,713 @@ body::before {
     flex-direction: column;
   }
 }
+
+/* ============================================================
+   PHASE 0+1: STITCH VISUAL MERGE
+   Additive only. No existing rules were modified above this line.
+   Adds: Stitch color tokens, surface scale, tertiary green,
+   PCB/grid backgrounds, glass-panel variants, scanline animation,
+   breathe-glow keyframe, red intensity scale, prefers-reduced-motion guards.
+   ============================================================ */
+
+/* ========== EXTENDED THEME TOKENS ========== */
+@theme {
+  --color-tertiary-green: #00e639;
+  --color-vanta-red-bright: #ff2a40;
+  --color-vanta-red-dim: #ff5540;
+  --color-surface-lowest: #0e0e0e;
+  --color-surface-low: #1b1b1b;
+  --color-surface: #1f1f1f;
+  --color-surface-high: #2a2a2a;
+  --color-outline-variant: #603e39;
+}
+
+/* ========== EXTENDED CSS VARIABLES ========== */
+:root {
+  --tertiary-green: #00e639;
+  --tertiary-glow: rgba(0, 230, 57, 0.5);
+  --vanta-red-bright: #ff2a40;
+  --vanta-red-dim: #ff5540;
+
+  /* Red intensity scale - the saturation fix.
+     Use these tokens to keep glow levels disciplined.
+     Only 3 elements should reach glow-4/5 at any time:
+     hero CTA, active DropZone, and the LIVE memory lab note. */
+  --red-glow-1: rgba(196, 30, 58, 0.08);
+  --red-glow-2: rgba(196, 30, 58, 0.2);
+  --red-glow-3: rgba(196, 30, 58, 0.4);
+  --red-glow-4: rgba(196, 30, 58, 0.7);
+  --red-glow-5: rgba(196, 30, 58, 1);
+}
+
+/* ========== ANIMATED BACKGROUND UTILITIES ========== */
+@media (prefers-reduced-motion: no-preference) {
+  .bg-grid-anim {
+    animation: scrollGrid 8s linear infinite;
+  }
+}
+
+@keyframes scrollGrid {
+  from { background-position: 0 0; }
+  to { background-position: 0 24px; }
+}
+
+/* ========== SCANLINE OVERLAY (opt-in) ==========
+   Apply class="scanline-global" to a fixed full-screen wrapper
+   inside the app. The animation is disabled under reduced motion. */
+.scanline-global {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  height: 18vh;
+  width: 100%;
+  background: linear-gradient(to bottom, transparent, rgba(196, 30, 58, 0.04), transparent);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .scanline-global {
+    animation: scanlineGlobal 12s linear infinite;
+  }
+}
+
+@keyframes scanlineGlobal {
+  0% { transform: translateY(-100vh); }
+  100% { transform: translateY(100vh); }
+}
+
+/* ========== BREATHE GLOW (Stitch) ==========
+   Replaces/augments ruby-pulse-text. More dramatic CRT-style pulse. */
+.breathe-headline {
+  text-shadow: 0 0 10px rgba(196, 30, 58, 0.3);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .breathe-headline {
+    animation: breatheGlow 3s ease-in-out infinite alternate;
+  }
+}
+
+@keyframes breatheGlow {
+  0%   { text-shadow: 0 0 10px rgba(196, 30, 58, 0.3); }
+  100% { text-shadow: 0 0 30px rgba(196, 30, 58, 0.9), 0 0 15px rgba(196, 30, 58, 0.6); }
+}
+
+/* ========== STITCH GLASS-PANEL VARIANTS ==========
+   Use these for new components. Existing .glass-panel and
+   .glass-panel-ruby are untouched. */
+.glass-panel-stitch {
+  background: rgba(18, 18, 21, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(196, 30, 58, 0.2);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5), inset 0 0 20px rgba(196, 30, 58, 0.05);
+  border-radius: 8px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-panel-stitch:hover {
+  border-color: rgba(196, 30, 58, 0.5);
+  box-shadow: 0 0 20px rgba(196, 30, 58, 0.15), inset 0 0 30px rgba(196, 30, 58, 0.08);
+  transform: translateY(-2px);
+}
+
+.glass-panel-active {
+  background: rgba(196, 30, 58, 0.04);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(196, 30, 58, 0.8);
+  box-shadow: 0 0 20px rgba(196, 30, 58, 0.2), inset 0 0 20px rgba(196, 30, 58, 0.08);
+  border-radius: 8px;
+}
+
+/* ========== TEXT GLOW UTILITIES (Stitch-style) ========== */
+.text-glow {
+  text-shadow: 0 0 10px rgba(196, 30, 58, 0.8);
+}
+
+.text-glow-soft {
+  text-shadow: 0 0 8px rgba(196, 30, 58, 0.4);
+}
+
+.text-glow-dim {
+  text-shadow: 0 0 6px rgba(196, 30, 58, 0.25);
+}
+
+.border-glow {
+  box-shadow: 0 0 15px rgba(196, 30, 58, 0.3), inset 0 0 10px rgba(196, 30, 58, 0.1);
+}
+
+/* ========== TERTIARY GREEN (system OK signal) ==========
+   Use ONLY for the "100% Client-Side" indicator and success states.
+   Do not use for any other UI element - it must remain rare. */
+.status-pulse-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--tertiary-green);
+  box-shadow: 0 0 5px var(--tertiary-green), 0 0 12px var(--tertiary-glow);
+  flex-shrink: 0;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .status-pulse-dot {
+    animation: statusPulse 2.4s ease-in-out infinite;
+  }
+}
+
+@keyframes statusPulse {
+  0%, 100% { box-shadow: 0 0 5px var(--tertiary-green), 0 0 10px var(--tertiary-glow); opacity: 0.85; }
+  50%      { box-shadow: 0 0 8px var(--tertiary-green), 0 0 20px var(--tertiary-glow); opacity: 1; }
+}
+
+/* ========== CIRCUIT PATTERN (opt-in) ==========
+   Apply to any container that should show the PCB trace pattern.
+   Use sparingly - the homepage already gets the lighter grid
+   from body::before. */
+.bg-circuit {
+  background-image: url("data:image/svg+xml,%3Csvg width='120' height='120' viewBox='0 0 120 120' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M10 10 L30 10 L30 30 L50 30 L50 50 L70 50 L70 70 L90 70 L90 90 L110 90' stroke='rgba(196,30,58,0.2)' fill='none' stroke-width='1'/%3E%3Cpath d='M0 60 L20 60 L20 80 L40 80 L40 100 L60 100' stroke='rgba(196,30,58,0.14)' fill='none' stroke-width='1'/%3E%3Ccircle cx='30' cy='30' r='2' fill='rgba(196,30,58,0.5)'/%3E%3Ccircle cx='70' cy='70' r='2' fill='rgba(196,30,58,0.5)'/%3E%3C/svg%3E");
+  background-size: 120px 120px;
+}
+
+/* ========== DARKER SURFACE TOKENS (Stitch) ========== */
+.surface-lowest { background-color: var(--color-surface-lowest); }
+.surface-low    { background-color: var(--color-surface-low); }
+.surface-mid    { background-color: var(--color-surface); }
+.surface-high   { background-color: var(--color-surface-high); }
+
+/* ========== FADE-UP (Stitch entry animation, opt-in) ==========
+   Replaces the .fade-up-enter class from the Stitch HTML export.
+   For new components only - existing framer-motion reveals stay. */
+.fade-up {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.fade-up.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fade-up {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
+
+/* ============================================================
+   COMMIT 1 - TOP FOLD UPGRADES
+   Additive: hero pill style, section divider, hero glow
+   ============================================================ */
+
+/* ========== HERO PILL (red glass, Stitch-style) ========== */
+.hero-pill-glass {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 18px;
+  border: 1px solid rgba(196, 30, 58, 0.4);
+  border-radius: 999px;
+  background: linear-gradient(135deg, rgba(196, 30, 58, 0.12), rgba(196, 30, 58, 0.04));
+  font-family: 'Orbitron', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--blood-ruby);
+  box-shadow: 0 0 20px rgba(196, 30, 58, 0.15), inset 0 0 12px rgba(196, 30, 58, 0.05);
+}
+
+/* ========== HERO HEADLINE GLOW (subtle CRT pulse) ========== */
+.hero-headline-glow {
+  text-shadow: 0 0 30px rgba(196, 30, 58, 0.18);
+}
+
+/* ========== SECTION DIVIDER (red gradient, fading at edges) ========== */
+.section-divider-red {
+  width: 100%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, rgba(196, 30, 58, 0.5) 50%, transparent 100%);
+  border: none;
+  margin: 0;
+  pointer-events: none;
+}
+
+.section-divider-red-tight {
+  width: 100%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, rgba(196, 30, 58, 0.35) 50%, transparent 100%);
+  border: none;
+  margin: 0;
+  pointer-events: none;
+}
+
+/* ========== HERO LOGO BACKDROP (stronger red glow) ========== */
+.hero-logo-glow {
+  position: relative;
+}
+
+.hero-logo-glow::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 280px;
+  height: 280px;
+  background: radial-gradient(circle, rgba(196, 30, 58, 0.18) 0%, rgba(196, 30, 58, 0.05) 40%, transparent 70%);
+  filter: blur(30px);
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* ========== DROP ZONE ALWAYS-ON (Stitch resting state) ========== */
+.dropzone-resting {
+  border: 1.5px dashed rgba(196, 30, 58, 0.35) !important;
+  background: linear-gradient(135deg, rgba(196, 30, 58, 0.03), rgba(10, 10, 10, 0.85)) !important;
+  box-shadow: 0 0 30px rgba(196, 30, 58, 0.1), inset 0 0 40px rgba(196, 30, 58, 0.04) !important;
+}
+
+/* ========== CORNER BRACKETS (HUD frame) ==========
+   Wrap any container with class="corner-brackets" to add the 4
+   red L-shaped corner marks. Used in Commit 2 for terminal frame,
+   memory lab panels, footer. */
+.corner-brackets {
+  position: relative;
+}
+
+.corner-brackets::before,
+.corner-brackets::after,
+.corner-brackets > .corner-bl,
+.corner-brackets > .corner-br {
+  content: '';
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border-color: rgba(196, 30, 58, 0.7);
+  border-style: solid;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.corner-brackets::before {
+  top: 0;
+  left: 0;
+  border-width: 1.5px 0 0 1.5px;
+}
+
+.corner-brackets::after {
+  top: 0;
+  right: 0;
+  border-width: 1.5px 1.5px 0 0;
+}
+
+.corner-brackets > .corner-bl {
+  bottom: 0;
+  left: 0;
+  border-width: 0 0 1.5px 1.5px;
+}
+
+.corner-brackets > .corner-br {
+  bottom: 0;
+  right: 0;
+  border-width: 0 1.5px 1.5px 0;
+}
+
+/* ============================================================
+   FULL HOMEPAGE STITCH UPGRADE - ALL IN ONE
+   ============================================================ */
+
+/* ========== HERO SCAN-LINE BEAM (Stitch signature) ========== */
+.hero-beam {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent 0%, rgba(196, 30, 58, 0) 10%, rgba(196, 30, 58, 0.6) 35%, rgba(196, 30, 58, 0.9) 50%, rgba(196, 30, 58, 0.6) 65%, rgba(196, 30, 58, 0) 90%, transparent 100%);
+  box-shadow: 0 0 30px rgba(196, 30, 58, 0.5), 0 0 60px rgba(196, 30, 58, 0.3);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.hero-beam::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 50%;
+  height: 80px;
+  background: radial-gradient(ellipse, rgba(196, 30, 58, 0.35) 0%, transparent 70%);
+  filter: blur(20px);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .hero-beam {
+    animation: heroBeamPulse 4s ease-in-out infinite;
+  }
+}
+
+@keyframes heroBeamPulse {
+  0%, 100% { opacity: 0.7; }
+  50%      { opacity: 1; }
+}
+
+/* ========== HERO LOGO BACKDROP - LARGER AND DRAMATIC ========== */
+.hero-logo-backdrop {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 500px;
+  height: 500px;
+  background:
+    radial-gradient(circle, rgba(196, 30, 58, 0.35) 0%, rgba(196, 30, 58, 0.12) 25%, rgba(196, 30, 58, 0.04) 50%, transparent 70%);
+  filter: blur(40px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .hero-logo-backdrop {
+    animation: logoBackdropPulse 6s ease-in-out infinite;
+  }
+}
+
+@keyframes logoBackdropPulse {
+  0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.85; }
+  50%      { transform: translate(-50%, -50%) scale(1.1); opacity: 1; }
+}
+
+/* ========== STEP BADGE (red numbered circle) ========== */
+.step-badge {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, rgba(196, 30, 58, 0.25), rgba(196, 30, 58, 0.08));
+  border: 1.5px solid rgba(196, 30, 58, 0.7);
+  box-shadow: 0 0 16px rgba(196, 30, 58, 0.3), inset 0 0 12px rgba(196, 30, 58, 0.1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 14px;
+  font-weight: 900;
+  color: var(--silver-white);
+  text-shadow: 0 0 8px rgba(196, 30, 58, 0.6);
+  flex-shrink: 0;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .step-badge {
+    animation: stepBadgePulse 3s ease-in-out infinite;
+  }
+}
+
+@keyframes stepBadgePulse {
+  0%, 100% { box-shadow: 0 0 16px rgba(196, 30, 58, 0.3), inset 0 0 12px rgba(196, 30, 58, 0.1); }
+  50%      { box-shadow: 0 0 24px rgba(196, 30, 58, 0.5), inset 0 0 16px rgba(196, 30, 58, 0.2); }
+}
+
+/* ========== ICON CONTAINER BORDERED (Stitch mini diagrams) ========== */
+.icon-container-bordered {
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  background: rgba(5, 5, 5, 0.7);
+  border: 1.5px solid rgba(196, 30, 58, 0.4);
+  box-shadow: inset 0 0 12px rgba(196, 30, 58, 0.05);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* ========== TOP ACCENT STRIP (red line at top of cards) ========== */
+.top-accent-strip {
+  position: relative;
+}
+
+.top-accent-strip::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 16px;
+  right: 16px;
+  height: 1.5px;
+  background: linear-gradient(90deg, transparent 0%, rgba(196, 30, 58, 0.6) 50%, transparent 100%);
+  box-shadow: 0 0 8px rgba(196, 30, 58, 0.3);
+  pointer-events: none;
+}
+
+/* ========== SEGMENTED PROGRESS BAR (Stitch signature stat bars) ========== */
+.segmented-progress {
+  display: flex;
+  gap: 3px;
+  width: 100%;
+  height: 4px;
+  margin-top: 10px;
+}
+
+.segmented-progress > span {
+  flex: 1;
+  height: 100%;
+  background: rgba(112, 112, 112, 0.18);
+  border-radius: 1px;
+}
+
+.segmented-progress > span.filled {
+  background: linear-gradient(90deg, rgba(196, 30, 58, 0.7), rgba(196, 30, 58, 0.95));
+  box-shadow: 0 0 6px rgba(196, 30, 58, 0.5);
+}
+
+/* ========== EYEBROW WITH RED LINE (Stitch section header pattern) ========== */
+.eyebrow-with-line {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--blood-ruby);
+}
+
+.eyebrow-with-line::before,
+.eyebrow-with-line::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, rgba(196, 30, 58, 0.4) 50%, transparent 100%);
+}
+
+.eyebrow-with-line::before {
+  background: linear-gradient(90deg, transparent 0%, rgba(196, 30, 58, 0.4) 100%);
+}
+
+.eyebrow-with-line::after {
+  background: linear-gradient(90deg, rgba(196, 30, 58, 0.4) 0%, transparent 100%);
+}
+
+/* ========== TERMINAL FRAME (HUD-style image wrapper) ========== */
+.terminal-frame {
+  position: relative;
+  border: 1px solid rgba(196, 30, 58, 0.35);
+  background: linear-gradient(135deg, rgba(5, 5, 5, 0.95), rgba(10, 10, 10, 0.9));
+  padding: 4px;
+  box-shadow:
+    0 0 30px rgba(196, 30, 58, 0.1),
+    inset 0 0 30px rgba(196, 30, 58, 0.04);
+}
+
+.terminal-frame > .terminal-screen {
+  position: relative;
+  display: block;
+  width: 100%;
+  border: 1px solid rgba(196, 30, 58, 0.2);
+  border-radius: 6px;
+}
+
+.terminal-frame::before,
+.terminal-frame::after,
+.terminal-frame > .corner-bl,
+.terminal-frame > .corner-br {
+  content: '';
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  border-color: rgba(196, 30, 58, 0.9);
+  border-style: solid;
+  pointer-events: none;
+  z-index: 3;
+}
+
+.terminal-frame::before {
+  top: -2px;
+  left: -2px;
+  border-width: 2px 0 0 2px;
+}
+
+.terminal-frame::after {
+  top: -2px;
+  right: -2px;
+  border-width: 2px 2px 0 0;
+}
+
+.terminal-frame > .corner-bl {
+  bottom: -2px;
+  left: -2px;
+  border-width: 0 0 2px 2px;
+}
+
+.terminal-frame > .corner-br {
+  bottom: -2px;
+  right: -2px;
+  border-width: 0 2px 2px 0;
+}
+
+/* ========== FOOTER BRACKETS ========== */
+.footer-brackets {
+  position: relative;
+  padding: 56px 24px 40px;
+  border-top: 1px solid rgba(196, 30, 58, 0.2);
+  text-align: center;
+}
+
+/* ========== WHO IS IT FOR - 5-COLUMN GRID ========== */
+.who-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 16px;
+}
+
+@media (max-width: 1100px) {
+  .who-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+@media (max-width: 720px) {
+  .who-grid { grid-template-columns: 1fr; }
+}
+
+/* ========== HOW IT WORKS - 5-COLUMN STEPS GRID ========== */
+.how-steps-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 16px;
+}
+
+@media (max-width: 1100px) {
+  .how-steps-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+@media (max-width: 720px) {
+  .how-steps-grid { grid-template-columns: 1fr; }
+}
+
+.footer-brackets::before,
+.footer-brackets::after,
+.footer-brackets > .corner-bl,
+.footer-brackets > .corner-br {
+  content: '';
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border-color: rgba(196, 30, 58, 0.7);
+  border-style: solid;
+  pointer-events: none;
+}
+
+.footer-brackets::before {
+  top: 0;
+  left: 0;
+  border-width: 1.5px 0 0 1.5px;
+  transform: translate(8px, 8px);
+}
+
+.footer-brackets::after {
+  top: 0;
+  right: 0;
+  border-width: 1.5px 1.5px 0 0;
+  transform: translate(-8px, 8px);
+}
+
+.footer-brackets > .corner-bl {
+  bottom: 0;
+  left: 0;
+  border-width: 0 0 1.5px 1.5px;
+  transform: translate(8px, -8px);
+}
+
+.footer-brackets > .corner-br {
+  bottom: 0;
+  right: 0;
+  border-width: 0 1.5px 1.5px 0;
+  transform: translate(-8px, -8px);
+}
+
+/* ============================================================
+   STITCH REDESIGN MERGE — PHASE 2+3 POLISH
+   ============================================================ */
+
+/* ========== MEMORY LAB NOTE CARD GLOW BORDERS (Stitch) ========== */
+.memory-lab-note-card {
+  border-color: rgba(196, 30, 58, 0.15);
+  transition: border-color 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.memory-lab-note-card:hover {
+  border-color: rgba(196, 30, 58, 0.5);
+  box-shadow: 0 0 32px rgba(196, 30, 58, 0.1), inset 0 0 20px rgba(196, 30, 58, 0.03);
+  transform: translateY(-3px);
+}
+
+.memory-lab-note-card.featured {
+  border-color: rgba(196, 30, 58, 0.36);
+  box-shadow: 0 0 20px rgba(196, 30, 58, 0.06);
+}
+
+.memory-lab-note-card.featured:hover {
+  border-color: rgba(196, 30, 58, 0.7);
+  box-shadow: 0 0 40px rgba(196, 30, 58, 0.15), inset 0 0 30px rgba(196, 30, 58, 0.05);
+}
+
+/* ========== MEMORY LAB STAT GLOW (Stitch) ========== */
+.memory-lab-stat:first-child {
+  border-color: rgba(196, 30, 58, 0.22);
+}
+
+.memory-lab-benchmark {
+  border-color: rgba(196, 30, 58, 0.2);
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.memory-lab-benchmark:hover {
+  border-color: rgba(196, 30, 58, 0.35);
+  box-shadow: 0 0 30px rgba(196, 30, 58, 0.08);
+}
+
+/* ========== ENHANCED DROPZONE CORNER ACCENTS (Stitch) ========== */
+.dropzone-corner-tl,
+.dropzone-corner-tr,
+.dropzone-corner-bl,
+.dropzone-corner-br {
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  border-color: rgba(196, 30, 58, 0.6);
+  border-style: solid;
+  pointer-events: none;
+  z-index: 3;
+  transition: border-color 0.3s ease, opacity 0.3s ease;
+}
+
+.dropzone-corner-tl { top: -1px; left: -1px; border-width: 2px 0 0 2px; }
+.dropzone-corner-tr { top: -1px; right: -1px; border-width: 2px 2px 0 0; }
+.dropzone-corner-bl { bottom: -1px; left: -1px; border-width: 0 0 2px 2px; }
+.dropzone-corner-br { bottom: -1px; right: -1px; border-width: 0 2px 2px 0; }
+
+/* ========== PROOF SIGNAL CARD HOVER (Stitch) ========== */
+.proof-signal-card {
+  padding: 12px 14px;
+  border-radius: 8px;
+  border: 1px solid rgba(112, 112, 112, 0.1);
+  background: rgba(255, 255, 255, 0.015);
+  transition: all 0.25s ease;
+}
+
+.proof-signal-card:hover {
+  border-color: rgba(196, 30, 58, 0.3);
+  background: rgba(196, 30, 58, 0.03);
+}
+
+/* ========== ENHANCED SECTION SPACING (Stitch) ========== */
+.section-gap-lg {
+  padding: 112px 0;
+}
+

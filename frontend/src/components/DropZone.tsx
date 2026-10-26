@@ -87,9 +87,9 @@ export function DropZone() {
         style={{
           position: 'relative',
           minHeight: '450px',
-          border: isDragging ? '2px solid rgba(196,30,58,0.8)' : '2px dashed rgba(112,112,112,0.3)',
+          border: isDragging ? '2px solid rgba(196,30,58,0.8)' : '1.5px dashed rgba(196,30,58,0.35)',
           borderRadius: '16px',
-          background: isDragging ? 'rgba(40, 15, 15, 0.9)' : isHovering ? 'rgba(40, 20, 20, 0.8)' : 'linear-gradient(135deg, rgba(17,17,17,0.7), rgba(10,10,10,0.85))',
+          background: isDragging ? 'rgba(40, 15, 15, 0.9)' : isHovering ? 'rgba(40, 20, 20, 0.8)' : 'linear-gradient(135deg, rgba(196,30,58,0.03), rgba(10,10,10,0.85))',
           display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '20px',
           cursor: 'pointer', overflow: 'hidden',
           transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
@@ -98,7 +98,7 @@ export function DropZone() {
             ? '0 0 50px rgba(196,30,58,0.5), inset 0 0 60px rgba(196,30,58,0.2)'
             : isHovering
             ? '0 0 30px rgba(196,30,58,0.4), inset 0 0 40px rgba(196,30,58,0.15)'
-            : 'none',
+            : '0 0 30px rgba(196,30,58,0.1), inset 0 0 40px rgba(196,30,58,0.04)',
           borderColor: isHovering && !isDragging ? 'rgba(196,30,58,0.7)' : undefined,
         }}
       >
@@ -109,6 +109,12 @@ export function DropZone() {
           backgroundImage: 'linear-gradient(rgba(196,30,58,0.25) 1px, transparent 1px), linear-gradient(90deg, rgba(196,30,58,0.25) 1px, transparent 1px)',
           backgroundSize: '30px 30px', animation: 'gridMove 20s linear infinite',
         }} />
+
+        {/* Stitch: Red corner accents */}
+        <div className="dropzone-corner-tl" style={{ opacity: (isHovering || isDragging) ? 1 : 0.4, borderColor: isDragging ? 'rgba(196,30,58,0.9)' : undefined }} />
+        <div className="dropzone-corner-tr" style={{ opacity: (isHovering || isDragging) ? 1 : 0.4, borderColor: isDragging ? 'rgba(196,30,58,0.9)' : undefined }} />
+        <div className="dropzone-corner-bl" style={{ opacity: (isHovering || isDragging) ? 1 : 0.4, borderColor: isDragging ? 'rgba(196,30,58,0.9)' : undefined }} />
+        <div className="dropzone-corner-br" style={{ opacity: (isHovering || isDragging) ? 1 : 0.4, borderColor: isDragging ? 'rgba(196,30,58,0.9)' : undefined }} />
 
         {/* Orbit scanners */}
         <div style={{
