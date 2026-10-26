@@ -5,6 +5,9 @@
 ## [4.5.0] -- Unreleased -- IMPORT CAPSULE V1 + MEMORY LAB NOTES
 > *VantaCore closes the local capsule loop and opens the Memory Lab education layer.*
 
+### Visual Refresh
+- Homepage visual refresh (Stitch-inspired polish) with accurate benchmark tiles and restored copy.
+
 ### Import Capsule
 - Added client-side Memory Capsule import flow for `.md`, `.txt`, and `.json` exports.
 - Added safe preview-before-restore behavior so imports do not mutate the workspace until confirmed.
