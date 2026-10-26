@@ -38,7 +38,7 @@
 
 /* ========== RESET & BASE ========== */
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
-html { scroll-behavior: smooth; overflow-x: hidden; }
+html { scroll-behavior: smooth; }
 body {
   font-family: 'Crimson Text', serif;
   background: #050505;
@@ -1454,10 +1454,10 @@ body::after {
   text-align: center;
 }
 
-/* ========== WHO IS IT FOR - 5-COLUMN GRID ========== */
+/* ========== WHO IS IT FOR - 3-COLUMN GRID ========== */
 .who-grid {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 16px;
 }
 
