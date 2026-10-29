@@ -241,7 +241,8 @@ export class Singularity {
     const codeBlocksInInput = this.countFencedCodeBlocks(text)
     const fold = this.foldRepeatedBlocks(text)
     const capsule = this.renderMemoryCapsule(text, fold)
-    const compressed = capsule.output.replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim()
+    let compressed = capsule.output.replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim()
+    if (originalChars <= 4000 && compressed.length > originalChars) compressed = text
     const compressedChars = compressed.length
     const processingTimeMs = parseFloat((performance.now() - startTime).toFixed(2))
 
