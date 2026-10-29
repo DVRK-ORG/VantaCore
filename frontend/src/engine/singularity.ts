@@ -24,6 +24,7 @@ interface Segment {
   text: string
   index: number
   total: number
+  start: number
   marker: TimelineMarker
 }
 
@@ -470,21 +471,30 @@ export class Singularity {
   }
 
   private makeSegments(text: string): Segment[] {
-    const protectedFences = this.protectFencedCode(text.replace(/\r\n/g, '\n'))
+    const normalized = text.replace(/\r\n/g, '\n')
+    const protectedFences = this.protectFencedCode(normalized)
     const candidates = protectedFences.text
       .split(/\n{2,}|(?<=\.)\s+(?=(?:User|Assistant|Agent|System)\b)/)
       .flatMap((block) => this.splitOversizedBlock(block, 1800))
       .map((block) => this.restoreProtected(block, protectedFences.blocks).trim())
       .filter((block) => block.length >= 12)
 
-    const fallback = candidates.length ? candidates : this.splitOversizedBlock(text, 1200)
+    const fallback = candidates.length ? candidates : this.splitOversizedBlock(normalized, 1200)
     const total = fallback.length
+    let cursor = 0
+    const located = fallback.map((segmentText) => {
+      const found = normalized.indexOf(segmentText, cursor)
+      const start = found >= 0 ? found : cursor
+      cursor = start + Math.max(segmentText.length, 1)
+      return { text: segmentText, start }
+    })
 
-    return fallback.map((segmentText, index) => ({
-      text: segmentText,
+    return located.map((item, index) => ({
+      text: item.text,
       index,
       total,
-      marker: this.timelineMarker(index, total),
+      start: item.start,
+      marker: this.timelineMarker(item.start, normalized.length),
     }))
   }
 
@@ -823,9 +833,9 @@ export class Singularity {
     return COMMAND_PATTERN.test(text.trim().replace(/^`|`$/g, ''))
   }
 
-  private timelineMarker(index: number, total: number): TimelineMarker {
-    if (total <= 1) return 'final-known-state'
-    const ratio = index / Math.max(total - 1, 1)
+  private timelineMarker(offset: number, length: number): TimelineMarker {
+    if (length <= 1) return 'final-known-state'
+    const ratio = offset / length
     if (ratio >= 0.9) return 'final-known-state'
     if (ratio >= 0.66) return 'late-session'
     if (ratio >= 0.33) return 'mid-session'
@@ -848,7 +858,23 @@ export class Singularity {
   }
 
   private sortEvidenceByTimeline(items: string[]): string[] {
-    return [...items].sort((a, b) => this.markerRankFromLine(b) - this.markerRankFromLine(a))
+    const groups = new Map<number, string[]>()
+    for (const item of items) {
+      const rank = this.markerRankFromLine(item)
+      const group = groups.get(rank)
+      if (group) group.push(item)
+      else groups.set(rank, [item])
+    }
+
+    const sorted: string[] = []
+    const ranks = [...groups.keys()].sort((a, b) => b - a)
+    for (const rank of ranks) {
+      const group = groups.get(rank) ?? []
+      for (let index = group.length - 1; index >= 0; index -= 1) {
+        sorted.push(group[index])
+      }
+    }
+    return sorted
   }
 
   private markerRankFromLine(item: string): number {
