@@ -1428,7 +1428,11 @@ export class Singularity {
     if (this.pathHits(plain).length) return true
     if (/\b[\w.-]+\.(?:tsx|ts|jsx|js|json|md|txt|html|css|py|sh|ps1|bat|log)\b/i.test(plain)) return true
     if (this.looksLikeCommand(plain)) return true
-    if (/\b(?:error|exception|traceback|stack trace)\b/i.test(plain)) return true
+    if (/\b\w*(?:Error|Exception):/.test(plain)) return true
+    if (/Traceback \(most recent call last\)/.test(plain)) return true
+    if (/\bexit code [1-9]\b/i.test(plain)) return true
+    if (/\bfailed with\b/i.test(plain)) return true
+    if (/`[^`\n]*\b(?:error|exception)\b[^`\n]*`/i.test(plain)) return true
     if (/`[^`\n]*[-_./\\][^`\n]*`/.test(plain)) return true
     if (/`[^`\n]*[0-9a-f]{7,40}[^`\n]*`/i.test(plain)) return true
     if (/`[^`\n]*\w+\([^`\n]*\)[^`\n]*`/.test(plain)) return true
