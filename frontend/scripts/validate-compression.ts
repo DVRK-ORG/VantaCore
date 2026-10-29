@@ -93,7 +93,7 @@ const main = async () => {
   console.log(`repeated blocks folded: ${formatNumber(result.repeatedBlocksFolded)}`)
   console.log(`dictionary references created: ${formatNumber(result.dictionaryReferencesCreated)}`)
   console.log(`clusters detected: ${formatNumber(result.clustersDetected)}`)
-  console.log(`code blocks protected: ${result.codeBlocksProtected > 0 ? 'yes' : 'none detected'} (${formatNumber(result.codeBlocksProtected)} fenced; output balanced: ${result.codeBlocksIntegrityOk ? 'yes' : 'no'})`)
+  console.log(`code blocks in input: ${formatNumber(result.codeBlocksProtected)} (matches output fences: ${result.codeBlocksIntegrityOk ? 'yes' : 'no'})`)
 
   if (options.writeOutput || options.outputPath) {
     const outputPath = options.outputPath ?? defaultOutputPath(options.inputPath)

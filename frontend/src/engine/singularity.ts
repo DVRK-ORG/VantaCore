@@ -15,7 +15,6 @@ interface ReferenceEntry {
 }
 
 interface FoldResult {
-  text: string
   entries: ReferenceEntry[]
   foldedOccurrences: number
 }
@@ -239,7 +238,7 @@ export class Singularity {
       }
     }
 
-    const codeBlocksProtected = this.countFencedCodeBlocks(text)
+    const codeBlocksInInput = this.countFencedCodeBlocks(text)
     const fold = this.foldRepeatedBlocks(text)
     const capsule = this.renderMemoryCapsule(text, fold)
     const compressed = capsule.output.replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim()
@@ -260,8 +259,9 @@ export class Singularity {
       repeatedBlocksFolded: fold.foldedOccurrences,
       dictionaryReferencesCreated: fold.entries.length,
       clustersDetected: capsule.clustersDetected,
-      codeBlocksProtected,
-      codeBlocksIntegrityOk: this.hasBalancedFences(compressed),
+      codeBlocksProtected: codeBlocksInInput,
+      codeBlocksIntegrityOk: codeBlocksInInput === this.countFencedCodeBlocks(compressed)
+        && !compressed.includes('__VANTA_FENCE_'),
     }
   }
 
@@ -392,16 +392,22 @@ export class Singularity {
       candidateMap.set(key, existing)
     }
 
-    for (const match of text.match(/```[\s\S]*?```/g) ?? []) {
-      if (match.length >= 80) addCandidate('CODE', match)
-    }
+    this.eachFencedBlock(text, (block) => {
+      if (block.length >= 80) addCandidate('CODE', block)
+    })
 
     for (const match of text.match(/`[^`\n]+`/g) ?? []) {
       const inner = match.slice(1, -1).trim()
       if (this.looksLikeCommand(inner) || inner.length >= 80) addCandidate('CMD', match)
     }
 
+    let insideFence = false
     for (const line of text.split(/\r?\n/)) {
+      if (this.isFenceDelimiter(line)) {
+        insideFence = !insideFence
+        continue
+      }
+      if (insideFence) continue
       const cleaned = line.trim().replace(/^[-*>]+\s*/, '')
       if (cleaned.length >= 8 && this.looksLikeCommand(cleaned)) {
         addCandidate('CMD', cleaned)
@@ -441,12 +447,9 @@ export class Singularity {
       return { ...entry, id: `${entry.kind}-${String(counters[entry.kind]).padStart(2, '0')}` }
     })
 
-    const { text: folded, replacements } = this.applyDictionaryReferences(text, numberedEntries)
-
     return {
-      text: folded,
       entries: numberedEntries,
-      foldedOccurrences: replacements,
+      foldedOccurrences: numberedEntries.reduce((total, entry) => total + entry.count, 0),
     }
   }
 
@@ -829,8 +832,7 @@ export class Singularity {
   }
 
   private cleanEvidenceLine(text: string, maxLength = 220): string {
-    let cleaned = text
-      .replace(/```[\s\S]*?```/g, (match) => `[code block ${match.length} chars]`)
+    let cleaned = this.maskFencedBlocks(text)
       .replace(/[-\s]*exported session \d+\s*-*/gi, ' ')
       .replace(/\{?"?(?:role|content|parts|text|metadata|source)"?\s*:\s*/gi, ' ')
       .replace(/\b(?:assistant|model|user|system)\s*:/gi, '')
@@ -895,14 +897,69 @@ export class Singularity {
     return normalized.toLowerCase()
   }
 
+  private isFenceDelimiter(line: string): boolean {
+    return /^\s*```[A-Za-z0-9_+-]*\s*$/.test(line)
+  }
+
+  private eachFencedBlock(text: string, onBlock: (block: string) => void): void {
+    const lines = text.split('\n')
+    let openAt = -1
+    for (let index = 0; index < lines.length; index += 1) {
+      if (!this.isFenceDelimiter(lines[index])) continue
+      if (openAt < 0) {
+        openAt = index
+        continue
+      }
+      onBlock(lines.slice(openAt, index + 1).join('\n'))
+      openAt = -1
+    }
+  }
+
+  private maskFencedBlocks(text: string): string {
+    const lines = text.split('\n')
+    const out: string[] = []
+    let buf: string[] | null = null
+    for (const line of lines) {
+      if (this.isFenceDelimiter(line)) {
+        if (buf) {
+          buf.push(line)
+          const block = buf.join('\n')
+          out.push(`[code block ${block.length} chars]`)
+          buf = null
+        } else {
+          buf = [line]
+        }
+        continue
+      }
+      if (buf) buf.push(line)
+      else out.push(line)
+    }
+    if (buf) out.push(...buf)
+    return out.join('\n')
+  }
+
   private protectFencedCode(text: string): { text: string; blocks: Map<string, string> } {
     const blocks = new Map<string, string>()
-    const protectedText = text.replace(/```[\s\S]*?```/g, (match) => {
-      const key = `__VANTA_FENCE_${blocks.size}__`
-      blocks.set(key, match)
-      return key
-    })
-    return { text: protectedText, blocks }
+    const out: string[] = []
+    let buf: string[] | null = null
+    for (const line of text.split('\n')) {
+      if (this.isFenceDelimiter(line)) {
+        if (buf) {
+          buf.push(line)
+          const key = `__VANTA_FENCE_${blocks.size}__`
+          blocks.set(key, buf.join('\n'))
+          out.push(key)
+          buf = null
+        } else {
+          buf = [line]
+        }
+        continue
+      }
+      if (buf) buf.push(line)
+      else out.push(line)
+    }
+    if (buf) out.push(...buf)
+    return { text: out.join('\n'), blocks }
   }
 
   private restoreProtected(text: string, blocks: Map<string, string>): string {
@@ -1023,12 +1080,11 @@ export class Singularity {
   }
 
   private countFencedCodeBlocks(text: string): number {
-    return (text.match(/```[\s\S]*?```/g) ?? []).length
-  }
-
-  private hasBalancedFences(text: string): boolean {
-    const fenceCount = (text.match(/```/g) ?? []).length
-    return fenceCount % 2 === 0 && !text.includes('__VANTA_FENCE_')
+    let count = 0
+    this.eachFencedBlock(text, () => {
+      count += 1
+    })
+    return count
   }
 
   private estimateTokens(chars: number): number {
