@@ -568,7 +568,7 @@ export class Singularity {
       .split('\n')
       .filter((line) => {
         const trimmed = line.trim()
-        return trimmed.length > 0 && !this.isToolPayload(trimmed) && !/^exec:\s+/i.test(trimmed) && !/^[\[{]/.test(trimmed)
+        return trimmed.length > 0 && !this.isToolPayload(trimmed) && !/^exec:\s+/i.test(trimmed) && !trimmed.startsWith('[') && !trimmed.startsWith('{')
       })
       .join('\n')
   }
@@ -783,8 +783,8 @@ export class Singularity {
     const trimmed = text.trim()
     if (/\btool\s*call\s*:/i.test(trimmed)) return true
     if (/^exec:\s+\S+/i.test(trimmed) && /[{"]/.test(trimmed)) return true
-    if (!/^[\[{]/.test(trimmed)) return false
-    const marks = (trimmed.match(/[{}\[\]":]/g) ?? []).length
+    if (!trimmed.startsWith('[') && !trimmed.startsWith('{')) return false
+    const marks = (trimmed.match(/[{}[\]":]/g) ?? []).length
     return marks >= 6 && /"(?:name|arguments|command|path|tool|ok|file)"\s*:/.test(trimmed)
   }
 
@@ -815,7 +815,7 @@ export class Singularity {
       const trimmed = line.trim()
       const toolCall = /\btool\s*call\s*:/i.test(trimmed)
       const execCall = /^exec:\s+\S+/i.test(trimmed)
-      if (!skipping && (toolCall || execCall || (this.isToolPayload(trimmed) && /^[\[{]/.test(trimmed)))) {
+      if (!skipping && (toolCall || execCall || (this.isToolPayload(trimmed) && (trimmed.startsWith('[') || trimmed.startsWith('{'))))) {
         summaries.push(this.toolCallSummary(trimmed))
         depth = (line.match(/{/g) ?? []).length - (line.match(/}/g) ?? []).length
         sawBrace = /[{[]/.test(line)
