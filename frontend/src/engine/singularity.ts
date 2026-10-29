@@ -238,11 +238,14 @@ export class Singularity {
       }
     }
 
-    const codeBlocksInInput = this.countFencedCodeBlocks(text)
-    const fold = this.foldRepeatedBlocks(text)
-    const capsule = this.renderMemoryCapsule(text, fold)
+    const redacted = this.redactSecrets(text)
+    const codeBlocksInInput = this.countFencedCodeBlocks(redacted)
+    const fold = this.foldRepeatedBlocks(redacted)
+    const capsule = this.renderMemoryCapsule(redacted, fold)
     let compressed = capsule.output.replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim()
-    if (originalChars <= 4000 && compressed.length > originalChars) compressed = text
+    if (originalChars <= 4000 && compressed.length > originalChars) {
+      compressed = redacted.length <= originalChars ? redacted : redacted.slice(0, originalChars)
+    }
     const compressedChars = compressed.length
     const processingTimeMs = parseFloat((performance.now() - startTime).toFixed(2))
 
@@ -1086,6 +1089,17 @@ export class Singularity {
       count += 1
     })
     return count
+  }
+
+  private redactSecrets(text: string): string {
+    return text
+      .replace(/-----BEGIN [A-Z0-9 ]*PRIVATE KEY-----[\s\S]*?-----END [A-Z0-9 ]*PRIVATE KEY-----/g, '[redacted]')
+      .replace(/\beyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\b/g, '[redacted]')
+      .replace(/\bBearer\s+[A-Za-z0-9._~+/-]{8,}/gi, 'Bearer [redacted]')
+      .replace(/\bsk-[A-Za-z0-9_-]{8,}\b/g, '[redacted]')
+      .replace(/\bgithub_pat_[A-Za-z0-9_]{8,}\b/g, '[redacted]')
+      .replace(/\bghp_[A-Za-z0-9]{8,}\b/g, '[redacted]')
+      .replace(/\bAKIA[0-9A-Z]{16}\b/g, '[redacted]')
   }
 
   private estimateTokens(chars: number): number {
