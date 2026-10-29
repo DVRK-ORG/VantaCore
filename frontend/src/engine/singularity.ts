@@ -31,7 +31,7 @@ type TimelineMarker = 'early-session' | 'mid-session' | 'late-session' | 'final-
 
 interface TopicDefinition {
   label: string
-  patterns: RegExp[]
+  terms: string[]
 }
 
 interface TopicScore {
@@ -77,49 +77,34 @@ const CONTINUITY_TERMS = new Set([
   'want', 'wants', 'wanted', 'should', 'already', 'fixed', 'verified',
   'pending', 'next', 'blocked', 'blocker', 'passed', 'failed', 'commit',
   'committed', 'pushed', 'deployed', 'deploy', 'done', 'completed',
-  'complete', 'remaining', 'open', 'todo', 'review', 'privacy_policy',
-  'chrome_web_store', 'landing_page', 'vantacore', 'cloudflare', 'chp',
-  'c.h.p', 'chrome_extension', 'promo_image', 'seo', 'sitemap',
+  'complete', 'remaining', 'open', 'todo', 'review',
 ])
 
-const TOPICS: TopicDefinition[] = [
-  {
-    label: 'IPE Landing Page / Chrome Extension',
-    patterns: [/\bipe\b/i, /\blanding\s+page\b/i, /\bchrome\s+extension\b/i, /\bextension\b/i],
-  },
-  {
-    label: 'Chrome Web Store / Privacy / Review',
-    patterns: [/\bchrome\s+web\s+store\b/i, /\bprivacy\s+policy\b/i, /\breview\b/i, /\bstore\s+listing\b/i, /\bsubmission\b/i],
-  },
-  {
-    label: 'Cloudflare / SEO / Sitemap / Deployment',
-    patterns: [/\bcloudflare\b/i, /\bdeployment?\b/i, /\bdeployed\b/i, /\bseo\b/i, /\bsitemap\b/i, /\brobots\.txt\b/i, /\bdns\b/i],
-  },
-  {
-    label: 'VantaCore Compression Test',
-    patterns: [/\bvantacore\b/i, /\bcompression\b/i, /\bcompressed\b/i, /\bmemory\s+packet\b/i, /\bmemory\s+capsule\b/i],
-  },
-  {
-    label: 'C.H.P Monetization / Product Strategy',
-    patterns: [/\bc\s*\.?\s*h\s*\.?\s*p\b/i, /\bmonetization\b/i, /\bproduct\s+strategy\b/i, /\bpricing\b/i, /\bsubscription\b/i],
-  },
-  {
-    label: 'Promo Image / Store Assets',
-    patterns: [/\bpromo\s+image\b/i, /\bscreenshot\b/i, /\basset\b/i, /\bog\s+image\b/i, /\bpreview\b/i],
-  },
-  {
-    label: 'Git / Branch / Release Trail',
-    patterns: [/\bgit\b/i, /\bcommit\b/i, /\bbranch\b/i, /\bpushed\b/i, /\bpull\s+request\b/i, /\bgithub\b/i],
-  },
-]
+const GENERIC_TOPIC_WORDS = new Set([
+  'please', 'like', 'handle', 'make', 'need', 'needs', 'show', 'keep', 'must',
+  'your', 'will', 'just', 'into', 'over', 'also', 'than', 'them', 'they',
+  'what', 'which', 'while', 'about', 'after', 'before', 'again', 'there',
+  'their', 'file', 'files', 'test', 'tests', 'code', 'true', 'false', 'null',
+  'string', 'return', 'export', 'import', 'const', 'function', 'message',
+  'content', 'text', 'step', 'turn', 'sure', 'user', 'assistant', 'human',
+  'system', 'model', 'expected', 'received', 'applies', 'lines', 'changed',
+  'path', 'none', 'clearly', 'detected', 'session', 'final', 'early', 'late',
+  'known', 'state', 'general', 'continuity', 'cluster', 'signal', 'signals',
+  'updated', 'created', 'added', 'build', 'class', 'public', 'private',
+  'package', 'decision', 'change', 'changes', 'error', 'data', 'type', 'name',
+  'fail', 'npm', 'node', 'git', 'http', 'https', 'www', 'com', 'org',
+  'value', 'args', 'argument', 'arguments', 'tool', 'call', 'exec', 'output',
+  'input', 'result', 'results', 'same', 'only', 'still', 'into', 'each',
+])
+
+const GENERIC_PATH_DIRS = new Set([
+  'src', 'lib', 'dist', 'node_modules', 'app', 'components', 'pages', 'public',
+  'scripts', 'test', 'tests', 'docs', 'frontend', 'backend', 'pkg', 'internal',
+  'cmd', 'bin', 'build', 'static', 'assets', 'styles', 'hooks', 'utils', 'types',
+  '__tests__', 'spec', 'source',
+])
 
 const PHRASE_REPLACEMENTS: Array<[RegExp, string]> = [
-  [/\bchrome\s+web\s+store\b/gi, 'chrome_web_store'],
-  [/\bprivacy\s+policy\b/gi, 'privacy_policy'],
-  [/\blanding\s+page\b/gi, 'landing_page'],
-  [/\bchrome\s+extension\b/gi, 'chrome_extension'],
-  [/\bpromo\s+image\b/gi, 'promo_image'],
-  [/\bc\s*\.?\s*h\s*\.?\s*p\b/gi, 'chp'],
   [/\bdo\s+not\b|\bdon't\b|\bdont\b/gi, 'do_not'],
   [/\buser\s+wants?\b/gi, 'user_wants'],
   [/\bagent\s+should\b/gi, 'agent_should'],
@@ -132,9 +117,9 @@ const PENDING_PATTERN = /\b(pending|open loop|todo|needs?|next|remaining|still|b
 const NEXT_PATTERN = /\b(next|continue|follow up|remaining|should now|likely step|where to continue|resume)\b/i
 const DO_NOT_PATTERN = /\b(do not|don't|dont|avoid|leave|preserve|keep same|same layout|same color|do not redesign|do not touch|do not repeat|without changing|no redesign)\b/i
 const DECISION_PATTERN = /\b(decided|decision|chose|selected|agreed|accepted|rejected|switched|kept|keep|will use|direction|scope)\b/i
-const SIGNAL_PATTERN = /\b(user wants|agent should|already fixed|verified|pending|next|blocked|passed|failed|commit|pushed|deployed|chrome web store|cloudflare|privacy policy|landing page|vantacore|c\.?h\.?p|do not|todo|remaining|open loop)\b/i
+const SIGNAL_PATTERN = /\b(user wants|agent should|already fixed|verified|pending|next|blocked|passed|failed|commit|pushed|deployed|do not|todo|remaining|open loop)\b/i
 
-const COMMAND_PATTERN = /^(?:PS\s+[A-Z]:\\.*?>\s*)?(?:\$|>)?\s*(?:git|rg|npm|pnpm|yarn|node|npx|powershell|pwsh|curl|wrangler|vercel|python|py|tsc|vite|gh|cat|ls|dir|Get-ChildItem|Select-String|Start-Process|netstat|tasklist|taskkill|code|cloudflare)\b/i
+const COMMAND_PATTERN = /^(?:PS\s+[A-Z]:\\.*?>\s*)?(?:\$|>)?\s*(?:git|rg|npm|pnpm|yarn|node|npx|powershell|pwsh|curl|wrangler|vercel|python|py|tsc|vite|gh|cat|ls|dir|Get-ChildItem|Select-String|Start-Process|netstat|tasklist|taskkill|code)\b/i
 const FILE_OR_URL_PATTERN = /(?:https?:\/\/[^\s)<>"']+|[A-Za-z]:\\[^\s<>"']+|(?:[\w.-]+\/)+[\w.-]+\.[A-Za-z0-9]+|\b[\w.-]+\.(?:tsx|ts|jsx|js|json|md|txt|html|css|png|jpg|jpeg|webp|xml|yml|yaml|toml|py|sh|ps1|bat|log)\b)/g
 const REFERENCE_PATTERN = /\[(?:CMD|PROMPT|CODE)-\d{2}\]/
 
@@ -271,9 +256,10 @@ export class Singularity {
 
   private renderMemoryCapsule(originalText: string, fold: FoldResult): { output: string; clustersDetected: number } {
     const segments = this.makeSegments(originalText)
-    const topicScores = this.detectTopicScores(segments)
+    const topics = this.detectTopics(originalText)
+    const topicScores = this.detectTopicScores(segments, topics)
     const evidence = this.extractEvidence(segments)
-    const clusters = this.buildClusters(segments, topicScores)
+    const clusters = this.buildClusters(segments, topicScores, topics)
     const lines: string[] = []
 
     lines.push('# VantaCore Memory Capsule')
@@ -507,7 +493,7 @@ export class Singularity {
     const normalized = text.replace(/\r\n/g, '\n')
     const protectedFences = this.protectFencedCode(normalized)
     const candidates = protectedFences.text
-      .split(/\n{2,}|(?<=\.)\s+(?=(?:User|Assistant|Agent|System)\b)/)
+      .split(/\n{2,}|(?<=\.)\s+(?=(?:User|Assistant|Agent|System|Human)\b)/)
       .flatMap((block) => this.splitOversizedBlock(block, 1800))
       .map((block) => this.restoreProtected(block, protectedFences.blocks).trim())
       .filter((block) => block.length >= 12)
@@ -558,8 +544,78 @@ export class Singularity {
     return pieces.filter(Boolean)
   }
 
-  private detectTopicScores(segments: Segment[]): TopicScore[] {
-    const scores = TOPICS.map((topic) => {
+  private detectTopics(text: string): TopicDefinition[] {
+    const topics: TopicDefinition[] = []
+    const seen = new Set<string>()
+    const push = (label: string) => {
+      const term = label.toLowerCase()
+      if (seen.has(term) || term.length < 3 || topics.length >= MAX_CLUSTERS) return
+      seen.add(term)
+      topics.push({ label: term, terms: [term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')] })
+    }
+    for (const name of this.projectNames(text)) push(name)
+    for (const term of this.distinctiveTerms(this.topicSourceText(text))) push(term)
+    return topics
+  }
+
+  private topicSourceText(text: string): string {
+    const userText = this.extractTurns(text)
+      .filter((turn) => turn.role === 'user')
+      .map((turn) => turn.text)
+      .join('\n')
+    const source = userText.trim().length >= 24 ? userText : text
+    return source
+      .split('\n')
+      .filter((line) => {
+        const trimmed = line.trim()
+        return trimmed.length > 0 && !this.isToolPayload(trimmed) && !/^exec:\s+/i.test(trimmed) && !/^[\[{]/.test(trimmed)
+      })
+      .join('\n')
+  }
+
+  private projectNames(text: string): string[] {
+    const counts = new Map<string, number>()
+    const pattern = /(?:^|[\s"'`(])((?:[\w.-]+\/)+[\w.-]+\.[A-Za-z0-9]+)/gm
+    let match: RegExpExecArray | null
+    while ((match = pattern.exec(text))) {
+      const parts = match[1].split('/')
+      const file = parts.pop() ?? ''
+      let name = ''
+      for (const part of parts) {
+        if (part.length >= 3 && !GENERIC_PATH_DIRS.has(part.toLowerCase())) {
+          name = part
+          break
+        }
+      }
+      if (!name) name = file.replace(/\..*$/, '')
+      const key = name.toLowerCase()
+      if (key.length < 3 || GENERIC_PATH_DIRS.has(key) || GENERIC_TOPIC_WORDS.has(key)) continue
+      counts.set(key, (counts.get(key) ?? 0) + 1)
+    }
+    return [...counts.entries()]
+      .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+      .slice(0, 3)
+      .map(([name]) => name)
+  }
+
+  private distinctiveTerms(text: string): string[] {
+    const counts = new Map<string, number>()
+    const words = text.toLowerCase().match(/[a-z][a-z0-9_-]{2,}/g) ?? []
+    const minCount = text.length < 4000 ? 1 : 2
+    for (const word of words) {
+      if (STOP_WORDS.has(word) || this.guillotine.has(word) || GENERIC_TOPIC_WORDS.has(word) || GENERIC_PATH_DIRS.has(word) || CONTINUITY_TERMS.has(word)) continue
+      if (TECH_LANG_NAMES.has(word)) continue
+      counts.set(word, (counts.get(word) ?? 0) + 1)
+    }
+    return [...counts.entries()]
+      .filter(([, count]) => count >= minCount)
+      .sort((a, b) => b[1] - a[1] || b[0].length - a[0].length || a[0].localeCompare(b[0]))
+      .slice(0, MAX_CLUSTERS)
+      .map(([word]) => word)
+  }
+
+  private detectTopicScores(segments: Segment[], topics: TopicDefinition[]): TopicScore[] {
+    const scores = topics.map((topic) => {
       let score = 0
       const markerScores = new Map<TimelineMarker, number>()
 
@@ -582,7 +638,7 @@ export class Singularity {
       .sort((a, b) => b.score - a.score)
   }
 
-  private buildClusters(segments: Segment[], topicScores: TopicScore[]): ClusterDraft[] {
+  private buildClusters(segments: Segment[], topicScores: TopicScore[], topics: TopicDefinition[]): ClusterDraft[] {
     const selectedTopics = topicScores.slice(0, MAX_CLUSTERS).map((topic) => topic.label)
     const clusters = new Map<string, ClusterDraft>()
 
@@ -593,7 +649,7 @@ export class Singularity {
     const generalLabel = 'General Continuity / Open Threads'
 
     for (const segment of segments) {
-      const best = this.bestTopicForSegment(segment, selectedTopics)
+      const best = this.bestTopicForSegment(segment, selectedTopics, topics)
       const signalScore = this.signalScore(segment.text)
       if (!best && signalScore < 2) continue
 
@@ -611,10 +667,10 @@ export class Singularity {
       .slice(0, MAX_CLUSTERS)
   }
 
-  private bestTopicForSegment(segment: Segment, labels: string[]): { label: string; score: number } | null {
+  private bestTopicForSegment(segment: Segment, labels: string[], topics: TopicDefinition[]): { label: string; score: number } | null {
     let best: { label: string; score: number } | null = null
     for (const label of labels) {
-      const topic = TOPICS.find((candidate) => candidate.label === label)
+      const topic = topics.find((candidate) => candidate.label === label)
       if (!topic) continue
       const score = this.topicScoreForText(topic, segment.text)
       if (score > 0 && (!best || score > best.score)) best = { label, score }
@@ -623,10 +679,13 @@ export class Singularity {
   }
 
   private topicScoreForText(topic: TopicDefinition, text: string): number {
-    return topic.patterns.reduce((score, pattern) => {
-      const matches = text.match(new RegExp(pattern.source, pattern.flags.includes('g') ? pattern.flags : `${pattern.flags}g`))
-      return score + (matches?.length ?? 0)
-    }, 0)
+    const lower = text.toLowerCase()
+    let score = 0
+    for (const term of topic.terms) {
+      const matches = lower.match(new RegExp(`\\b${term}\\b`, 'g'))
+      score += matches?.length ?? 0
+    }
+    return score
   }
 
   private highestMarker(scores: Map<TimelineMarker, number>): TimelineMarker {
@@ -844,7 +903,7 @@ export class Singularity {
     let cleaned = this.maskFencedBlocks(text)
       .replace(/[-\s]*exported session \d+\s*-*/gi, ' ')
       .replace(/\{?"?(?:role|content|parts|text|metadata|source)"?\s*:\s*/gi, ' ')
-      .replace(/\b(?:assistant|model|user|system)\s*:/gi, '')
+      .replace(/(?:^|\s)(?:#{1,3}\s*)?(?:\*\*|__)?(?:human|assistant|user|system|model)(?:\*\*|__)?\s*:/gi, ' ')
       .replace(/\s+/g, ' ')
       .trim()
 
@@ -1261,7 +1320,7 @@ export class Singularity {
       unique.push(file)
     }
     return unique
-      .filter((file) => !unique.some((other) => other.length > file.length && (other.endsWith(`/${file}`) || other.endsWith(`.${file}`))))
+      .filter((file) => !unique.some((other) => other !== file && other.length > file.length && other.includes(file)))
       .slice(0, 4)
   }
 
