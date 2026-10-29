@@ -1,7 +1,7 @@
 import { readFile, writeFile } from 'node:fs/promises'
 import { basename, dirname, extname, join } from 'node:path'
 import { pathToFileURL } from 'node:url'
-import { Singularity } from '../src/engine/singularity.ts'
+import { recoverableCodeBodies, Singularity } from '../src/engine/singularity.ts'
 
 interface CliOptions {
   inputPath: string | null
@@ -31,48 +31,7 @@ const parseArgs = (argv: string[]): CliOptions => {
 
 const formatNumber = (value: number): string => value.toLocaleString('en-US')
 
-const lineLooksLikeCode = (line: string): boolean => {
-  const trimmed = line.trim()
-  if (!trimmed) return false
-  if (/^(?:PS\s+[A-Z]:\\.*?>\s*)?(?:\$|>)?\s*(?:git|rg|npm|pnpm|yarn|node|npx|powershell|pwsh|curl|wrangler|vercel|python|py|tsc|vite|gh|cat|ls|dir|Get-ChildItem|Select-String|Start-Process|netstat|tasklist|taskkill|code)(?!\.)\b/i.test(trimmed)) return true
-  if (/^(?:import |export |def |class |function |const |let |var |return |#include|package |public |private |fn |func |type |interface |struct )/i.test(trimmed)) return true
-  if (/^(?: {4,}|\t)/.test(line) && /[{}[\]();=]/.test(line)) return true
-  if (/[.!?]["']?\s*$/.test(trimmed) && (trimmed.match(/[A-Za-z]{2,}/g) ?? []).length >= 3) return false
-  const symbols = (trimmed.match(/[{}[\]();=]/g) ?? []).length
-  return symbols >= 2 && symbols / trimmed.length >= 0.06
-}
-
-const untaggedBodyIsCode = (body: string): boolean => {
-  const lines = body.split('\n').filter((line) => line.trim())
-  if (!lines.length) return false
-  const codeLines = lines.filter((line) => lineLooksLikeCode(line)).length
-  return codeLines * 2 >= lines.length
-}
-
-const recoverableBlockBodies = (text: string): string[] => {
-  const lines = text.replace(/\r\n/g, '\n').split('\n')
-  const bodies: string[] = []
-  const stack: Array<{ lang: string; body: string[] }> = []
-  const fenceLine = /^[ \t]{0,3}(`{3,})([^`]*)$/
-  for (const line of lines) {
-    const match = fenceLine.exec(line)
-    if (!match) {
-      if (stack.length) stack[stack.length - 1].body.push(line)
-      continue
-    }
-    const info = match[2].trim()
-    if (stack.length && info === '') {
-      const frame = stack.pop()
-      if (!frame) continue
-      const body = frame.body.join('\n')
-      if (frame.lang || untaggedBodyIsCode(body)) bodies.push(body)
-      continue
-    }
-    const lang = info.split(/\s+/)[0]?.toLowerCase() ?? ''
-    stack.push({ lang, body: [] })
-  }
-  return bodies
-}
+const recoverableBlockBodies = (text: string): string[] => recoverableCodeBodies(text)
 
 const assertBlocksRecovered = (input: string, output: string, engineCount: number): void => {
   const bodies = recoverableBlockBodies(input).filter((body) => body.trim().length > 0)
