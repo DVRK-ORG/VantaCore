@@ -94,7 +94,7 @@ const main = async () => {
   console.log(`repeated blocks folded: ${formatNumber(result.repeatedBlocksFolded)}`)
   console.log(`dictionary references created: ${formatNumber(result.dictionaryReferencesCreated)}`)
   console.log(`clusters detected: ${formatNumber(result.clustersDetected)}`)
-  console.log(`code blocks: ${formatNumber(result.codeBlocksProtected)} in input, ${formatNumber(result.codeBlocksKept)} kept, ${formatNumber(result.codeBlocksFolded)} folded, ${formatNumber(result.codeBlocksDropped)} dropped`)
+  console.log(`code blocks: ${formatNumber(result.codeBlocksProtected)} in input, ${formatNumber(result.codeBlocksKept)} kept inline, ${formatNumber(result.codeBlocksFolded)} stored in dictionary, ${formatNumber(result.codeBlocksDropped)} dropped`)
 
   if (options.writeOutput || options.outputPath) {
     const outputPath = options.outputPath ?? defaultOutputPath(options.inputPath)

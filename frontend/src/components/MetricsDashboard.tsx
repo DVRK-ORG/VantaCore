@@ -82,7 +82,7 @@ export function MetricsDashboard() {
         </div>
         <div className="flex items-center gap-1.5 font-mono text-[12px] text-obsidian-silver">
           <Lock size={14} className="text-obsidian-silver" />
-          Code blocks: {codeBlocksProtected} in input, {result.codeBlocksKept} kept, {result.codeBlocksFolded} folded, {result.codeBlocksDropped} dropped
+          Code blocks: {codeBlocksProtected} in input, {result.codeBlocksKept} kept inline, {result.codeBlocksFolded} stored in dictionary, {result.codeBlocksDropped} dropped
         </div>
         <div className="font-mono text-[12px] text-obsidian-silver">
           {clustersDetected} clusters / {dictionaryReferencesCreated} refs / {repeatedBlocksFolded} folds

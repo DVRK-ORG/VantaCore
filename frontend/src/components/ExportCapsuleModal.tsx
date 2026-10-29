@@ -28,6 +28,9 @@ export interface ExportEntry {
   dictionaryReferencesCreated: number
   clustersDetected: number
   codeBlocksProtected: number
+  codeBlocksKept?: number
+  codeBlocksFolded?: number
+  codeBlocksDropped?: number
   codeBlocksIntegrityOk: boolean
   sourceMode?: CompressionProfile
 }
@@ -148,6 +151,9 @@ function ExportCapsuleModalInner({ entry, onClose }: { entry: ExportEntry; onClo
       dictionaryReferencesCreated: entry.dictionaryReferencesCreated,
       clustersDetected: entry.clustersDetected,
       codeBlocksProtected: entry.codeBlocksProtected,
+      codeBlocksKept: entry.codeBlocksKept ?? 0,
+      codeBlocksFolded: entry.codeBlocksFolded ?? 0,
+      codeBlocksDropped: entry.codeBlocksDropped ?? 0,
       codeBlocksIntegrityOk: entry.codeBlocksIntegrityOk,
     }, {
       compressionProfile: sourceMode,
