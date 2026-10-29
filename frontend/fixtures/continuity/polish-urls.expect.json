@@ -36,7 +36,8 @@
       "bestchange",
       "prnewswire",
       "www-example-com-some-article.md",
-      "example-com-some-article.md"
+      "example-com-some-article.md",
+      ".../print.html"
     ]
   }
 }

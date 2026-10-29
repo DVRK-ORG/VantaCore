@@ -58,17 +58,24 @@ interface Evidence {
 }
 
 const STOP_WORDS = new Set([
-  'a', 'an', 'the', 'and', 'or', 'but', 'if', 'then', 'else', 'when', 'at',
-  'from', 'by', 'for', 'with', 'in', 'on', 'to', 'of', 'is', 'it', 'that',
-  'this', 'these', 'those', 'be', 'been', 'being', 'have', 'has', 'had',
-  'does', 'did', 'can', 'could', 'would', 'may', 'might', 'must',
-  'up', 'out', 'new', 'get', 'use', 'using', 'used',
-  't', 's', 'm', 're', 've', 'd', 'll',
-  'i', 'me', 'my', 'mine', 'we', 'our', 'ours', 'you', 'yours',
-  'he', 'him', 'his', 'she', 'hers', 'us', 'who', 'whom', 'whose',
+  'a', 'about', 'above', 'after', 'again', 'against', 'all', 'am', 'an', 'and',
+  'any', 'are', 'as', 'at', 'be', 'because', 'been', 'before', 'being', 'below',
+  'between', 'both', 'but', 'by', 'can', 'could', 'did', 'do', 'does', 'doing',
+  'down', 'during', 'each', 'few', 'for', 'from', 'further', 'had', 'has', 'have',
+  'having', 'he', 'her', 'here', 'hers', 'herself', 'him', 'himself', 'his', 'how',
+  'i', 'if', 'in', 'into', 'is', 'it', 'its', 'itself', 'just', 'me', 'more', 'most',
+  'my', 'myself', 'no', 'nor', 'not', 'now', 'of', 'off', 'on', 'once', 'only', 'or',
+  'other', 'our', 'ours', 'ourselves', 'out', 'over', 'own', 'same', 'she', 'should',
+  'so', 'some', 'such', 'than', 'that', 'the', 'their', 'theirs', 'them', 'themselves',
+  'then', 'there', 'these', 'they', 'this', 'those', 'through', 'to', 'too', 'under',
+  'until', 'up', 'very', 'was', 'we', 'were', 'what', 'when', 'where', 'which',
+  'while', 'who', 'whom', 'whose', 'why', 'will', 'with', 'you', 'your', 'yours',
+  'yourself', 'yourselves',
+  'mine', 't', 's', 'm', 're', 've', 'd', 'll',
   'dont', 'cant', 'wont', 'didnt', 'doesnt', 'isnt', 'arent', 'wasnt', 'werent',
   'hasnt', 'havent', 'hadnt', 'couldnt', 'wouldnt', 'shouldnt',
   'im', 'ive', 'youre', 'youve', 'theyre', 'theyve', 'thats', 'whats', 'lets', 'aint',
+  'get', 'use', 'using', 'used', 'new', 'else', 'might', 'must', 'may',
 ])
 
 const TECH_LANG_NAMES = new Set([
@@ -348,8 +355,11 @@ export class Singularity {
       for (const entry of fold.entries) {
         lines.push(this.renderReferenceEntry(entry))
       }
-    } else {
+    } else if (!codeReport.stored.length) {
       lines.push('- no repeated command/prompt/code blocks met folding thresholds')
+    }
+    for (const block of codeReport.stored) {
+      lines.push(`[CODE stored 1x]:\n<<<CODE\n${block}\n>>>`)
     }
     if (codeReport.kept.length) {
       lines.push('')
@@ -1172,7 +1182,7 @@ export class Singularity {
 
     for (const match of this.cleanPathText(this.stripUrls(text)).match(FILE_OR_URL_PATTERN) ?? []) {
       const file = this.presentFile(match.replace(/[.,;:]+$/, ''))
-      if (/^https?:\/\//i.test(file) || this.isUrlOrFragment(file) || /(?:^|\.)(?:com|org|net|io|ai|dev)$/i.test(file)) continue
+      if (/^https?:\/\//i.test(file) || this.isUrlOrFragment(file) || this.isTruncatedPath(file) || /(?:^|\.)(?:com|org|net|io|ai|dev)$/i.test(file)) continue
       artifacts.push(file)
     }
 
@@ -1428,27 +1438,42 @@ export class Singularity {
 
   private isCodeFence(block: string): boolean {
     const { lang, body } = this.fenceParts(block)
+    if (lang) return true
     const trimmed = body.trim()
     if (!trimmed) return false
-    if (!lang && /^(?:\*\*)?(?:human|user|assistant|prompt|response)\b/i.test(trimmed)) return false
-    if (!lang && /(^|\n)\s*`{3,}/.test(trimmed)) return false
+    if (/^(?:\*\*)?(?:human|user|assistant|prompt|response)\b/i.test(trimmed)) return false
+    if (/(^|\n)\s*`{3,}/.test(trimmed)) return false
     if (/\btool\s*call\s*:/i.test(trimmed)) return false
     if (this.isToolPayload(trimmed)) return false
-    if (this.isCommandFence(block)) return true
     if (this.fenceBodyIsProse(trimmed)) return false
-    if (lang) return true
-    if (/^\s*(?:import |export |def |class |function |const |let |var |return |#include|package |public |private )/m.test(trimmed)) return true
-    const symbols = (trimmed.match(/[{}[\]();=<>]/g) ?? []).length
-    return symbols / trimmed.length > 0.03
+    return this.untaggedBodyIsCode(body)
+  }
+
+  private lineLooksLikeCode(line: string): boolean {
+    const trimmed = line.trim()
+    if (!trimmed) return false
+    if (this.looksLikeCommand(trimmed)) return true
+    if (/^(?:import |export |def |class |function |const |let |var |return |#include|package |public |private |fn |func |type |interface |struct )/i.test(trimmed)) return true
+    if (/^(?: {4,}|\t)/.test(line) && /[{}[\]();=]/.test(line)) return true
+    if (/[.!?]["']?\s*$/.test(trimmed) && (trimmed.match(/[A-Za-z]{2,}/g) ?? []).length >= 3) return false
+    const symbols = (trimmed.match(/[{}[\]();=]/g) ?? []).length
+    return symbols >= 2 && symbols / trimmed.length >= 0.06
+  }
+
+  private untaggedBodyIsCode(body: string): boolean {
+    const lines = body.split('\n').filter((line) => line.trim())
+    if (!lines.length) return false
+    const codeLines = lines.filter((line) => this.lineLooksLikeCode(line)).length
+    return codeLines * 2 >= lines.length
   }
 
   private isCommandFence(block: string): boolean {
     const { lang, body } = this.fenceParts(block)
+    if (['bash', 'sh', 'shell', 'zsh', 'powershell', 'ps1', 'pwsh', 'cmd', 'bat', 'console'].includes(lang)) return true
     const lines = body.split('\n').map((line) => line.trim()).filter(Boolean)
+    if (!lines.length) return false
     const commands = lines.filter((line) => this.looksLikeCommand(line)).length
-    if (lines.length && commands * 2 >= lines.length) return true
-    const shell = ['bash', 'sh', 'shell', 'zsh', 'powershell', 'ps1', 'pwsh', 'cmd', 'bat', 'console'].includes(lang)
-    return shell && !this.fenceBodyIsProse(body.trim())
+    return commands * 2 >= lines.length
   }
 
   private listCodeFences(text: string): Array<{ text: string; start: number }> {
@@ -1471,6 +1496,7 @@ export class Singularity {
   private codeBlockReport(text: string, fold: FoldResult): {
     summary: string
     kept: string[]
+    stored: string[]
     input: number
     keptCount: number
     foldedCount: number
@@ -1489,7 +1515,9 @@ export class Singularity {
       groups.set(key, (groups.get(key) ?? 0) + 1)
     }
     const kept: string[] = []
+    const stored: string[] = []
     const seenKept = new Set<string>()
+    const seenStored = new Set<string>()
     let keptCount = 0
     let foldedCount = 0
     let droppedCount = 0
@@ -1509,11 +1537,20 @@ export class Singularity {
         }
         continue
       }
+      if (this.fenceParts(block.text).lang) {
+        if (!seenStored.has(key)) {
+          seenStored.add(key)
+          stored.push(block.text)
+        }
+        foldedCount += 1
+        continue
+      }
       droppedCount += 1
     }
     return {
       summary: `code blocks: ${blocks.length} in input, ${keptCount} kept inline, ${foldedCount} stored in dictionary, ${droppedCount} dropped`,
       kept,
+      stored,
       input: blocks.length,
       keptCount,
       foldedCount,
@@ -1798,8 +1835,13 @@ export class Singularity {
     return /-(?:com|org|net|io|ai|dev|co|uk|ae)-[^/\\]*\.(?:md|html?|txt)$/i.test(base)
   }
 
+  private isTruncatedPath(file: string): boolean {
+    const text = file.trim()
+    return /^(?:\.{3}|…)/.test(text) || /(?:^|[/\\])(?:\.{3}|…)(?:[/\\]|$)/.test(text)
+  }
+
   private isCodeOrConfigFile(file: string): boolean {
-    if (this.isMediaFile(file) || this.isUrlOrFragment(file) || this.isSavedWebPage(file)) return false
+    if (this.isMediaFile(file) || this.isUrlOrFragment(file) || this.isSavedWebPage(file) || this.isTruncatedPath(file)) return false
     return /\.(?:tsx?|jsx?|mjs|cjs|json|md|txt|html|css|xml|ya?ml|toml|py|sh|ps1|bat|log|vue|svelte|rs|go|java|kt|rb|php|cs|c|h|hpp|sql|ini|cfg|conf|lock)(?:$|[^A-Za-z0-9])/i.test(file)
       || /(?:^|[/\\])(?:Dockerfile|Makefile|LICENSE|README)(?:$|[^A-Za-z0-9])/i.test(file)
   }

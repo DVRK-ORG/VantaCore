@@ -31,6 +31,64 @@ const parseArgs = (argv: string[]): CliOptions => {
 
 const formatNumber = (value: number): string => value.toLocaleString('en-US')
 
+const lineLooksLikeCode = (line: string): boolean => {
+  const trimmed = line.trim()
+  if (!trimmed) return false
+  if (/^(?:PS\s+[A-Z]:\\.*?>\s*)?(?:\$|>)?\s*(?:git|rg|npm|pnpm|yarn|node|npx|powershell|pwsh|curl|wrangler|vercel|python|py|tsc|vite|gh|cat|ls|dir|Get-ChildItem|Select-String|Start-Process|netstat|tasklist|taskkill|code)(?!\.)\b/i.test(trimmed)) return true
+  if (/^(?:import |export |def |class |function |const |let |var |return |#include|package |public |private |fn |func |type |interface |struct )/i.test(trimmed)) return true
+  if (/^(?: {4,}|\t)/.test(line) && /[{}[\]();=]/.test(line)) return true
+  if (/[.!?]["']?\s*$/.test(trimmed) && (trimmed.match(/[A-Za-z]{2,}/g) ?? []).length >= 3) return false
+  const symbols = (trimmed.match(/[{}[\]();=]/g) ?? []).length
+  return symbols >= 2 && symbols / trimmed.length >= 0.06
+}
+
+const untaggedBodyIsCode = (body: string): boolean => {
+  const lines = body.split('\n').filter((line) => line.trim())
+  if (!lines.length) return false
+  const codeLines = lines.filter((line) => lineLooksLikeCode(line)).length
+  return codeLines * 2 >= lines.length
+}
+
+const recoverableBlockBodies = (text: string): string[] => {
+  const lines = text.replace(/\r\n/g, '\n').split('\n')
+  const bodies: string[] = []
+  const stack: Array<{ lang: string; body: string[] }> = []
+  const fenceLine = /^[ \t]{0,3}(`{3,})([^`]*)$/
+  for (const line of lines) {
+    const match = fenceLine.exec(line)
+    if (!match) {
+      if (stack.length) stack[stack.length - 1].body.push(line)
+      continue
+    }
+    const info = match[2].trim()
+    if (stack.length && info === '') {
+      const frame = stack.pop()
+      if (!frame) continue
+      const body = frame.body.join('\n')
+      if (frame.lang || untaggedBodyIsCode(body)) bodies.push(body)
+      continue
+    }
+    const lang = info.split(/\s+/)[0]?.toLowerCase() ?? ''
+    stack.push({ lang, body: [] })
+  }
+  return bodies
+}
+
+const assertBlocksRecovered = (input: string, output: string, engineCount: number): void => {
+  const bodies = recoverableBlockBodies(input).filter((body) => body.trim().length > 0)
+  const missing = bodies.filter((body) => !output.includes(body))
+  console.log(`independent code blocks: ${formatNumber(bodies.length)}`)
+  if (engineCount < bodies.length) {
+    console.error(`FAIL engine counted ${engineCount} code blocks, line scan found ${bodies.length}`)
+    process.exitCode = 1
+  }
+  if (missing.length) {
+    console.error(`FAIL ${missing.length} code block bodies missing from output`)
+    for (const body of missing.slice(0, 8)) console.error(body.slice(0, 160))
+    process.exitCode = 1
+  }
+}
+
 const defaultOutputPath = (inputPath: string | null): string => {
   if (!inputPath) return join(process.cwd(), 'vantacore-validation-output.md')
   const extension = extname(inputPath)
@@ -95,6 +153,7 @@ const main = async () => {
   console.log(`dictionary references created: ${formatNumber(result.dictionaryReferencesCreated)}`)
   console.log(`clusters detected: ${formatNumber(result.clustersDetected)}`)
   console.log(`code blocks: ${formatNumber(result.codeBlocksProtected)} in input, ${formatNumber(result.codeBlocksKept)} kept inline, ${formatNumber(result.codeBlocksFolded)} stored in dictionary, ${formatNumber(result.codeBlocksDropped)} dropped`)
+  assertBlocksRecovered(input, result.compressed, result.codeBlocksProtected)
 
   if (options.writeOutput || options.outputPath) {
     const outputPath = options.outputPath ?? defaultOutputPath(options.inputPath)
