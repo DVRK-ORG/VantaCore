@@ -25,6 +25,9 @@ export interface ExportableStats {
   dictionaryReferencesCreated: number
   clustersDetected: number
   codeBlocksProtected: number
+  codeBlocksKept?: number
+  codeBlocksFolded?: number
+  codeBlocksDropped?: number
   codeBlocksIntegrityOk: boolean
 }
 
@@ -101,6 +104,9 @@ const statsForJson = (stats: ExportableStats) => ({
   dictionaryReferencesCreated: stats.dictionaryReferencesCreated,
   clustersDetected: stats.clustersDetected,
   codeBlocksProtected: stats.codeBlocksProtected,
+  codeBlocksKept: stats.codeBlocksKept ?? 0,
+  codeBlocksFolded: stats.codeBlocksFolded ?? 0,
+  codeBlocksDropped: stats.codeBlocksDropped ?? 0,
   codeBlocksIntegrityOk: stats.codeBlocksIntegrityOk,
 })
 

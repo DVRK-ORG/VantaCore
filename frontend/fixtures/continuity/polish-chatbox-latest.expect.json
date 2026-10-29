@@ -1,0 +1,43 @@
+{
+  "facts": [
+    "quaynote",
+    "harbor-notes/quay.ts",
+    "Updated one more quaynote note"
+  ],
+  "stopPointFacts": [
+    "Keep one more quaynote note",
+    "Updated one more quaynote note",
+    "harbor-notes/quay.ts"
+  ],
+  "topicTop3": "quaynote",
+  "secrets": [],
+  "absent": [
+    "] our (",
+    ": our]",
+    "] its (",
+    ": its]",
+    "## Highlights",
+    "## Root cause",
+    "dont"
+  ],
+  "absentHeadings": [
+    "## Highlights",
+    "## Root cause"
+  ],
+  "stopFields": {
+    "last user message:": ["Keep one more quaynote note"],
+    "last assistant reply:": ["Updated one more quaynote note"]
+  },
+  "stopFieldAbsent": {
+    "last user message:": [
+      "Look at that",
+      "Does that still look right?",
+      "pasted note is not the latest",
+      "Highlights"
+    ],
+    "last assistant reply:": [
+      "Does that still look right?",
+      "Look at that"
+    ]
+  }
+}

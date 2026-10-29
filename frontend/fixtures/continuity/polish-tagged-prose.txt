@@ -1,0 +1,335 @@
+Human: Keep quaynote row 0 in harbor-notes/quay.ts.
+
+Assistant: Updated quaynote row 0 in harbor-notes/quay.ts. The ledger list matches.
+
+Human: Keep quaynote row 1 in harbor-notes/quay.ts.
+
+Assistant: Updated quaynote row 1 in harbor-notes/quay.ts. The ledger list matches.
+
+Human: Keep quaynote row 2 in harbor-notes/quay.ts.
+
+Assistant: Updated quaynote row 2 in harbor-notes/quay.ts. The ledger list matches.
+
+Human: Keep quaynote row 3 in harbor-notes/quay.ts.
+
+Assistant: Updated quaynote row 3 in harbor-notes/quay.ts. The ledger list matches.
+
+Human: Keep quaynote row 4 in harbor-notes/quay.ts.
+
+Assistant: Updated quaynote row 4 in harbor-notes/quay.ts. The ledger list matches.
+
+Human: Keep quaynote row 5 in harbor-notes/quay.ts.
+
+Assistant: Updated quaynote row 5 in harbor-notes/quay.ts. The ledger list matches.
+
+Human: Keep quaynote row 6 in harbor-notes/quay.ts.
+
+Assistant: Updated quaynote row 6 in harbor-notes/quay.ts. The ledger list matches.
+
+Human: Keep quaynote row 7 in harbor-notes/quay.ts.
+
+Assistant: Updated quaynote row 7 in harbor-notes/quay.ts. The ledger list matches.
+
+Human: Keep quaynote row 8 in harbor-notes/quay.ts.
+
+Assistant: Updated quaynote row 8 in harbor-notes/quay.ts. The ledger list matches.
+
+Human: Keep quaynote row 9 in harbor-notes/quay.ts.
+
+Assistant: Updated quaynote row 9 in harbor-notes/quay.ts. The ledger list matches.
+
+Human: Keep quaynote row 10 in harbor-notes/quay.ts.
+
+Assistant: Updated quaynote row 10 in harbor-notes/quay.ts. The ledger list matches.
+
+Human: Keep quaynote row 11 in harbor-notes/quay.ts.
+
+Assistant: Updated quaynote row 11 in harbor-notes/quay.ts. The ledger list matches.
+
+```text
+Dana, hardening pass is verified clean and the quaynote list matches the ledger.
+```
+
+```md
+Harbor notes stay in harbor-notes/quay.ts until the berth map is checked again.
+```
+
+```mermaid
+The quay flow is a prose description of harbor-notes/quay.ts until the ledger is updated.
+```
+
+```powershell
+Read the latest quay note from the harbor ledger before the release tag.
+```
+
+Human: Keep quaynote row 12 in harbor-notes/quay.ts.
+
+Assistant: Updated quaynote row 12 in harbor-notes/quay.ts. The ledger list matches.
+
+Human: Keep quaynote row 13 in harbor-notes/quay.ts.
+
+Assistant: Updated quaynote row 13 in harbor-notes/quay.ts. The ledger list matches.
+
+Human: Keep quaynote row 14 in harbor-notes/quay.ts.
+
+Assistant: Updated quaynote row 14 in harbor-notes/quay.ts. The ledger list matches.
+
+Human: Keep quaynote row 15 in harbor-notes/quay.ts.
+
+Assistant: Updated quaynote row 15 in harbor-notes/quay.ts. The ledger list matches.
+
+Human: Keep quaynote row 16 in harbor-notes/quay.ts.
+
+Assistant: Updated quaynote row 16 in harbor-notes/quay.ts. The ledger list matches.
+
+Human: Keep quaynote row 17 in harbor-notes/quay.ts.
+
+Assistant: Updated quaynote row 17 in harbor-notes/quay.ts. The ledger list matches.
+
+Human: Keep quaynote row 18 in harbor-notes/quay.ts.
+
+Assistant: Updated quaynote row 18 in harbor-notes/quay.ts. The ledger list matches.
+
+Human: Keep quaynote row 19 in harbor-notes/quay.ts.
+
+Assistant: Updated quaynote row 19 in harbor-notes/quay.ts. The ledger list matches.
+
+```text
+Dana, the middle hardening note is prose inside a text fence and still belongs with the ledger.
+```
+
+Human: Keep quaynote row 20 in harbor-notes/quay.ts.
+
+Assistant: Updated quaynote row 20 in harbor-notes/quay.ts. The ledger list matches.
+
+Human: Keep quaynote row 21 in harbor-notes/quay.ts.
+
+Assistant: Updated quaynote row 21 in harbor-notes/quay.ts. The ledger list matches.
+
+Human: Keep quaynote row 22 in harbor-notes/quay.ts.
+
+Assistant: Updated quaynote row 22 in harbor-notes/quay.ts. The ledger list matches.
+
+Human: Keep quaynote row 23 in harbor-notes/quay.ts.
+
+Assistant: Updated quaynote row 23 in harbor-notes/quay.ts. The ledger list matches.
+
+Human: Keep quaynote row 24 in harbor-notes/quay.ts.
+
+Assistant: Updated quaynote row 24 in harbor-notes/quay.ts. The ledger list matches.
+
+Human: Keep quaynote row 25 in harbor-notes/quay.ts.
+
+Assistant: Updated quaynote row 25 in harbor-notes/quay.ts. The ledger list matches.
+
+Human: Keep quaynote row 26 in harbor-notes/quay.ts.
+
+Assistant: Updated quaynote row 26 in harbor-notes/quay.ts. The ledger list matches.
+
+Human: Keep quaynote row 27 in harbor-notes/quay.ts.
+
+Assistant: Updated quaynote row 27 in harbor-notes/quay.ts. The ledger list matches.
+
+```text
+Dana, hardening pass is verified clean and the quaynote list matches the ledger.
+```
+
+```md
+Harbor notes stay in harbor-notes/quay.ts until the berth map is checked again.
+```
+
+```mermaid
+The quay flow is a prose description of harbor-notes/quay.ts until the ledger is updated.
+```
+
+```powershell
+Read the latest quay note from the harbor ledger before the release tag.
+```
+
+Human: Keep quaynote row 28 in harbor-notes/quay.ts.
+
+Assistant: Updated quaynote row 28 in harbor-notes/quay.ts. The ledger list matches.
+
+Human: Keep quaynote row 29 in harbor-notes/quay.ts.
+
+Assistant: Updated quaynote row 29 in harbor-notes/quay.ts. The ledger list matches.
+
+Human: Keep quaynote row 30 in harbor-notes/quay.ts.
+
+Assistant: Updated quaynote row 30 in harbor-notes/quay.ts. The ledger list matches.
+
+Human: Keep quaynote row 31 in harbor-notes/quay.ts.
+
+Assistant: Updated quaynote row 31 in harbor-notes/quay.ts. The ledger list matches.
+
+Human: Keep quaynote row 32 in harbor-notes/quay.ts.
+
+Assistant: Updated quaynote row 32 in harbor-notes/quay.ts. The ledger list matches.
+
+Human: Keep quaynote row 33 in harbor-notes/quay.ts.
+
+Assistant: Updated quaynote row 33 in harbor-notes/quay.ts. The ledger list matches.
+
+Human: Keep quaynote row 34 in harbor-notes/quay.ts.
+
+Assistant: Updated quaynote row 34 in harbor-notes/quay.ts. The ledger list matches.
+
+Human: Keep quaynote row 35 in harbor-notes/quay.ts.
+
+Assistant: Updated quaynote row 35 in harbor-notes/quay.ts. The ledger list matches.
+
+Human: Keep quaynote row 36 in harbor-notes/quay.ts.
+
+Assistant: Updated quaynote row 36 in harbor-notes/quay.ts. The ledger list matches.
+
+Human: Keep quaynote row 37 in harbor-notes/quay.ts.
+
+Assistant: Updated quaynote row 37 in harbor-notes/quay.ts. The ledger list matches.
+
+Human: Keep quaynote row 38 in harbor-notes/quay.ts.
+
+Assistant: Updated quaynote row 38 in harbor-notes/quay.ts. The ledger list matches.
+
+Human: Keep quaynote row 39 in harbor-notes/quay.ts.
+
+Assistant: Updated quaynote row 39 in harbor-notes/quay.ts. The ledger list matches.
+
+Human: Keep quaynote row 40 in harbor-notes/quay.ts.
+
+Assistant: Updated quaynote row 40 in harbor-notes/quay.ts. The ledger list matches.
+
+Human: Keep quaynote row 41 in harbor-notes/quay.ts.
+
+Assistant: Updated quaynote row 41 in harbor-notes/quay.ts. The ledger list matches.
+
+Human: Keep quaynote row 42 in harbor-notes/quay.ts.
+
+Assistant: Updated quaynote row 42 in harbor-notes/quay.ts. The ledger list matches.
+
+Human: Keep quaynote row 43 in harbor-notes/quay.ts.
+
+Assistant: Updated quaynote row 43 in harbor-notes/quay.ts. The ledger list matches.
+
+Human: Keep quaynote row 44 in harbor-notes/quay.ts.
+
+Assistant: Updated quaynote row 44 in harbor-notes/quay.ts. The ledger list matches.
+
+Human: Keep quaynote row 45 in harbor-notes/quay.ts.
+
+Assistant: Updated quaynote row 45 in harbor-notes/quay.ts. The ledger list matches.
+
+Human: Keep quaynote row 46 in harbor-notes/quay.ts.
+
+Assistant: Updated quaynote row 46 in harbor-notes/quay.ts. The ledger list matches.
+
+Human: Keep quaynote row 47 in harbor-notes/quay.ts.
+
+Assistant: Updated quaynote row 47 in harbor-notes/quay.ts. The ledger list matches.
+
+```text
+Dana, hardening pass is verified clean and the quaynote list matches the ledger.
+```
+
+```md
+Harbor notes stay in harbor-notes/quay.ts until the berth map is checked again.
+```
+
+```mermaid
+The quay flow is a prose description of harbor-notes/quay.ts until the ledger is updated.
+```
+
+```powershell
+Read the latest quay note from the harbor ledger before the release tag.
+```
+
+Human: Keep quaynote row 48 in harbor-notes/quay.ts.
+
+Assistant: Updated quaynote row 48 in harbor-notes/quay.ts. The ledger list matches.
+
+Human: Keep quaynote row 49 in harbor-notes/quay.ts.
+
+Assistant: Updated quaynote row 49 in harbor-notes/quay.ts. The ledger list matches.
+
+Human: Keep quaynote row 50 in harbor-notes/quay.ts.
+
+Assistant: Updated quaynote row 50 in harbor-notes/quay.ts. The ledger list matches.
+
+Human: Keep quaynote row 51 in harbor-notes/quay.ts.
+
+Assistant: Updated quaynote row 51 in harbor-notes/quay.ts. The ledger list matches.
+
+Human: Keep quaynote row 52 in harbor-notes/quay.ts.
+
+Assistant: Updated quaynote row 52 in harbor-notes/quay.ts. The ledger list matches.
+
+Human: Keep quaynote row 53 in harbor-notes/quay.ts.
+
+Assistant: Updated quaynote row 53 in harbor-notes/quay.ts. The ledger list matches.
+
+Human: Keep quaynote row 54 in harbor-notes/quay.ts.
+
+Assistant: Updated quaynote row 54 in harbor-notes/quay.ts. The ledger list matches.
+
+Human: Keep quaynote row 55 in harbor-notes/quay.ts.
+
+Assistant: Updated quaynote row 55 in harbor-notes/quay.ts. The ledger list matches.
+
+Human: Keep quaynote row 56 in harbor-notes/quay.ts.
+
+Assistant: Updated quaynote row 56 in harbor-notes/quay.ts. The ledger list matches.
+
+Human: Keep quaynote row 57 in harbor-notes/quay.ts.
+
+Assistant: Updated quaynote row 57 in harbor-notes/quay.ts. The ledger list matches.
+
+Human: Keep quaynote row 58 in harbor-notes/quay.ts.
+
+Assistant: Updated quaynote row 58 in harbor-notes/quay.ts. The ledger list matches.
+
+Human: Keep quaynote row 59 in harbor-notes/quay.ts.
+
+Assistant: Updated quaynote row 59 in harbor-notes/quay.ts. The ledger list matches.
+
+Human: Keep quaynote row 60 in harbor-notes/quay.ts.
+
+Assistant: Updated quaynote row 60 in harbor-notes/quay.ts. The ledger list matches.
+
+Human: Keep quaynote row 61 in harbor-notes/quay.ts.
+
+Assistant: Updated quaynote row 61 in harbor-notes/quay.ts. The ledger list matches.
+
+Human: Keep quaynote row 62 in harbor-notes/quay.ts.
+
+Assistant: Updated quaynote row 62 in harbor-notes/quay.ts. The ledger list matches.
+
+Human: Keep quaynote row 63 in harbor-notes/quay.ts.
+
+Assistant: Updated quaynote row 63 in harbor-notes/quay.ts. The ledger list matches.
+
+Human: Keep quaynote row 64 in harbor-notes/quay.ts.
+
+Assistant: Updated quaynote row 64 in harbor-notes/quay.ts. The ledger list matches.
+
+Human: Keep quaynote row 65 in harbor-notes/quay.ts.
+
+Assistant: Updated quaynote row 65 in harbor-notes/quay.ts. The ledger list matches.
+
+Human: Keep quaynote row 66 in harbor-notes/quay.ts.
+
+Assistant: Updated quaynote row 66 in harbor-notes/quay.ts. The ledger list matches.
+
+Human: Keep quaynote row 67 in harbor-notes/quay.ts.
+
+Assistant: Updated quaynote row 67 in harbor-notes/quay.ts. The ledger list matches.
+
+Human: Keep quaynote row 68 in harbor-notes/quay.ts.
+
+Assistant: Updated quaynote row 68 in harbor-notes/quay.ts. The ledger list matches.
+
+Human: Keep quaynote row 69 in harbor-notes/quay.ts.
+
+Assistant: Updated quaynote row 69 in harbor-notes/quay.ts. The ledger list matches.
+
+```text
+Dana, the final hardening note lands beside the quaynote ledger.
+```

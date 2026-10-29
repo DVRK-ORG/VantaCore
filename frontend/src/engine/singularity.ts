@@ -58,12 +58,24 @@ interface Evidence {
 }
 
 const STOP_WORDS = new Set([
-  'a', 'an', 'the', 'and', 'or', 'but', 'if', 'then', 'else', 'when', 'at',
-  'from', 'by', 'for', 'with', 'in', 'on', 'to', 'of', 'is', 'it', 'that',
-  'this', 'these', 'those', 'be', 'been', 'being', 'have', 'has', 'had',
-  'does', 'did', 'can', 'could', 'would', 'may', 'might', 'must',
-  'up', 'out', 'new', 'get', 'use', 'using', 'used',
-  't', 's', 'm', 're', 've', 'd', 'll',
+  'a', 'about', 'above', 'after', 'again', 'against', 'all', 'am', 'an', 'and',
+  'any', 'are', 'as', 'at', 'be', 'because', 'been', 'before', 'being', 'below',
+  'between', 'both', 'but', 'by', 'can', 'could', 'did', 'do', 'does', 'doing',
+  'down', 'during', 'each', 'few', 'for', 'from', 'further', 'had', 'has', 'have',
+  'having', 'he', 'her', 'here', 'hers', 'herself', 'him', 'himself', 'his', 'how',
+  'i', 'if', 'in', 'into', 'is', 'it', 'its', 'itself', 'just', 'me', 'more', 'most',
+  'my', 'myself', 'no', 'nor', 'not', 'now', 'of', 'off', 'on', 'once', 'only', 'or',
+  'other', 'our', 'ours', 'ourselves', 'out', 'over', 'own', 'same', 'she', 'should',
+  'so', 'some', 'such', 'than', 'that', 'the', 'their', 'theirs', 'them', 'themselves',
+  'then', 'there', 'these', 'they', 'this', 'those', 'through', 'to', 'too', 'under',
+  'until', 'up', 'very', 'was', 'we', 'were', 'what', 'when', 'where', 'which',
+  'while', 'who', 'whom', 'whose', 'why', 'will', 'with', 'you', 'your', 'yours',
+  'yourself', 'yourselves',
+  'mine', 't', 's', 'm', 're', 've', 'd', 'll',
+  'dont', 'cant', 'wont', 'didnt', 'doesnt', 'isnt', 'arent', 'wasnt', 'werent',
+  'hasnt', 'havent', 'hadnt', 'couldnt', 'wouldnt', 'shouldnt',
+  'im', 'ive', 'youre', 'youve', 'theyre', 'theyve', 'thats', 'whats', 'lets', 'aint',
+  'get', 'use', 'using', 'used', 'new', 'else', 'might', 'must', 'may',
 ])
 
 const TECH_LANG_NAMES = new Set([
@@ -132,8 +144,8 @@ const DO_NOT_PATTERN = /\b(do not|don't|dont|avoid|leave|preserve|keep same|same
 const DECISION_PATTERN = /\b(decided|decision|chose|selected|agreed|accepted|rejected|switched|kept|keep|will use|direction|scope)\b/i
 const SIGNAL_PATTERN = /\b(user wants|agent should|already fixed|verified|pending|next|blocked|passed|failed|commit|pushed|deployed|do not|todo|remaining|open loop)\b/i
 
-const COMMAND_PATTERN = /^(?:PS\s+[A-Z]:\\.*?>\s*)?(?:\$|>)?\s*(?:git|rg|npm|pnpm|yarn|node|npx|powershell|pwsh|curl|wrangler|vercel|python|py|tsc|vite|gh|cat|ls|dir|Get-ChildItem|Select-String|Start-Process|netstat|tasklist|taskkill|code)\b/i
-const FILE_OR_URL_PATTERN = /(?:https?:\/\/[^\s)<>"']+|[A-Za-z]:\\[^\s<>"']+|(?:[\w.-]+\/)+[\w.-]+\.[A-Za-z0-9]+|\b[\w.-]+\.(?:tsx|ts|jsx|js|json|md|txt|html|css|png|jpg|jpeg|webp|xml|yml|yaml|toml|py|sh|ps1|bat|log)\b)/g
+const COMMAND_PATTERN = /^(?:PS\s+[A-Z]:\\.*?>\s*)?(?:\$|>)?\s*(?:git|rg|npm|pnpm|yarn|node|npx|powershell|pwsh|curl|wrangler|vercel|python|py|tsc|vite|gh|cat|ls|dir|Get-ChildItem|Select-String|Start-Process|netstat|tasklist|taskkill|code)(?!\.)\b/i
+const FILE_OR_URL_PATTERN = /(?:https?:\/\/[^\s)<>"']+|(?<![A-Za-z])[A-Za-z]:[/\\][^\s<>"']+|(?:[\w.-]+\/)+[\w.-]+\.[A-Za-z0-9]+|\b[\w.-]+\.(?:tsx|ts|jsx|js|json|md|txt|html|css|png|jpg|jpeg|webp|xml|yml|yaml|toml|py|sh|ps1|bat|log)\b)/g
 const REFERENCE_PATTERN = /\[(?:CMD|PROMPT|CODE)-\d{2}\]/
 
 export class Singularity {
@@ -243,7 +255,7 @@ export class Singularity {
     const redacted = this.redactSecrets(source)
     const fold = this.foldRepeatedBlocks(redacted)
     const capsule = this.renderMemoryCapsule(redacted, fold)
-    let compressed = this.stripExportHeadings(capsule.output).replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim()
+    let compressed = this.demoteForeignHeadings(this.stripExportHeadings(capsule.output)).replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim()
     if (originalChars <= 4000 && compressed.length > originalChars) {
       compressed = redacted.length <= originalChars ? redacted : redacted.slice(0, originalChars)
     }
@@ -343,8 +355,11 @@ export class Singularity {
       for (const entry of fold.entries) {
         lines.push(this.renderReferenceEntry(entry))
       }
-    } else {
+    } else if (!codeReport.stored.length) {
       lines.push('- no repeated command/prompt/code blocks met folding thresholds')
+    }
+    for (const block of codeReport.stored) {
+      lines.push(`[CODE stored 1x]:\n<<<CODE\n${block}\n>>>`)
     }
     if (codeReport.kept.length) {
       lines.push('')
@@ -641,7 +656,7 @@ export class Singularity {
 
   private pathHits(text: string): string[] {
     const hits: string[] = []
-    const windows = /[A-Za-z]:(?:\\+|\/)[^\s"'<>|]+/g
+    const windows = /(?<![A-Za-z])[A-Za-z]:(?:\\+|\/)[^\s"'<>|]+/g
     const posix = /(?:^|[\s"'`(])((?:[\w.-]+\/)+[\w.-]+\.[A-Za-z0-9]+)/gm
     let match: RegExpExecArray | null
     while ((match = windows.exec(text))) hits.push(match[0].replace(/[),.;:]+$/, ''))
@@ -689,10 +704,11 @@ export class Singularity {
   }
 
   private cleanDisplayPath(raw: string): string {
-    if (!/\\/.test(raw)) return raw
+    const drive = raw.match(/^[A-Za-z]:/)?.[0] ?? ''
+    if (!drive && !/\\/.test(raw)) return raw
     const segments = this.pathSegments(raw)
     if (!segments.length) return raw
-    const drive = raw.match(/^[A-Za-z]:/)?.[0]
+    if (drive && !raw.includes('\\')) return `${drive}/${segments.join('/')}`
     return drive ? `${drive}\\${segments.join('\\')}` : segments.join('/')
   }
 
@@ -765,7 +781,7 @@ export class Singularity {
 
   private distinctiveTerms(text: string): string[] {
     const counts = new Map<string, number>()
-    const words = text.toLowerCase().match(/[a-z][a-z0-9_-]{2,}/g) ?? []
+    const words = text.toLowerCase().replace(/['’]/g, '').match(/[a-z][a-z0-9_-]{2,}/g) ?? []
     const minCount = text.length < 4000 ? 1 : 2
     for (const word of words) {
       if (STOP_WORDS.has(word) || this.guillotine.has(word) || GENERIC_TOPIC_WORDS.has(word) || GENERIC_PATH_DIRS.has(word) || CONTINUITY_TERMS.has(word)) continue
@@ -958,10 +974,22 @@ export class Singularity {
   private resultSummary(text: string): string {
     const quoted = text.match(/"(?:file_path|path|command|cmd)"\s*:\s*"((?:\\.|[^"\\])*)"/)
     const target = this.cleanDisplayPath((quoted?.[1] ?? 'tool result').replace(/\\"/g, '"').replace(/\s+/g, ' ').trim())
-    const failed = /"error"\s*:/i.test(text) || /"success"\s*:\s*false/i.test(text) || /"exitCode"\s*:\s*(?!0\b)\d/.test(text)
     const ok = /"success"\s*:\s*true/i.test(text) || /"exitCode"\s*:\s*0\b/.test(text)
+    const failed = !ok && (
+      /"success"\s*:\s*false/i.test(text)
+      || /"exitCode"\s*:\s*(?!0\b)\d/.test(text)
+      || this.realErrorValue(text)
+    )
     const status = failed ? 'failed' : ok ? 'succeeded' : 'returned'
     return `${target || 'tool result'} ${status}`.slice(0, 160)
+  }
+
+  private realErrorValue(text: string): boolean {
+    const match = text.match(/"error"\s*:\s*(null|false|true|-?\d+(?:\.\d+)?|"(?:\\.|[^"\\])*"|[[{])/i)
+    if (!match) return false
+    const value = match[1]
+    if (/^null$/i.test(value) || /^false$/i.test(value) || value === '""' || value === '0') return false
+    return true
   }
 
   private toolCallSummary(text: string): string {
@@ -1022,7 +1050,12 @@ export class Singularity {
     const pendingResult = (): boolean => {
       let cursor = index
       while (cursor < lines.length && lines[cursor].trim() === '') cursor += 1
-      if (!/^result\s*:/i.test(lines[cursor]?.trim() ?? '')) return false
+      const line = lines[cursor]?.trim() ?? ''
+      if (!/^result\s*:/i.test(line)) return false
+      const rest = line.replace(/^result\s*:/i, '').trim()
+      const next = lines[cursor + 1]?.trim() ?? ''
+      const json = /^[[{]/.test(rest) || (rest.length === 0 && (next.startsWith('{') || next.startsWith('[')))
+      if (!json) return false
       index = cursor
       return true
     }
@@ -1037,6 +1070,12 @@ export class Singularity {
         break
       }
       if (/^(?:args|result)\s*:/i.test(trimmed) && depth <= 0) {
+        if (/^result\s*:/i.test(trimmed)) {
+          const rest = trimmed.replace(/^result\s*:/i, '').trim()
+          const next = lines[index + 1]?.trim() ?? ''
+          const json = /^[[{]/.test(rest) || (rest.length === 0 && (next.startsWith('{') || next.startsWith('[')))
+          if (!json) break
+        }
         const headerDepth = this.braceDepth(raw)
         depth += headerDepth
         if (/[{[]/.test(raw)) sawJson = true
@@ -1143,7 +1182,7 @@ export class Singularity {
 
     for (const match of this.cleanPathText(this.stripUrls(text)).match(FILE_OR_URL_PATTERN) ?? []) {
       const file = this.presentFile(match.replace(/[.,;:]+$/, ''))
-      if (/^https?:\/\//i.test(file) || /(?:^|\.)(?:com|org|net|io|ai|dev)$/i.test(file)) continue
+      if (/^https?:\/\//i.test(file) || this.isUrlOrFragment(file) || this.isTruncatedPath(file) || /(?:^|\.)(?:com|org|net|io|ai|dev)$/i.test(file)) continue
       artifacts.push(file)
     }
 
@@ -1188,7 +1227,184 @@ export class Singularity {
   }
 
   private isFenceDelimiter(line: string): boolean {
-    return /^\s*```[A-Za-z0-9_+-]*\s*$/.test(line)
+    return this.openingAtLine(line) !== null
+  }
+
+  private openingAtLine(line: string): { length: number } | null {
+    const match = /^\s*(`{3,})([^`]*)$/.exec(line)
+    if (!match) return null
+    return { length: match[1].length }
+  }
+
+  private closingAtLine(line: string, minLength: number): boolean {
+    const match = /^\s*(`{3,})\s*$/.exec(line)
+    return Boolean(match && match[1].length >= minLength)
+  }
+
+  private findFences(text: string): Array<{ start: number; end: number; text: string }> {
+    return this.scanFences(text).outer
+  }
+
+  private codeFenceSpans(text: string): Array<{ start: number; end: number; text: string }> {
+    const scanned = this.scanFences(text)
+    const code = scanned.code.filter((span) => !this.spanIsMessageWrapper(text, span.start, span.end))
+    const runs = scanned.outer.flatMap((span) => this.wrapperCodeRuns(text, span))
+    const embedded = this.toolResultCodeSpans(text)
+    return [...code, ...runs, ...embedded]
+  }
+
+  recoverableBodies(text: string): string[] {
+    const normalized = text.replace(/\r\n/g, '\n')
+    return this.codeFenceSpans(normalized).map((span) => this.fenceParts(this.fenceText(span.text)).body)
+  }
+
+  private lineClosesFence(line: string, minLength: number): { endOffset: number; wholeLine: boolean } | null {
+    const mark = /^(\s*)(`{3,})(.*)$/.exec(line)
+    if (!mark || mark[2].length < minLength) return null
+    if (!(mark[3].trim() === '' || /^\s/.test(mark[3]))) return null
+    return { endOffset: mark[1].length + mark[2].length, wholeLine: mark[3].trim() === '' }
+  }
+
+  private scanFences(text: string): {
+    outer: Array<{ start: number; end: number; text: string }>
+    code: Array<{ start: number; end: number; text: string }>
+  } {
+    const outer: Array<{ start: number; end: number; text: string }> = []
+    const code: Array<{ start: number; end: number; text: string }> = []
+    const stack: Array<{ start: number; length: number; lang: string }> = []
+    let cursor = 0
+    const pushSpan = (start: number, end: number) => {
+      const raw = text.slice(start, end)
+      const normalized = this.fenceText(raw)
+      const isCode = !this.spanIsMessageWrapper(text, start, end) && this.isCodeFence(normalized)
+      if (isCode) code.push({ start, end, text: raw })
+      if (!stack.length) outer.push({ start, end, text: raw })
+    }
+    while (cursor < text.length) {
+      const open = this.nextFenceOpen(text, cursor)
+      if (!open) break
+      const lineStart = text.lastIndexOf('\n', open.start - 1) + 1
+      const atLineStart = /^\s*$/.test(text.slice(lineStart, open.start))
+      if (!atLineStart) {
+        const close = this.nextFenceClose(text, open.contentStart, open.length)
+        const eatsOuter = Boolean(stack.length && close && this.closeIsLineStart(text, close.end))
+        if (close && close.end > open.start && !eatsOuter) pushSpan(open.start, close.end)
+        cursor = close && close.end > open.start && !eatsOuter ? close.end : open.start + open.length
+        continue
+      }
+      const lineEnd = text.indexOf('\n', open.start)
+      const line = text.slice(lineStart, lineEnd < 0 ? text.length : lineEnd)
+      const lang = (line.trim().replace(/^`+/, '').trim().split(/\s/)[0] ?? '').toLowerCase()
+      const closer = stack.length ? this.lineClosesFence(line, stack[stack.length - 1].length) : null
+      if (closer) {
+        const top = stack.pop()
+        const end = closer.wholeLine && lineEnd >= 0 ? lineEnd + 1 : lineStart + closer.endOffset
+        if (top) pushSpan(top.start, end)
+        cursor = end
+        continue
+      }
+      stack.push({ start: open.start, length: open.length, lang })
+      cursor = open.contentStart
+    }
+    return { outer, code }
+  }
+
+  private nextFenceOpen(text: string, from: number): { start: number; contentStart: number; length: number } | null {
+    let index = from
+    while (index < text.length) {
+      const at = text.indexOf('```', index)
+      if (at < 0) return null
+      let length = 0
+      while (text[at + length] === '`') length += 1
+      if (this.backticksInsideString(text, at)) {
+        index = at + length
+        continue
+      }
+      const lineStart = text.lastIndexOf('\n', at - 1) + 1
+      const indent = text.slice(lineStart, at)
+      if (/^\s*$/.test(indent)) {
+        const lineEnd = text.indexOf('\n', at)
+        const line = text.slice(lineStart, lineEnd < 0 ? text.length : lineEnd)
+        if (this.openingAtLine(line)) {
+          return { start: at, contentStart: lineEnd < 0 ? text.length : lineEnd + 1, length }
+        }
+      } else {
+        const lang = /^([A-Za-z0-9_+#.+-]*)/.exec(text.slice(at + length))
+        const after = at + length + (lang?.[1].length ?? 0)
+        const escaped = text.startsWith('\\n', after)
+        if (escaped || text[after] === '\n') {
+          return { start: at, contentStart: after + (escaped ? 2 : 1), length }
+        }
+      }
+      index = at + length
+    }
+    return null
+  }
+
+  private backticksInsideString(text: string, at: number): boolean {
+    const lineStart = text.lastIndexOf('\n', at - 1) + 1
+    let quoted = false
+    for (let index = lineStart; index < at; index += 1) {
+      const char = text[index]
+      if (char === '\\') {
+        index += 1
+        continue
+      }
+      if (char === '"') quoted = !quoted
+    }
+    return quoted
+  }
+
+  private closeIsLineStart(text: string, end: number): boolean {
+    let cursor = end - 1
+    if (text[cursor] === '\n') cursor -= 1
+    while (cursor >= 0 && text[cursor] === '`') cursor -= 1
+    const lineStart = text.lastIndexOf('\n', cursor) + 1
+    return /^\s*$/.test(text.slice(lineStart, cursor + 1))
+  }
+
+  private escapedFenceClose(text: string, from: number, limit: number, minLength: number): { end: number } | null {
+    let index = text.indexOf('\\n', from)
+    while (index >= 0 && index < limit) {
+      if (text[index + 2] === '`') {
+        let length = 0
+        while (text[index + 2 + length] === '`') length += 1
+        const after = index + 2 + length
+        if (length >= minLength && (after >= text.length || text.startsWith('\\n', after) || text[after] === '\n' || after >= limit || /\s/.test(text[after] ?? ''))) {
+          return { end: after }
+        }
+      }
+      index = text.indexOf('\\n', index + 2)
+    }
+    return null
+  }
+
+  private nextFenceClose(text: string, from: number, minLength: number): { end: number } | null {
+    let index = from
+    while (index < text.length) {
+      if (index > 0 && text[index - 1] !== '\n') {
+        const newline = text.indexOf('\n', index)
+        const limit = newline < 0 ? text.length : newline
+        const inline = this.escapedFenceClose(text, index, limit, minLength)
+        if (inline) return inline
+        if (newline < 0) return null
+        index = newline + 1
+        continue
+      }
+      const escaped = this.escapedFenceClose(text, index, index + 2, minLength)
+      if (escaped) return escaped
+      const lineEnd = text.indexOf('\n', index)
+      const line = text.slice(index, lineEnd < 0 ? text.length : lineEnd)
+      const mark = /^(\s*)(`{3,})(.*)$/.exec(line)
+      if (mark && mark[2].length >= minLength && (mark[3].trim() === '' || /^\s/.test(mark[3]))) {
+        const tickEnd = index + mark[1].length + mark[2].length
+        const wholeLine = mark[3].trim() === ''
+        return { end: wholeLine && lineEnd >= 0 ? lineEnd + 1 : tickEnd }
+      }
+      if (lineEnd < 0) return null
+      index = lineEnd + 1
+    }
+    return null
   }
 
   private stripUrls(text: string): string {
@@ -1214,24 +1430,284 @@ export class Singularity {
     return !open
   }
 
+  private fenceText(raw: string): string {
+    if (raw.includes('\n')) return raw
+    return raw.replace(/\\n/g, '\n')
+  }
+
+  private fenceLines(block: string): string[] {
+    return this.fenceText(block).replace(/\n+$/, '').split('\n')
+  }
+
   private fenceParts(block: string): { lang: string; body: string } {
-    const lines = block.split('\n')
-    const lang = (lines[0] ?? '').trim().replace(/^```/, '').trim().toLowerCase()
+    const lines = this.fenceLines(block)
+    const lang = (lines[0] ?? '').trim().replace(/^`+/, '').trim().toLowerCase()
     return { lang, body: lines.slice(1, -1).join('\n') }
   }
 
   private isCodeFence(block: string): boolean {
     const { lang, body } = this.fenceParts(block)
+    if (lang) return true
     const trimmed = body.trim()
     if (!trimmed) return false
+    if (/^(?:\*\*)?(?:human|user|assistant|prompt|response)\b/i.test(trimmed)) return false
+    if (/(^|\n)\s*`{3,}/.test(trimmed)) return false
     if (/\btool\s*call\s*:/i.test(trimmed)) return false
     if (this.isToolPayload(trimmed)) return false
-    if (lang) return true
-    if (this.isCommandFence(block)) return true
+    const content = trimmed.split('\n').map((line) => line.trim()).filter(Boolean)
+    if (content.length && content.every((line) => this.isNeverCodeLine(line))) return false
     if (this.fenceBodyIsProse(trimmed)) return false
-    if (/^\s*(?:import |export |def |class |function |const |let |var |return |#include|package |public |private )/m.test(trimmed)) return true
-    const symbols = (trimmed.match(/[{}[\]();=<>]/g) ?? []).length
-    return symbols / trimmed.length > 0.03
+    return this.untaggedBodyIsCode(body)
+  }
+
+  private lineLooksLikeCode(line: string): boolean {
+    const trimmed = line.trim()
+    if (!trimmed) return false
+    if (/^\[image\b/i.test(trimmed)) return false
+    if (this.looksLikeCommand(trimmed)) return true
+    if (/^(?:import |export |def |class |function |const |let |var |return |#include|package |public |private |fn |func |type |interface |struct )/i.test(trimmed)) return true
+    if (/^(?: {4,}|\t)/.test(line) && /[{}[\]();=]/.test(line)) return true
+    if (/:\s*$/.test(trimmed) && !this.isLogOrTraceLine(line)) return false
+    if (/[.!?]["']?\s*$/.test(trimmed) && (trimmed.match(/[A-Za-z]{2,}/g) ?? []).length >= 3) return false
+    const symbols = (trimmed.match(/[{}[\]();=]/g) ?? []).length
+    return symbols >= 2 && symbols / trimmed.length >= 0.06
+  }
+
+  private untaggedBodyIsCode(body: string): boolean {
+    const lines = body.split('\n').filter((line) => line.trim())
+    if (!lines.length) return false
+    const codeLines = lines.filter((line) => this.lineLooksLikeCode(line)).length
+    return codeLines * 2 >= lines.length
+  }
+
+  private isNeverCodeLine(line: string): boolean {
+    const trimmed = line.trim()
+    if (!trimmed) return false
+    if (/^\[image\b/i.test(trimmed)) return true
+    if (this.looksLikeCommand(trimmed) || this.isLogOrTraceLine(line)) return false
+    return /:\s*$/.test(trimmed)
+  }
+
+  private isLogOrTraceLine(line: string): boolean {
+    const trimmed = line.trim()
+    if (!trimmed || /^\[image\b/i.test(trimmed)) return false
+    if (/^(?:INFO|DEBUG|WARNING|WARN|ERROR|CRITICAL)\s*:/.test(trimmed)) return true
+    if (/^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}:\d{2}/.test(trimmed)) return true
+    if (/^Traceback \(most recent call last\):/.test(trimmed)) return true
+    if (/^File ".+", line \d+/.test(trimmed)) return true
+    if (/^(?: {2,}|\t)at \S.+\(.+:\d+:\d+\)/.test(line)) return true
+    if (/^[A-Za-z_][\w.]*(?:Error|Exception): \S/.test(trimmed)) return true
+    return false
+  }
+
+  private isRoleHeader(line: string): boolean {
+    return /^(?:#{1,3}[ \t]+)?(?:\*\*|__)?(?:human|user|assistant|system|prompt|response|question|answer)(?:\*\*|__)?[ \t]*:/i.test(line.trim())
+  }
+
+  private isToolCallHeader(line: string): boolean {
+    return /^tool\s*call\s*:/i.test(line.trim())
+  }
+
+  private isExportFooter(line: string): boolean {
+    const trimmed = line.trim()
+    return /^(?:-{3,}|\*{3,}|_{3,})\s*$/.test(trimmed) || /chatboxai\.app|powered by chatgpt exporter/i.test(trimmed)
+  }
+
+  private nearestNonBlank(text: string, from: number, direction: -1 | 1): string {
+    const slice = direction < 0 ? text.slice(0, from) : text.slice(from)
+    const lines = direction < 0 ? slice.split('\n').reverse() : slice.split('\n')
+    for (const line of lines) {
+      if (line.trim()) return line.trim()
+    }
+    return ''
+  }
+
+  private spanIsMessageWrapper(text: string, start: number, end: number): boolean {
+    const lineStart = text.lastIndexOf('\n', Math.max(0, start - 1)) + 1
+    const lineEnd = text.indexOf('\n', start)
+    const openLine = text.slice(lineStart, lineEnd < 0 ? text.length : lineEnd)
+    if (!/^\s*`{3,}\s*$/.test(openLine)) return false
+    const prev = this.nearestNonBlank(text, lineStart, -1)
+    const next = this.nearestNonBlank(text, end, 1)
+    const jsonEnd = /^[}\]][,;]?$/.test(prev) || (/^[{[]/.test(prev) && /[}\]]\s*$/.test(prev))
+    const tail = text.slice(Math.max(0, lineStart - 4000), lineStart)
+    const opensAfter = this.isRoleHeader(prev) || (jsonEnd && /^[ \t]*result\s*:/im.test(tail))
+    const closesBefore = this.isRoleHeader(next) || this.isToolCallHeader(next) || this.isExportFooter(next)
+    return opensAfter && closesBefore
+  }
+
+  private syntheticFence(lang: string, body: string, start: number): { start: number; end: number; text: string } {
+    const text = '```' + lang + '\n' + body.replace(/\n+$/, '') + '\n```\n'
+    return { start, end: start + text.length, text }
+  }
+
+  private wrapperCodeRuns(text: string, span: { start: number; end: number }): Array<{ start: number; end: number; text: string }> {
+    if (!this.spanIsMessageWrapper(text, span.start, span.end)) return []
+    const openLineEnd = text.indexOf('\n', span.start)
+    const bodyStart = openLineEnd < 0 ? span.end : openLineEnd + 1
+    const closeLineStart = text.lastIndexOf('\n', Math.max(span.start, span.end - 1)) + 1
+    if (closeLineStart <= bodyStart) return []
+    const body = text.slice(bodyStart, closeLineStart)
+    const lines = body.split('\n')
+    const visible: Array<{ line: string; abs: number; kind: 'command' | 'log' | '' }> = []
+    let cursor = bodyStart
+    let nested = false
+    for (const line of lines) {
+      const fence = /^(`{3,})([^`]*)$/.exec(line)
+      if (fence && !nested && fence[2].trim() !== '') {
+        nested = true
+        visible.push({ line: '', abs: cursor, kind: '' })
+      } else if (fence && nested && fence[2].trim() === '') {
+        nested = false
+        visible.push({ line: '', abs: cursor, kind: '' })
+      } else if (!nested) {
+        visible.push({ line, abs: cursor, kind: this.runKind(line) })
+      }
+      cursor += line.length + 1
+    }
+    const runs: Array<{ start: number; end: number; text: string }> = []
+    let index = 0
+    while (index < visible.length) {
+      const kind = visible[index].kind
+      if (!kind) {
+        index += 1
+        continue
+      }
+      let end = index + 1
+      while (end < visible.length) {
+        if (visible[end].kind === kind) {
+          end += 1
+          continue
+        }
+        if (!visible[end].line.trim()) {
+          const next = visible[end + 1]
+          if (next && next.kind === kind) {
+            end += 1
+            continue
+          }
+        }
+        break
+      }
+      const chunk = visible.slice(index, end)
+      while (chunk.length && !chunk[chunk.length - 1].line.trim()) chunk.pop()
+      const meaningful = chunk.filter((item) => item.kind === kind)
+      if (kind === 'command' || meaningful.length >= 2 || /^Traceback \(most recent call last\):/.test(chunk[0]?.line.trim() ?? '')) {
+        runs.push(this.syntheticFence(kind === 'command' ? 'bash' : 'text', chunk.map((item) => item.line).join('\n'), chunk[0].abs))
+      }
+      index = end
+    }
+    return runs
+  }
+
+  private runKind(line: string): 'command' | 'log' | '' {
+    if (!line.trim() || this.isNeverCodeLine(line)) return ''
+    if (this.looksLikeCommand(line)) return 'command'
+    if (this.isLogOrTraceLine(line)) return 'log'
+    return ''
+  }
+
+  private toolResultCodeSpans(text: string): Array<{ start: number; end: number; text: string }> {
+    const lines = text.split('\n')
+    const starts: number[] = []
+    let offset = 0
+    for (const line of lines) {
+      starts.push(offset)
+      offset += line.length + 1
+    }
+    const spans: Array<{ start: number; end: number; text: string }> = []
+    for (let index = 0; index < lines.length; index += 1) {
+      if (!/^[ \t]*result\s*:/i.test(lines[index])) continue
+      let end = index
+      const blob = [lines[index]]
+      while (end + 1 < lines.length && lines[end + 1].trim() !== '') {
+        end += 1
+        blob.push(lines[end])
+      }
+      for (const value of this.jsonStringsContainingFences(blob.join('\n'))) {
+        spans.push(...this.fencesInUnescaped(value, starts[index]))
+      }
+      index = end
+    }
+    return spans
+  }
+
+  private jsonStringsContainingFences(region: string): string[] {
+    const values: string[] = []
+    for (let index = 0; index < region.length; index += 1) {
+      if (region[index] !== '"') continue
+      index += 1
+      let raw = ''
+      while (index < region.length) {
+        if (region[index] === '\\') {
+          raw += region[index] + (region[index + 1] ?? '')
+          index += 2
+          continue
+        }
+        if (region[index] === '"') break
+        raw += region[index]
+        index += 1
+      }
+      if (raw.includes('```')) values.push(this.unescapeJsonString(raw))
+    }
+    return values
+  }
+
+  private unescapeJsonString(value: string): string {
+    return value.replace(/\\(u[0-9a-fA-F]{4}|.)/g, (_match, esc: string) => {
+      if (esc === 'n') return '\n'
+      if (esc === 'r') return '\r'
+      if (esc === 't') return '\t'
+      if (esc === 'b') return '\b'
+      if (esc === 'f') return '\f'
+      if (esc[0] === 'u') return String.fromCharCode(parseInt(esc.slice(1), 16))
+      return esc
+    })
+  }
+
+  private fencesInUnescaped(value: string, start: number): Array<{ start: number; end: number; text: string }> {
+    const found: Array<{ start: number; end: number; text: string }> = []
+    let index = 0
+    while (index < value.length) {
+      const open = value.indexOf('```', index)
+      if (open < 0) break
+      let ticks = 0
+      while (value[open + ticks] === '`') ticks += 1
+      const afterTicks = open + ticks
+      const langMatch = /^([A-Za-z0-9_+#-]*)/.exec(value.slice(afterTicks))
+      const lang = langMatch?.[1] ?? ''
+      let cursor = afterTicks + lang.length
+      if (value[cursor] === '\r') cursor += 1
+      if (value[cursor] !== '\n') {
+        index = afterTicks
+        continue
+      }
+      cursor += 1
+      const bodyStart = cursor
+      let closeAt = -1
+      while (cursor < value.length) {
+        const atLine = cursor === 0 || value[cursor - 1] === '\n'
+        if (atLine && value[cursor] === '`') {
+          let marks = 0
+          while (value[cursor + marks] === '`') marks += 1
+          const after = cursor + marks
+          const tail = value[after] ?? ''
+          if (marks >= ticks && (tail === '' || tail === '\n' || tail === '\r' || /\s/.test(tail))) {
+            closeAt = cursor
+            cursor = after
+            break
+          }
+        }
+        cursor += 1
+      }
+      if (closeAt < 0) {
+        index = afterTicks
+        continue
+      }
+      const body = value.slice(bodyStart, closeAt).replace(/\n$/, '')
+      if (lang || this.untaggedBodyIsCode(body)) found.push(this.syntheticFence(lang || 'text', body, start))
+      index = cursor
+    }
+    return found
   }
 
   private isCommandFence(block: string): boolean {
@@ -1244,24 +1720,9 @@ export class Singularity {
   }
 
   private listCodeFences(text: string): Array<{ text: string; start: number }> {
-    const lines = text.split('\n')
-    const starts: number[] = []
-    let offset = 0
-    for (const line of lines) {
-      starts.push(offset)
-      offset += line.length + 1
-    }
     const blocks: Array<{ text: string; start: number }> = []
-    let openAt = -1
-    for (let index = 0; index < lines.length; index += 1) {
-      if (!this.isFenceDelimiter(lines[index] ?? '')) continue
-      if (openAt < 0) {
-        openAt = index
-        continue
-      }
-      const textBlock = lines.slice(openAt, index + 1).join('\n')
-      if (this.isCodeFence(textBlock)) blocks.push({ text: textBlock, start: starts[openAt] ?? 0 })
-      openAt = -1
+    for (const span of this.codeFenceSpans(text)) {
+      blocks.push({ text: this.fenceText(span.text), start: span.start })
     }
     return blocks
   }
@@ -1278,6 +1739,7 @@ export class Singularity {
   private codeBlockReport(text: string, fold: FoldResult): {
     summary: string
     kept: string[]
+    stored: string[]
     input: number
     keptCount: number
     foldedCount: number
@@ -1296,7 +1758,9 @@ export class Singularity {
       groups.set(key, (groups.get(key) ?? 0) + 1)
     }
     const kept: string[] = []
+    const stored: string[] = []
     const seenKept = new Set<string>()
+    const seenStored = new Set<string>()
     let keptCount = 0
     let foldedCount = 0
     let droppedCount = 0
@@ -1309,18 +1773,27 @@ export class Singularity {
       if (this.keepCodeBlock(block.start, normalized.length, block.text, normalized)) {
         if (!seenKept.has(key)) {
           seenKept.add(key)
-          kept.push(block.text)
+          kept.push(this.presentKeptBlock(block.text))
           keptCount += 1
         } else {
           droppedCount += 1
         }
         continue
       }
+      if (this.fenceParts(block.text).lang) {
+        if (!seenStored.has(key)) {
+          seenStored.add(key)
+          stored.push(block.text)
+        }
+        foldedCount += 1
+        continue
+      }
       droppedCount += 1
     }
     return {
-      summary: `code blocks: ${blocks.length} in input, ${keptCount} kept, ${foldedCount} folded, ${droppedCount} dropped`,
+      summary: `code blocks: ${blocks.length} in input, ${keptCount} kept inline, ${foldedCount} stored in dictionary, ${droppedCount} dropped`,
       kept,
+      stored,
       input: blocks.length,
       keptCount,
       foldedCount,
@@ -1328,47 +1801,42 @@ export class Singularity {
     }
   }
 
-  private eachFencedBlock(text: string, onBlock: (block: string) => void): void {
-    const lines = text.split('\n')
-    let openAt = -1
-    for (let index = 0; index < lines.length; index += 1) {
-      if (!this.isFenceDelimiter(lines[index])) continue
-      if (openAt < 0) {
-        openAt = index
-        continue
-      }
-      onBlock(lines.slice(openAt, index + 1).join('\n'))
-      openAt = -1
+  private presentKeptBlock(block: string): string {
+    const lines = this.fenceLines(block)
+    const body = lines.slice(1, -1)
+    const risky = body.some((line) => /^#{1,6}\s/.test(line.trim()) || /^`{3,}/.test(line.trim()))
+    if (!risky) return block
+    let longest = 3
+    for (const line of lines) {
+      for (const run of line.match(/`+/g) ?? []) longest = Math.max(longest, run.length)
     }
+    const fence = '`'.repeat(longest + 1)
+    return `${fence}\n${block}\n${fence}`
+  }
+
+  private eachFencedBlock(text: string, onBlock: (block: string) => void): void {
+    for (const span of this.codeFenceSpans(text)) onBlock(this.fenceText(span.text))
   }
 
   private maskFencedBlocks(text: string): string {
-    const lines = text.split('\n')
-    const out: string[] = []
-    let buf: string[] | null = null
-    for (const line of lines) {
-      if (this.isFenceDelimiter(line)) {
-        if (buf) {
-          buf.push(line)
-          out.push(this.renderFencedBlock(buf))
-          buf = null
-        } else {
-          buf = [line]
-        }
-        continue
-      }
-      if (buf) buf.push(line)
-      else out.push(line)
+    const spans = this.findFences(text)
+    if (!spans.length) return text
+    let out = ''
+    let cursor = 0
+    for (const span of spans) {
+      out += text.slice(cursor, span.start)
+      out += this.renderFencedBlock(this.fenceText(span.text), this.spanIsMessageWrapper(text, span.start, span.end))
+      cursor = span.end
     }
-    if (buf) out.push(...buf)
-    return out.join('\n')
+    return out + text.slice(cursor)
   }
 
-  private renderFencedBlock(lines: string[]): string {
+  private renderFencedBlock(raw: string, forceUnwrap = false): string {
+    const lines = this.fenceLines(raw)
     const opening = lines[0]?.trim() ?? ''
     const bodyLines = lines.slice(1, -1)
-    if (/^```\s*$/.test(opening) && this.fenceBodyIsProse(bodyLines.join('\n'))) {
-      return bodyLines
+    if (forceUnwrap || (/^`{3,}\s*$/.test(opening) && (this.fenceBodyIsProse(bodyLines.join('\n')) || !this.isCodeFence(raw)))) {
+      const unwrapped = bodyLines
         .map((line) => {
           const trimmed = line.trim()
           if (trimmed.length <= 220) return trimmed
@@ -1377,8 +1845,9 @@ export class Singularity {
         })
         .filter(Boolean)
         .join('\n')
+      return this.maskFencedBlocks(unwrapped)
     }
-    return `[code block ${lines.join('\n').length} chars]`
+    return `[code block ${raw.length} chars]`
   }
 
   private fenceBodyIsProse(body: string): boolean {
@@ -1395,26 +1864,18 @@ export class Singularity {
 
   private protectFencedCode(text: string): { text: string; blocks: Map<string, string> } {
     const blocks = new Map<string, string>()
-    const out: string[] = []
-    let buf: string[] | null = null
-    for (const line of text.split('\n')) {
-      if (this.isFenceDelimiter(line)) {
-        if (buf) {
-          buf.push(line)
-          const key = `__VANTA_FENCE_${blocks.size}__`
-          blocks.set(key, buf.join('\n'))
-          out.push(key)
-          buf = null
-        } else {
-          buf = [line]
-        }
-        continue
-      }
-      if (buf) buf.push(line)
-      else out.push(line)
+    const spans = this.findFences(text)
+    if (!spans.length) return { text, blocks }
+    let out = ''
+    let cursor = 0
+    for (const span of spans) {
+      out += text.slice(cursor, span.start)
+      const key = `__VANTA_FENCE_${blocks.size}__`
+      blocks.set(key, span.text)
+      out += key
+      cursor = span.end
     }
-    if (buf) out.push(...buf)
-    return { text: out.join('\n'), blocks }
+    return { text: out + text.slice(cursor), blocks }
   }
 
   private restoreProtected(text: string, blocks: Map<string, string>): string {
@@ -1548,34 +2009,84 @@ export class Singularity {
       lastAssistant = close.assistant
     }
 
-    const mentioned = [...this.commitReport(text), ...this.tailFiles(text)].slice(0, 8)
-    const next = this.statedNextStep(lastAssistant, lastUser)
+    const mentioned = [...this.commitReport(text), ...this.tailFiles(text)]
+      .filter((item) => !this.isMediaFile(item))
+      .slice(0, 8)
+    const nextRaw = this.statedNextStep(lastAssistant)
+    const next = nextRaw || 'none stated'
+    const reply = lastAssistant
+      ? this.replyWithoutStatedStep(this.trimReply(lastAssistant), nextRaw)
+      : 'not clearly detected'
 
     return [
       '## WHERE IT STOPPED',
       'last user message:',
-      lastUser ? this.renderStopUser(lastUser) : 'not clearly detected',
+      lastUser ? this.renderStopUser(lastUser, turns.length === 0) : 'not clearly detected',
       'last assistant reply:',
-      lastAssistant ? this.trimReply(lastAssistant) : 'not clearly detected',
+      reply,
       'last commits/files:',
       ...(mentioned.length ? mentioned.map((item) => `- ${item}`) : ['- not clearly detected']),
       'stated next step:',
-      next || 'not clearly detected',
+      next,
       '',
     ]
   }
 
   private latestWorkTurns(turns: Array<{ role: 'user' | 'assistant'; text: string }>): { user: string; assistant: string } {
-    let user = ''
-    let assistant = ''
-    for (let index = turns.length - 1; index >= 0; index -= 1) {
-      const turn = turns[index]
-      if (!this.hasWorkSignal(turn.text)) continue
-      if (turn.role === 'user' && !user) user = turn.text
-      if (turn.role === 'assistant' && !assistant) assistant = turn.text
-      if (user && assistant) break
+    const usable = (turn: { text: string }) => {
+      const prose = this.stripNoise(this.turnProse(turn.text)).trim()
+      return prose.length > 0 && !this.isEmotionalNoise(prose)
     }
-    return { user, assistant }
+    for (let userIndex = turns.length - 1; userIndex >= 0; userIndex -= 1) {
+      if (turns[userIndex].role !== 'user' || !usable(turns[userIndex])) continue
+      for (let index = userIndex + 1; index < turns.length; index += 1) {
+        if (turns[index].role === 'user' && usable(turns[index])) break
+        if (turns[index].role === 'assistant' && usable(turns[index])) {
+          return { user: turns[userIndex].text, assistant: turns[index].text }
+        }
+      }
+    }
+    for (let index = turns.length - 1; index >= 0; index -= 1) {
+      if (turns[index].role === 'assistant' && usable(turns[index])) return { user: '', assistant: turns[index].text }
+    }
+    for (let index = turns.length - 1; index >= 0; index -= 1) {
+      if (turns[index].role === 'user' && usable(turns[index])) return { user: turns[index].text, assistant: '' }
+    }
+    return { user: '', assistant: '' }
+  }
+
+  private isEmotionalNoise(text: string): boolean {
+    if (this.hasWorkSignal(text) || this.isNextStepSentence(text)) return false
+    return /\b(?:i remember|i was scared|believed in (?:me|you)|never giving up|black screen|blank page|forever yours|always together|together, everywhere|i love you|love you|thanks babe|proud of us)\b/i.test(text)
+  }
+
+  private isMediaFile(value: string): boolean {
+    return /\.(?:png|jpe?g|gif|webp|bmp|svg|ico|mp4|mov|webm|mp3|wav)(?:$|[^A-Za-z0-9])/i.test(value)
+  }
+
+  private isUrlOrFragment(value: string): boolean {
+    const text = value.trim()
+    if (/^https?:\/\//i.test(text) || /^https?:\/[^/]/i.test(text)) return true
+    if (/^[a-z]:\/+(?:www\.)?[a-z0-9-]+(?:\.[a-z0-9-]+)+/i.test(text)) return true
+    if (/(?:^|[/\\])(?:www\.)?[a-z0-9-]+\.(?:com|org|net|io|ai|dev|co|uk|ae)(?:[/\\:]|$)/i.test(text)) return true
+    return false
+  }
+
+  private isSavedWebPage(file: string): boolean {
+    const base = (file.split(/[/\\]/).pop() ?? file).trim()
+    if (/^www-/i.test(base)) return true
+    return /-(?:com|org|net|io|ai|dev|co|uk|ae)-[^/\\]*\.(?:md|html?|txt)$/i.test(base)
+  }
+
+  private isTruncatedPath(file: string): boolean {
+    const text = file.trim()
+    return /^(?:\.{3}|…)/.test(text) || /(?:^|[/\\])(?:\.{3}|…)(?:[/\\]|$)/.test(text)
+  }
+
+  private isCodeOrConfigFile(file: string): boolean {
+    if (this.isMediaFile(file) || this.isUrlOrFragment(file) || this.isSavedWebPage(file) || this.isTruncatedPath(file)) return false
+    return /\.(?:tsx?|jsx?|mjs|cjs|json|md|txt|html|css|xml|ya?ml|toml|py|sh|ps1|bat|log|vue|svelte|rs|go|java|kt|rb|php|cs|c|h|hpp|sql|ini|cfg|conf|lock)(?:$|[^A-Za-z0-9])/i.test(file)
+      || /(?:^|[/\\])(?:Dockerfile|Makefile|LICENSE|README)(?:$|[^A-Za-z0-9])/i.test(file)
   }
 
   private hasWorkSignal(text: string): boolean {
@@ -1604,8 +2115,10 @@ export class Singularity {
   }
 
   private unwrapUntaggedFence(text: string): string {
-    const match = text.trim().match(/^```[ \t]*\n([\s\S]*?)\n```$/)
-    return match ? match[1].trim() : text
+    const trimmed = text.trim()
+    const match = trimmed.match(/^```[ \t]*\n([\s\S]*)\n```[ \t]*$/)
+    if (!match || /(^|\n)\s*```/.test(match[1])) return text
+    return match[1].trim()
   }
 
   private turnProse(text: string): string {
@@ -1630,8 +2143,17 @@ export class Singularity {
       .join('\n')
   }
 
-  private renderStopUser(text: string): string {
-    return this.capVerbatim(this.turnProse(text), 600)
+  private renderStopUser(text: string, tail = false): string {
+    const prose = this.turnProse(text)
+    return tail ? this.capTail(prose, 600) : this.capVerbatim(prose, 600)
+  }
+
+  private capTail(text: string, limit: number): string {
+    const trimmed = text.replace(/\n{3,}/g, '\n\n').trim()
+    if (trimmed.length <= limit) return trimmed
+    const slice = trimmed.slice(-limit)
+    const clipped = slice.replace(/^\S*\s+/, '')
+    return `...${clipped || slice}`
   }
 
   private stripExportChrome(text: string): string {
@@ -1639,6 +2161,8 @@ export class Singularity {
     const tail = text.slice(start)
       .replace(/\n[ \t]*-{5,}[ \t]*\n[\s\S]*chatboxai\.app[\s\S]*$/i, '')
       .replace(/\n*<a\b[^>\n]*chatboxai\.app[\s\S]*$/i, '')
+      .replace(/\n[ \t]*-{3,}[ \t]*\n[\s\S]*powered by chatgpt exporter[\s\S]*$/i, '')
+      .replace(/\n[ \t]*powered by chatgpt exporter[\s\S]*$/i, '')
     return `${text.slice(0, start)}${tail}`.replace(/https?:\/\/(?:www\.)?chatboxai\.app\S*/gi, '')
   }
 
@@ -1647,11 +2171,14 @@ export class Singularity {
     if (fromJson.length) return fromJson
 
     const turns: Array<{ role: 'user' | 'assistant'; text: string }> = []
-    const marker = /(?:^|\n)\s*(?:#{1,3}\s*)?(?:\*\*|__)?(human|user|assistant|prompt|response|question|answer)(?:\*\*|__)?\s*:\s*/gi
+    const marker = /(?:^|\n)[ \t]*(#{1,3}[ \t]+|\*\*|__)?(human|user|assistant|prompt|response|question|answer)(?:\*\*|__)?[ \t]*:[ \t]*/gi
     const marks: Array<{ role: 'user' | 'assistant'; start: number; end: number }> = []
     let match: RegExpExecArray | null
     while ((match = marker.exec(text))) {
-      const label = match[1].toLowerCase()
+      const prefix = match[1] ?? ''
+      const label = match[2].toLowerCase()
+      const wrapped = label === 'prompt' || label === 'response' || label === 'question' || label === 'answer'
+      if (wrapped && !prefix) continue
       marks.push({
         role: label === 'assistant' || label === 'response' || label === 'answer' ? 'assistant' : 'user',
         start: match.index,
@@ -1700,28 +2227,35 @@ export class Singularity {
     return this.cleanEvidenceLine(this.turnProse(text), 500) || 'not clearly detected'
   }
 
-  private statedNextStep(assistant: string, user: string): string {
-    for (const chunk of [assistant, user]) {
-      if (!chunk.trim()) continue
-      const prose = this.turnProse(chunk)
-      const listed = this.nextStepFromList(prose)
-      if (listed) return this.cleanEvidenceLine(listed, 300)
-      const sentences = this.cleanEvidenceLine(prose, 4000)
-        .replace(/```[\s\S]*?```/g, ' ')
-        .replace(/\[code block \d+ chars\]/g, ' ')
-        .split(/(?<=[.!?])\s+/)
-      for (let index = sentences.length - 1; index >= 0; index -= 1) {
-        const sentence = sentences[index]?.trim() ?? ''
-        if (sentence.length < 8) continue
-        if (/\bone last thing\b/i.test(sentence) || /\bthen run\b/i.test(sentence) || /\bnext steps?\s*:/i.test(sentence)) {
-          return this.cleanEvidenceLine(sentence, 300)
-        }
-        if (this.hasWorkSignal(sentence) && (NEXT_PATTERN.test(sentence) || /\b(?:todo|next step)\b/i.test(sentence))) {
-          return this.cleanEvidenceLine(sentence, 300)
-        }
-      }
+  private replyWithoutStatedStep(reply: string, next: string): string {
+    if (!next || !reply.includes(next)) return reply
+    const stripped = reply.replace(next, ' ').replace(/\s+/g, ' ').trim()
+    return stripped.length >= 24 ? stripped : reply
+  }
+
+  private statedNextStep(assistant: string): string {
+    if (!assistant.trim()) return ''
+    const prose = this.turnProse(assistant)
+    const listed = this.nextStepFromList(prose)
+    if (listed) return this.cleanEvidenceLine(listed, 300)
+    const sentences = this.cleanEvidenceLine(prose, 4000)
+      .replace(/```[\s\S]*?```/g, ' ')
+      .replace(/\[code block \d+ chars\]/g, ' ')
+      .split(/(?<=[.!?])\s+/)
+    for (let index = sentences.length - 1; index >= 0; index -= 1) {
+      const sentence = sentences[index]?.trim() ?? ''
+      if (sentence.length < 8 || !this.isNextStepSentence(sentence)) continue
+      return this.cleanEvidenceLine(sentence, 300)
     }
     return ''
+  }
+
+  private isNextStepSentence(sentence: string): boolean {
+    if (/\bone last thing\b/i.test(sentence) || /\bthen run\b/i.test(sentence) || /\bnext steps?\b/i.test(sentence)) return true
+    if (/\b(?:follow[- ]?up|remaining work|still need to|left to do|should now|you can now)\b/i.test(sentence)) return true
+    if (/\bnext\b/i.test(sentence) && /\b(?:run|add|fix|ship|tag|test|check|update|commit|push|open|review|export)\b/i.test(sentence)) return true
+    if (this.hasWorkSignal(sentence) && (NEXT_PATTERN.test(sentence) || /\b(?:todo|next step)\b/i.test(sentence))) return true
+    return false
   }
 
   private nextStepFromList(text: string): string {
@@ -1780,6 +2314,7 @@ export class Singularity {
     for (const hash of created) push(hash)
     for (const hash of heads) push(hash)
     push(logHead)
+    for (const hash of this.proseCommitHashes(source)) push(hash)
     const removed = [...dropped]
     const labels = removed.map((hash) => `${hash} (dropped)`)
     const room = Math.max(1, 4 - labels.length)
@@ -1788,8 +2323,73 @@ export class Singularity {
 
   private commitsBeforeReset(source: string): string[] {
     const logged = this.latestOnelineLog(source)
+    const created = this.createdHashes(source)
+    if (created.length && this.lastCreatedIndex(source) > this.latestOnelineLogEnd(source)) return created
     if (logged.length >= 2) return logged
-    return this.createdHashes(source)
+    return created
+  }
+
+  private lastCreatedIndex(source: string): number {
+    const pattern = /\[(?:[A-Za-z][\w./-]*)\s+([0-9a-f]{7,40})\]/gi
+    let end = -1
+    let match: RegExpExecArray | null
+    while ((match = pattern.exec(source))) {
+      if (!this.isCommitHash(match[1])) continue
+      end = match.index
+    }
+    return end
+  }
+
+  private latestOnelineLogEnd(source: string): number {
+    const lines = source.split('\n')
+    const lineStarts: number[] = []
+    let offset = 0
+    for (const line of lines) {
+      lineStarts.push(offset)
+      offset += line.length + 1
+    }
+    let bestEnd = -1
+    let bestLine = -1
+    let index = 0
+    while (index < lines.length) {
+      const hash = this.lineHash(lines[index] ?? '')
+      if (!hash) {
+        index += 1
+        continue
+      }
+      let endLine = index
+      let cursor = index + 1
+      while (cursor < lines.length && this.lineHash(lines[cursor] ?? '')) {
+        endLine = cursor
+        cursor += 1
+      }
+      const message = /\b[0-9a-f]{7,40}\b\s+\S/.test(lines[index] ?? '')
+      if ((endLine > index || message) && endLine >= bestLine) {
+        bestLine = endLine
+        bestEnd = lineStarts[endLine] + (lines[endLine]?.length ?? 0)
+      }
+      index = cursor
+    }
+    return bestEnd
+  }
+
+  private proseCommitHashes(source: string): string[] {
+    const found: Array<{ hash: string; index: number }> = []
+    const pattern = /\b(?:new commit|commit(?:ted)?|reverted?|pushed|cherry-?picked|reset to)\b[^.\n]{0,80}?\b([0-9a-f]{7,40})\b/gi
+    let match: RegExpExecArray | null
+    while ((match = pattern.exec(source))) {
+      if (!this.isCommitHash(match[1])) continue
+      found.push({ hash: match[1].toLowerCase(), index: match.index })
+    }
+    found.sort((a, b) => b.index - a.index)
+    const ordered: string[] = []
+    const seen = new Set<string>()
+    for (const item of found) {
+      if (seen.has(item.hash)) continue
+      seen.add(item.hash)
+      ordered.push(item.hash)
+    }
+    return ordered
   }
 
   private latestOnelineLog(source: string): string[] {
@@ -1909,7 +2509,8 @@ export class Singularity {
     for (let index = matches.length - 1; index >= 0; index -= 1) {
       const file = this.presentFile(matches[index].replace(/[.,;:)]+$/, ''))
       if (/^https?:\/\//i.test(file) || /chatboxai\.app/i.test(file)) continue
-      const key = file.toLowerCase()
+      if (!this.isCodeOrConfigFile(file)) continue
+      const key = file.replace(/[\\/]+/g, '/').toLowerCase()
       if (seen.has(key)) continue
       seen.add(key)
       unique.push(file)
@@ -1940,15 +2541,57 @@ export class Singularity {
     return Math.ceil(chars / 4)
   }
 
+  private linesInsideFence(lines: string[]): boolean[] {
+    const inside = new Array<boolean>(lines.length).fill(false)
+    let openLength = 0
+    for (let index = 0; index < lines.length; index += 1) {
+      const line = lines[index] ?? ''
+      if (openLength === 0) {
+        const opening = this.openingAtLine(line)
+        if (!opening) continue
+        inside[index] = true
+        openLength = opening.length
+        continue
+      }
+      inside[index] = true
+      if (this.closingAtLine(line, openLength)) openLength = 0
+    }
+    return inside
+  }
+
+  private isCapsuleHeading(line: string): boolean {
+    if (line === '# VantaCore Memory Capsule') return true
+    if (line === '## WHERE IT STOPPED') return true
+    if (line === '## SESSION MAP') return true
+    if (line === '## CURRENT FINAL STATE') return true
+    if (line === '## OPEN LOOPS / NEXT ACTIONS') return true
+    if (line === '## DO NOT REPEAT / DO NOT CHANGE') return true
+    if (line === '## DECISION LOG') return true
+    if (line === '## KEY COMMANDS / FILES / ARTIFACTS') return true
+    if (line === '## REFERENCE DICTIONARY') return true
+    return /^## \[CLUSTER-\d+: .+\]$/.test(line)
+  }
+
+  private demoteForeignHeadings(text: string): string {
+    const lines = text.split('\n')
+    const fenced = this.linesInsideFence(lines)
+    return lines.map((line, index) => {
+      if (fenced[index] || this.isCapsuleHeading(line)) return line
+      const stripped = line.replace(/^#{1,6}[ \t]+/, '')
+      return stripped.replace(/(^|\s)#{1,6}[ \t]+(?=(?:highlights|verification|disclaimer|category|root cause|summary|next steps)\b)/gi, '$1')
+    }).join('\n')
+  }
+
   private capNarrative(output: string): string {
     const lines = output.split('\n')
-    const dictStart = lines.findIndex((line) => line.startsWith('## REFERENCE DICTIONARY'))
+    const fenced = this.linesInsideFence(lines)
+    const dictStart = lines.findIndex((line, index) => !fenced[index] && line.startsWith('## REFERENCE DICTIONARY'))
     let dictEnd = -1
     if (dictStart >= 0) {
-      const next = lines.findIndex((line, index) => index > dictStart && line.startsWith('## ['))
+      const next = lines.findIndex((line, index) => index > dictStart && !fenced[index] && line.startsWith('## ['))
       dictEnd = next < 0 ? lines.length : next
     }
-    const clusterStart = lines.findIndex((line) => line.startsWith('## ['))
+    const clusterStart = lines.findIndex((line, index) => !fenced[index] && line.startsWith('## ['))
     if (clusterStart < 0) return output
 
     const narrativeLength = () => {
@@ -1962,20 +2605,22 @@ export class Singularity {
 
     let guard = 0
     while (narrativeLength() > NARRATIVE_BUDGET && guard < 5000) {
-      const index = this.lowestBudgetLine(lines, clusterStart)
+      const index = this.lowestBudgetLine(lines, clusterStart, fenced)
       if (index < 0) break
       lines.splice(index, 1)
+      fenced.splice(index, 1)
       guard += 1
     }
     return lines.join('\n')
   }
 
-  private lowestBudgetLine(lines: string[], clusterStart: number): number {
+  private lowestBudgetLine(lines: string[], clusterStart: number, fenced: boolean[]): number {
     let section: 'detail' | 'list' | 'other' = 'other'
     const details: Array<{ index: number; score: number }> = []
     const lists: Array<{ index: number; score: number }> = []
     const summaries: number[] = []
     for (let index = clusterStart; index < lines.length; index += 1) {
+      if (fenced[index]) continue
       const line = lines[index]
       if (line.startsWith('## [')) {
         section = 'other'
@@ -2007,3 +2652,5 @@ export class Singularity {
     return summaries.length ? summaries[summaries.length - 1] : -1
   }
 }
+
+export const recoverableCodeBodies = (text: string): string[] => new Singularity().recoverableBodies(text)

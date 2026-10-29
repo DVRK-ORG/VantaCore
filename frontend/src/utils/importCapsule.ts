@@ -38,7 +38,16 @@ type TrustedStats = Pick<CompressionResult,
   | NumericStatKey
   | 'tokenEstimationMethod'
   | 'codeBlocksIntegrityOk'
+  | 'codeBlocksKept'
+  | 'codeBlocksFolded'
+  | 'codeBlocksDropped'
 >
+
+const optionalCount = (stats: JsonRecord, key: string): number => {
+  const value = stats[key]
+  if (!isFiniteNumber(value) || value < 0) return 0
+  return value
+}
 
 const normalizeLineEndings = (content: string) => content.replace(/\r\n?/g, '\n')
 
@@ -108,6 +117,9 @@ const readTrustedStats = (stats: unknown, actualCompressedLength: number): Trust
     dictionaryReferencesCreated: statNumber('dictionaryReferencesCreated'),
     clustersDetected: statNumber('clustersDetected'),
     codeBlocksProtected: statNumber('codeBlocksProtected'),
+    codeBlocksKept: optionalCount(stats, 'codeBlocksKept'),
+    codeBlocksFolded: optionalCount(stats, 'codeBlocksFolded'),
+    codeBlocksDropped: optionalCount(stats, 'codeBlocksDropped'),
     codeBlocksIntegrityOk: stats.codeBlocksIntegrityOk,
   }
 
@@ -146,9 +158,9 @@ const resultFromTrustedStats = (compressed: string, stats: TrustedStats): Compre
   dictionaryReferencesCreated: stats.dictionaryReferencesCreated,
   clustersDetected: stats.clustersDetected,
   codeBlocksProtected: stats.codeBlocksProtected,
-  codeBlocksKept: 0,
-  codeBlocksFolded: 0,
-  codeBlocksDropped: 0,
+  codeBlocksKept: stats.codeBlocksKept,
+  codeBlocksFolded: stats.codeBlocksFolded,
+  codeBlocksDropped: stats.codeBlocksDropped,
   codeBlocksIntegrityOk: stats.codeBlocksIntegrityOk,
   })
 

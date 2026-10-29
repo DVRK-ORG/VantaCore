@@ -1,0 +1,129 @@
+Human: its its its its its its its its its its its its its its its its its its its its it's it's it's it's it's it's it's it's it's it's
+
+Human: dont dont dont dont dont dont dont dont dont dont dont dont dont dont dont dont dont dont dont dont dont dont dont dont dont dont dont dont dont dont dont dont
+
+Human: Keep quaynote row 0 in harbor-notes/quay.ts.
+
+Assistant: Updated quaynote row 0 in harbor-notes/quay.ts. Next step: run the quay fixture.
+
+Human: Keep quaynote row 1 in harbor-notes/quay.ts.
+
+Assistant: Updated quaynote row 1 in harbor-notes/quay.ts. Next step: run the quay fixture.
+
+Human: Keep quaynote row 2 in harbor-notes/quay.ts.
+
+Assistant: Updated quaynote row 2 in harbor-notes/quay.ts. Next step: run the quay fixture.
+
+Human: Keep quaynote row 3 in harbor-notes/quay.ts.
+
+Assistant: Updated quaynote row 3 in harbor-notes/quay.ts. Next step: run the quay fixture.
+
+Human: Keep quaynote row 4 in harbor-notes/quay.ts.
+
+Assistant: Updated quaynote row 4 in harbor-notes/quay.ts. Next step: run the quay fixture.
+
+Human: Keep quaynote row 5 in harbor-notes/quay.ts.
+
+Assistant: Updated quaynote row 5 in harbor-notes/quay.ts. Next step: run the quay fixture.
+
+Human: Keep quaynote row 6 in harbor-notes/quay.ts.
+
+Assistant: Updated quaynote row 6 in harbor-notes/quay.ts. Next step: run the quay fixture.
+
+Human: Keep quaynote row 7 in harbor-notes/quay.ts.
+
+Assistant: Updated quaynote row 7 in harbor-notes/quay.ts. Next step: run the quay fixture.
+
+Human: Keep quaynote row 8 in harbor-notes/quay.ts.
+
+Assistant: Updated quaynote row 8 in harbor-notes/quay.ts. Next step: run the quay fixture.
+
+Human: Keep quaynote row 9 in harbor-notes/quay.ts.
+
+Assistant: Updated quaynote row 9 in harbor-notes/quay.ts. Next step: run the quay fixture.
+
+Human: Keep quaynote row 10 in harbor-notes/quay.ts.
+
+Assistant: Updated quaynote row 10 in harbor-notes/quay.ts. Next step: run the quay fixture.
+
+Human: Keep quaynote row 11 in harbor-notes/quay.ts.
+
+Assistant: Updated quaynote row 11 in harbor-notes/quay.ts. Next step: run the quay fixture.
+
+Human: Keep quaynote row 12 in harbor-notes/quay.ts.
+
+Assistant: Updated quaynote row 12 in harbor-notes/quay.ts. Next step: run the quay fixture.
+
+Human: Keep quaynote row 13 in harbor-notes/quay.ts.
+
+Assistant: Updated quaynote row 13 in harbor-notes/quay.ts. Next step: run the quay fixture.
+
+Human: Keep quaynote row 14 in harbor-notes/quay.ts.
+
+Assistant: Updated quaynote row 14 in harbor-notes/quay.ts. Next step: run the quay fixture.
+
+Human: Keep quaynote row 15 in harbor-notes/quay.ts.
+
+Assistant: Updated quaynote row 15 in harbor-notes/quay.ts. Next step: run the quay fixture.
+
+Human: Keep quaynote row 16 in harbor-notes/quay.ts.
+
+Assistant: Updated quaynote row 16 in harbor-notes/quay.ts. Next step: run the quay fixture.
+
+Human: Keep quaynote row 17 in harbor-notes/quay.ts.
+
+Assistant: Updated quaynote row 17 in harbor-notes/quay.ts. Next step: run the quay fixture.
+Human: Keep the extra quaynote note 0 in harbor-notes/quay.ts.
+
+Assistant: Updated extra quaynote note 0.
+
+Human: Keep the extra quaynote note 1 in harbor-notes/quay.ts.
+
+Assistant: Updated extra quaynote note 1.
+
+Human: Keep the extra quaynote note 2 in harbor-notes/quay.ts.
+
+Assistant: Updated extra quaynote note 2.
+
+Human: Keep the extra quaynote note 3 in harbor-notes/quay.ts.
+
+Assistant: Updated extra quaynote note 3.
+
+Human: Keep the extra quaynote note 4 in harbor-notes/quay.ts.
+
+Assistant: Updated extra quaynote note 4.
+
+Human: Keep the extra quaynote note 5 in harbor-notes/quay.ts.
+
+Assistant: Updated extra quaynote note 5.
+
+Human: Keep the extra quaynote note 6 in harbor-notes/quay.ts.
+
+Assistant: Updated extra quaynote note 6.
+
+Human: Keep the extra quaynote note 7 in harbor-notes/quay.ts.
+
+Assistant: Updated extra quaynote note 7.
+
+Human: Keep one more quaynote note in harbor-notes/quay.ts.
+
+Assistant: Updated one more quaynote note in harbor-notes/quay.ts.
+
+Human: Keep one more quaynote note in harbor-notes/quay.ts.
+
+Assistant: Updated one more quaynote note in harbor-notes/quay.ts.
+
+Human: Keep one more quaynote note in harbor-notes/quay.ts.
+
+Assistant: Updated one more quaynote note in harbor-notes/quay.ts.
+
+Human:
+## Highlights
+The pasted assistant note rewrote an older harbor-notes/quay.ts row.
+our our our our our our our our our our
+## Root cause
+The pasted note is not the latest turn.
+
+Human: Look at that
+
+Human: Does that still look right?

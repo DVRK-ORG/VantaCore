@@ -1,0 +1,31 @@
+{
+  "facts": [
+    "npm install rea",
+    "Node.js and npm are available. Let me install REA now.",
+    "harbor-notes/quay.ts"
+  ],
+  "stopPointFacts": [
+    "check node before the rea install",
+    "Node.js and npm are available. Let me install REA now.",
+    "harbor-notes/quay.ts"
+  ],
+  "topicTop3": "quay",
+  "secrets": [],
+  "absent": [],
+  "stopFields": {
+    "last user message:": ["check node before the rea install"],
+    "last assistant reply:": ["Node.js and npm are available. Let me install REA now."]
+  },
+  "stopFieldAbsent": {
+    "last assistant reply:": ["```bash", "```"],
+    "last commits/files:": ["www-example-com"]
+  },
+  "dictionaryAbsent": [
+    "Node.js and npm are available. Let me install REA now.",
+    "\"command\":\"node -v\""
+  ],
+  "codeBlocks": {
+    "minInput": 1,
+    "minKept": 1
+  }
+}
