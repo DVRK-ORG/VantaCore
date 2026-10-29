@@ -12,6 +12,7 @@ interface Expectation {
   topicTop3: string
   secrets: string[]
   absent?: string[]
+  codeBlocks?: { minInput?: number; minKept?: number; minFolded?: number }
 }
 
 interface CapsuleEngine {
@@ -98,6 +99,22 @@ const main = async () => {
 
     for (const banned of expectation.absent ?? []) {
       if (banned && output.includes(banned)) errors.push(`present: ${banned.slice(0, 40)}`)
+    }
+
+    if (expectation.codeBlocks) {
+      const counted = output.match(/code blocks: (\d+) in input, (\d+) kept, (\d+) folded, (\d+) dropped/)
+      if (!counted) {
+        errors.push('code block counts missing')
+      } else {
+        const input = Number(counted[1])
+        const kept = Number(counted[2])
+        const folded = Number(counted[3])
+        const dropped = Number(counted[4])
+        if (input !== kept + folded + dropped) errors.push('code block counts do not add up')
+        if ((expectation.codeBlocks.minInput ?? 0) > input) errors.push(`code input ${input}`)
+        if ((expectation.codeBlocks.minKept ?? 0) > kept) errors.push(`code kept ${kept}`)
+        if ((expectation.codeBlocks.minFolded ?? 0) > folded) errors.push(`code folded ${folded}`)
+      }
     }
 
     const duplicates = duplicateBulletRate(output)
