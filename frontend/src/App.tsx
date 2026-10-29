@@ -97,6 +97,11 @@ function App() {
       }
 
       const url = new URL(href, window.location.origin)
+      // /security is a static page, so let the browser load it instead of routing inside the app.
+      if (url.origin === window.location.origin && url.pathname === '/security') {
+        return
+      }
+
       if (url.pathname === window.location.pathname) {
         if (url.hash) {
           e.preventDefault()

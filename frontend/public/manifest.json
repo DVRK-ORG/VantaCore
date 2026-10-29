@@ -1,7 +1,7 @@
 {
   "name": "VantaCore — The Singularity Engine",
   "short_name": "VantaCore",
-  "description": "Compress massive AI sessions by 90-99%. 100% client-side, free forever.",
+  "description": "Compress massive AI sessions into portable memory capsules. 100% client-side.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#050505",
@@ -32,7 +32,7 @@
       "src": "/OG.jpg",
       "sizes": "1200x630",
       "type": "image/jpeg",
-      "label": "VantaCore — 98.87% compression in 0.19 seconds"
+      "label": "VantaCore demo benchmark: 96.2% reduction"
     }
   ]
 }
