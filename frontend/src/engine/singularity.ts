@@ -279,6 +279,8 @@ export class Singularity {
     lines.push('# VantaCore Memory Capsule')
     lines.push(`token estimate: ${TOKEN_ESTIMATION_METHOD}`)
     lines.push('')
+    const stopPoint = this.renderStopPoint(originalText)
+    lines.push(...stopPoint)
 
     lines.push('## SESSION MAP')
     if (topicScores.length) {
@@ -291,6 +293,9 @@ export class Singularity {
     lines.push('')
 
     const used = new Set<string>()
+    for (const line of stopPoint) {
+      if (line.startsWith('- ')) used.add(this.detailSignature(line))
+    }
     const completed = this.freshLines(evidence.completed, 4, used)
     const verified = this.freshLines(evidence.verified, 4, used)
     const pending = this.freshLines(evidence.pending, 4, used)
@@ -1117,6 +1122,147 @@ export class Singularity {
       count += 1
     })
     return count
+  }
+
+  private renderStopPoint(text: string): string[] {
+    const turns = this.extractTurns(text)
+    let lastUser = ''
+    let lastAssistant = ''
+    for (const turn of turns) {
+      if (turn.role === 'user') lastUser = turn.text
+      else lastAssistant = turn.text
+    }
+    if (!turns.length) {
+      const close = this.unstructuredClose(text)
+      lastUser = close.user
+      lastAssistant = close.assistant
+    }
+
+    const tail = `${lastUser}\n${lastAssistant}\n${text.slice(Math.max(0, text.length - 2500))}`
+    const mentioned = [...this.tailCommits(tail), ...this.tailFiles(tail)].slice(0, 8)
+    const next = this.statedNextStep(lastAssistant, lastUser)
+
+    return [
+      '## WHERE IT STOPPED',
+      'last user message:',
+      lastUser ? this.capVerbatim(this.maskFencedBlocks(lastUser), 600) : 'not clearly detected',
+      'last assistant reply:',
+      lastAssistant ? this.trimReply(lastAssistant) : 'not clearly detected',
+      'last commits/files:',
+      ...(mentioned.length ? mentioned.map((item) => `- ${item}`) : ['- not clearly detected']),
+      'stated next step:',
+      next || 'not clearly detected',
+      '',
+    ]
+  }
+
+  private extractTurns(text: string): Array<{ role: 'user' | 'assistant'; text: string }> {
+    const fromJson = this.extractJsonTurns(text)
+    if (fromJson.length) return fromJson
+
+    const turns: Array<{ role: 'user' | 'assistant'; text: string }> = []
+    const marker = /(?:^|\n)\s*(?:#{1,3}\s*)?(?:\*\*|__)?(human|user|assistant)(?:\*\*|__)?\s*:\s*/gi
+    const marks: Array<{ role: 'user' | 'assistant'; start: number; end: number }> = []
+    let match: RegExpExecArray | null
+    while ((match = marker.exec(text))) {
+      const label = match[1].toLowerCase()
+      marks.push({
+        role: label === 'assistant' ? 'assistant' : 'user',
+        start: match.index,
+        end: match.index + match[0].length,
+      })
+    }
+    for (let index = 0; index < marks.length; index += 1) {
+      const end = index + 1 < marks.length ? marks[index + 1].start : text.length
+      const body = text.slice(marks[index].end, end).trim()
+      if (body) turns.push({ role: marks[index].role, text: body })
+    }
+    return turns
+  }
+
+  private extractJsonTurns(text: string): Array<{ role: 'user' | 'assistant'; text: string }> {
+    if (!/"role"\s*:\s*"(user|assistant)"/.test(text) || !text.includes('"parts"')) return []
+    const turns: Array<{ role: 'user' | 'assistant'; text: string }> = []
+    const pattern = /"role"\s*:\s*"(user|assistant)"[\s\S]*?"parts"\s*:\s*\[\s*"((?:\\.|[^"\\])*)"/g
+    let match: RegExpExecArray | null
+    while ((match = pattern.exec(text))) {
+      const body = match[2].replace(/\\n/g, '\n').replace(/\\"/g, '"').replace(/\\\\/g, '\\').trim()
+      if (!body) continue
+      turns.push({ role: match[1] === 'user' ? 'user' : 'assistant', text: body })
+    }
+    return turns
+  }
+
+  private unstructuredClose(text: string): { user: string; assistant: string } {
+    const paragraphs = text
+      .split(/\n{2,}/)
+      .map((paragraph) => paragraph.trim())
+      .filter((paragraph) => paragraph.length >= 8 && !this.isToolPayload(paragraph) && !/^exec:\s+/i.test(paragraph))
+    if (!paragraphs.length) return { user: '', assistant: '' }
+    const commandLines = text.split('\n').filter((line) => this.looksLikeCommand(line) || /^exec:\s+/i.test(line.trim())).length
+    if (commandLines >= 3) return { user: '', assistant: paragraphs[paragraphs.length - 1] }
+    return { user: text.trim(), assistant: '' }
+  }
+
+  private capVerbatim(text: string, limit: number): string {
+    const trimmed = text.replace(/\n{3,}/g, '\n\n').trim()
+    if (trimmed.length <= limit) return trimmed
+    return `${trimmed.slice(0, limit).replace(/\s+\S*$/, '')}...`
+  }
+
+  private trimReply(text: string): string {
+    return this.cleanEvidenceLine(text, 500) || 'not clearly detected'
+  }
+
+  private statedNextStep(assistant: string, user: string): string {
+    for (const chunk of [assistant, user]) {
+      if (!chunk.trim()) continue
+      const sentences = this.cleanEvidenceLine(chunk, 4000).replace(/```[\s\S]*?```/g, ' ').split(/(?<=[.!?])\s+/)
+      for (let index = sentences.length - 1; index >= 0; index -= 1) {
+        const sentence = sentences[index]?.trim() ?? ''
+        if (sentence.length < 8) continue
+        if (NEXT_PATTERN.test(sentence) || /\b(?:todo|next step)\b/i.test(sentence)) {
+          return this.cleanEvidenceLine(sentence, 300)
+        }
+      }
+    }
+    return ''
+  }
+
+  private tailCommits(text: string): string[] {
+    const found: string[] = []
+    const pattern = /\b(?:commit\s+)?([0-9a-f]{7,40})\b/gi
+    let match: RegExpExecArray | null
+    while ((match = pattern.exec(text))) {
+      if (!/[a-f]/i.test(match[1])) continue
+      found.push(match[1].toLowerCase())
+    }
+    const unique: string[] = []
+    const seen = new Set<string>()
+    for (let index = found.length - 1; index >= 0; index -= 1) {
+      const hash = found[index]
+      if (seen.has(hash)) continue
+      seen.add(hash)
+      unique.push(hash)
+      if (unique.length >= 4) break
+    }
+    return unique
+  }
+
+  private tailFiles(text: string): string[] {
+    const matches = text.match(FILE_OR_URL_PATTERN) ?? []
+    const unique: string[] = []
+    const seen = new Set<string>()
+    for (let index = matches.length - 1; index >= 0; index -= 1) {
+      const file = matches[index].replace(/[.,;:)]+$/, '')
+      const key = file.toLowerCase()
+      if (seen.has(key)) continue
+      seen.add(key)
+      unique.push(file)
+    }
+    return unique
+      .filter((file) => !unique.some((other) => other.length > file.length && (other.endsWith(`/${file}`) || other.endsWith(`.${file}`))))
+      .slice(0, 4)
   }
 
   private redactSecrets(text: string): string {
