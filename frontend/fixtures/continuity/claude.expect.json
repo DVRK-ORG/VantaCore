@@ -1,0 +1,19 @@
+{
+  "facts": [
+    "invoice PDF",
+    "tax ID",
+    "ReportLab",
+    "billing/invoice.py",
+    "abc126b",
+    "Tests passed"
+  ],
+  "stopPointFacts": [
+    "invoice PDF must show the tax ID",
+    "we keep ReportLab",
+    "abc126b",
+    "billing/invoice.py",
+    "Tests passed"
+  ],
+  "topicTop3": "invoice",
+  "secrets": []
+}

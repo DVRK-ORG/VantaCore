@@ -1,0 +1,18 @@
+{
+  "facts": [
+    "parser",
+    "fractions",
+    "src/app.ts",
+    "Do not change the UI",
+    "add tests",
+    "ingredient parser"
+  ],
+  "stopPointFacts": [
+    "Turn 58: please make the parser handle fractions like 1/2 cup. Do not change the UI.",
+    "Step 59: we updated src/app.ts",
+    "Next we should add tests.",
+    "src/app.ts"
+  ],
+  "topicTop3": "parser",
+  "secrets": []
+}

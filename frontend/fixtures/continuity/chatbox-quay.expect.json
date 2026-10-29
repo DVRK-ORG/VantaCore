@@ -1,0 +1,30 @@
+{
+  "facts": [
+    "harbor-ledger",
+    "mooring fees",
+    "berth map",
+    "list mooring fees once",
+    "8de77c0",
+    "4c91ab2",
+    "replay the berth-hours fixture",
+    "[code block"
+  ],
+  "stopPointFacts": [
+    "Revert the bad rate change and commit the single-count mooring fix.",
+    "4c91ab2",
+    "8de77c0",
+    "harbor-ledger/src/fees/mooring.ts",
+    "list mooring fees once",
+    "replay the berth-hours fixture"
+  ],
+  "topicTop3": "harbor-ledger",
+  "secrets": [
+    "harbor-secret-token-99",
+    "sk-harborledgerkey1234567890",
+    "ghp_harborledgerFAKEtoken123456",
+    "github_pat_harborledgerFAKEtoken123456",
+    "AKIAHARBORLEDGER99",
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJoYXJib3IifQ.signaturevalue1",
+    "MIIEowIBAAKCAQEA7harborledgerfakekeymaterialonly"
+  ]
+}
