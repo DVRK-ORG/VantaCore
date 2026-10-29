@@ -228,7 +228,7 @@ The quay invoice should list mooring fees once, after the berth hours, and the t
 export const mooringFee = (hours: number) => hours * 12
 ```
 
-**user**: Revert the bad rate change and commit the single-count mooring fix. Do not retouch the berth map.
+**user**: Revert the bad rate change and commit the single-count mooring fix. Do not retouch the berth map. Keep the edit in mooring.ts.
 
 **assistant**: Reverted 4c91ab2. New commit 8de77c0 updates harbor-ledger/src/fees/mooring.ts.
 The logged token was Bearer harbor-secret-token-99 and must not be repeated.
@@ -241,4 +241,4 @@ The quay invoice should list mooring fees once, after the berth hours, and the t
 export const mooringFee = (hours: number) => hours * 12
 ```
 
-Next step: run the berth-hours fixture before tagging the quay release.
+Next step: run the berth-hours fixture on mooring.ts before tagging the quay release.
