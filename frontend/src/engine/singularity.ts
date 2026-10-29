@@ -3,6 +3,7 @@ import type { CompressionResult } from './types'
 const TOKEN_ESTIMATION_METHOD = 'approximate: ceil(characters / 4)'
 const MAX_CLUSTERS = 6
 const MAX_DETAIL_SNIPPETS_PER_CLUSTER = 32
+const NARRATIVE_BUDGET = 6400
 
 type ReferenceKind = 'CMD' | 'PROMPT' | 'CODE'
 
@@ -95,6 +96,8 @@ const GENERIC_TOPIC_WORDS = new Set([
   'fail', 'npm', 'node', 'git', 'http', 'https', 'www', 'com', 'org',
   'value', 'args', 'argument', 'arguments', 'tool', 'call', 'exec', 'output',
   'input', 'result', 'results', 'same', 'only', 'still', 'into', 'each',
+  'index', 'server', 'main', 'app', 'job', 'jobs', 'origin', 'origins',
+  'isolated', 'babe', 'html', 'css', 'json', 'png', 'jpg', 'jpeg', 'svg', 'txt',
 ])
 
 const GENERIC_PATH_DIRS = new Set([
@@ -103,6 +106,14 @@ const GENERIC_PATH_DIRS = new Set([
   'cmd', 'bin', 'build', 'static', 'assets', 'styles', 'hooks', 'utils', 'types',
   '__tests__', 'spec', 'source',
 ])
+
+const PATH_NAMED_ROOTS = new Set([
+  'projects', 'repos', 'repo', 'workspace', 'workspaces', 'code', 'sites', 'developer',
+])
+
+const PATH_HOME_ROOTS = new Set(['home', 'users', 'user', 'desktop', 'documents'])
+
+const PATH_MARKERS = new Set(['src', 'source', 'static', 'lib', 'app'])
 
 const PHRASE_REPLACEMENTS: Array<[RegExp, string]> = [
   [/\bdo\s+not\b|\bdon't\b|\bdont\b/gi, 'do_not'],
@@ -223,7 +234,8 @@ export class Singularity {
       }
     }
 
-    const redacted = this.redactSecrets(text)
+    const source = this.stripExportChrome(text)
+    const redacted = this.redactSecrets(source)
     const codeBlocksInInput = this.countFencedCodeBlocks(redacted)
     const fold = this.foldRepeatedBlocks(redacted)
     const capsule = this.renderMemoryCapsule(redacted, fold)
@@ -369,7 +381,7 @@ export class Singularity {
       lines.push('')
     }
 
-    return { output: lines.join('\n'), clustersDetected: Math.max(clusters.length, 1) }
+    return { output: this.capNarrative(lines.join('\n')), clustersDetected: Math.max(clusters.length, 1) }
   }
 
   private foldRepeatedBlocks(text: string): FoldResult {
@@ -545,16 +557,22 @@ export class Singularity {
   }
 
   private detectTopics(text: string): TopicDefinition[] {
+    const project = this.projectNames(text)[0] ?? ''
+    const projectKey = project.toLowerCase()
     const topics: TopicDefinition[] = []
     const seen = new Set<string>()
-    const push = (label: string) => {
-      const term = label.toLowerCase()
-      if (seen.has(term) || term.length < 3 || topics.length >= MAX_CLUSTERS) return
+    const escape = (term: string) => term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    for (const term of this.distinctiveTerms(this.topicSourceText(text))) {
+      if (term === projectKey || seen.has(term) || topics.length >= MAX_CLUSTERS) continue
       seen.add(term)
-      topics.push({ label: term, terms: [term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')] })
+      topics.push({
+        label: project ? `${project} ${term}` : term,
+        terms: [escape(term)],
+      })
     }
-    for (const name of this.projectNames(text)) push(name)
-    for (const term of this.distinctiveTerms(this.topicSourceText(text))) push(term)
+    if (!topics.length && project) {
+      topics.push({ label: project, terms: [escape(projectKey)] })
+    }
     return topics
   }
 
@@ -574,28 +592,73 @@ export class Singularity {
   }
 
   private projectNames(text: string): string[] {
-    const counts = new Map<string, number>()
-    const pattern = /(?:^|[\s"'`(])((?:[\w.-]+\/)+[\w.-]+\.[A-Za-z0-9]+)/gm
-    let match: RegExpExecArray | null
-    while ((match = pattern.exec(text))) {
-      const parts = match[1].split('/')
-      const file = parts.pop() ?? ''
-      let name = ''
-      for (const part of parts) {
-        if (part.length >= 3 && !GENERIC_PATH_DIRS.has(part.toLowerCase())) {
-          name = part
-          break
-        }
-      }
-      if (!name) name = file.replace(/\..*$/, '')
+    const counts = new Map<string, { count: number; label: string }>()
+    for (const path of this.pathHits(text)) {
+      const name = this.projectFromPath(path)
       const key = name.toLowerCase()
-      if (key.length < 3 || GENERIC_PATH_DIRS.has(key) || GENERIC_TOPIC_WORDS.has(key)) continue
-      counts.set(key, (counts.get(key) ?? 0) + 1)
+      if (!name || key.length < 3 || this.isGenericTopic(key)) continue
+      const existing = counts.get(key)
+      if (existing) existing.count += 1
+      else counts.set(key, { count: 1, label: name })
     }
-    return [...counts.entries()]
-      .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+    return [...counts.values()]
+      .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label))
       .slice(0, 3)
-      .map(([name]) => name)
+      .map((item) => item.label)
+  }
+
+  private pathHits(text: string): string[] {
+    const hits: string[] = []
+    const windows = /[A-Za-z]:\\(?:[^\\/:*?"<>|\r\n]+\\)+[^\\/:*?"<>|\r\n]+\.[A-Za-z0-9]+/g
+    const posix = /(?:^|[\s"'`(])((?:[\w.-]+\/)+[\w.-]+\.[A-Za-z0-9]+)/gm
+    let match: RegExpExecArray | null
+    while ((match = windows.exec(text))) hits.push(match[0])
+    while ((match = posix.exec(text))) hits.push(match[1])
+    return hits
+  }
+
+  private projectFromPath(raw: string): string {
+    const parts = raw.replace(/\\+/g, '/').split('/').filter(Boolean)
+    const file = parts[parts.length - 1] ?? ''
+    const dirs = parts.slice(0, -1).filter((part) => !/^[A-Za-z]:$/.test(part))
+    const isRoot = (part: string) => {
+      const key = part.toLowerCase()
+      return key.length < 2 || GENERIC_PATH_DIRS.has(key) || PATH_NAMED_ROOTS.has(key) || PATH_HOME_ROOTS.has(key)
+    }
+    for (let index = dirs.length - 1; index >= 0; index -= 1) {
+      if (!PATH_NAMED_ROOTS.has(dirs[index].toLowerCase())) continue
+      for (let next = index + 1; next < dirs.length; next += 1) {
+        if (!isRoot(dirs[next]) && !this.isGenericTopic(dirs[next])) return dirs[next]
+      }
+    }
+    for (let index = 0; index < dirs.length; index += 1) {
+      if (!PATH_MARKERS.has(dirs[index].toLowerCase())) continue
+      const parent = index > 0 ? dirs[index - 1] : ''
+      if (parent && !isRoot(parent) && !this.isGenericTopic(parent)) return parent
+    }
+    const desktopAt = dirs.findIndex((part) => part.toLowerCase() === 'desktop')
+    if (desktopAt >= 0) {
+      for (let next = desktopAt + 1; next < dirs.length; next += 1) {
+        if (!isRoot(dirs[next]) && !this.isGenericTopic(dirs[next])) return dirs[next]
+      }
+    }
+    const homeAt = dirs.findIndex((part) => ['home', 'users', 'user'].includes(part.toLowerCase()))
+    if (homeAt >= 0) {
+      for (let next = homeAt + 2; next < dirs.length; next += 1) {
+        if (!isRoot(dirs[next]) && !this.isGenericTopic(dirs[next])) return dirs[next]
+      }
+    }
+    for (const dir of dirs) {
+      if (!isRoot(dir) && !this.isGenericTopic(dir)) return dir
+    }
+    const stem = file.replace(/\..*$/, '')
+    if (!stem || this.isGenericTopic(stem)) return ''
+    return stem
+  }
+
+  private isGenericTopic(name: string): boolean {
+    const key = name.toLowerCase()
+    return key.length < 3 || GENERIC_TOPIC_WORDS.has(key) || GENERIC_PATH_DIRS.has(key) || PATH_NAMED_ROOTS.has(key) || PATH_HOME_ROOTS.has(key)
   }
 
   private distinctiveTerms(text: string): string[] {
@@ -782,10 +845,27 @@ export class Singularity {
   private isToolPayload(text: string): boolean {
     const trimmed = text.trim()
     if (/\btool\s*call\s*:/i.test(trimmed)) return true
+    if (/^result:\s*[[{]/i.test(trimmed)) return true
+    if (trimmed.includes('\\r\\n')) return true
     if (/^exec:\s+\S+/i.test(trimmed) && /[{"]/.test(trimmed)) return true
     if (!trimmed.startsWith('[') && !trimmed.startsWith('{')) return false
     const marks = (trimmed.match(/[{}[\]":]/g) ?? []).length
-    return marks >= 6 && /"(?:name|arguments|command|path|tool|ok|file)"\s*:/.test(trimmed)
+    return marks >= 6 && /"(?:name|arguments|command|path|tool|ok|file|file_path|error|success|exitCode|stdout)"\s*:/.test(trimmed)
+  }
+
+  private resultSummary(text: string): string {
+    const quoted = text.match(/"(?:file_path|path|command|cmd)"\s*:\s*"((?:\\.|[^"\\])*)"/)
+    const target = (quoted?.[1] ?? 'tool result')
+      .replace(/\\r\\n/g, ' ')
+      .replace(/\\n/g, ' ')
+      .replace(/\\"/g, '"')
+      .replace(/\\\\/g, '\\')
+      .replace(/\s+/g, ' ')
+      .trim()
+    const failed = /"error"\s*:/i.test(text) || /"success"\s*:\s*false/i.test(text) || /"exitCode"\s*:\s*(?!0\b)\d/.test(text)
+    const ok = /"success"\s*:\s*true/i.test(text) || /"exitCode"\s*:\s*0\b/.test(text)
+    const status = failed ? 'failed' : ok ? 'succeeded' : 'returned'
+    return `${target || 'tool result'} ${status}`.slice(0, 160)
   }
 
   private toolCallSummary(text: string): string {
@@ -804,17 +884,30 @@ export class Singularity {
     let skipping = false
     let depth = 0
     let sawBrace = false
+    let resultPayload = ''
 
     const finishSkip = () => {
+      if (resultPayload) summaries.push(this.resultSummary(resultPayload))
       skipping = false
       depth = 0
       sawBrace = false
+      resultPayload = ''
     }
 
     for (const line of text.split('\n')) {
       const trimmed = line.trim()
+      const resultCall = /^result:\s*[[{]/i.test(trimmed)
       const toolCall = /\btool\s*call\s*:/i.test(trimmed)
       const execCall = /^exec:\s+\S+/i.test(trimmed)
+      if (!skipping && resultCall) {
+        resultPayload = trimmed
+        depth = (line.match(/{/g) ?? []).length - (line.match(/}/g) ?? []).length
+        sawBrace = true
+        if (depth <= 0) finishSkip()
+        else skipping = true
+        continue
+      }
+      if (!skipping && trimmed.includes('\\r\\n')) continue
       if (!skipping && (toolCall || execCall || (this.isToolPayload(trimmed) && (trimmed.startsWith('[') || trimmed.startsWith('{'))))) {
         summaries.push(this.toolCallSummary(trimmed))
         depth = (line.match(/{/g) ?? []).length - (line.match(/}/g) ?? []).length
@@ -825,6 +918,7 @@ export class Singularity {
       }
 
       if (skipping) {
+        if (resultPayload) resultPayload = `${resultPayload}\n${trimmed}`
         depth += (line.match(/{/g) ?? []).length
         depth -= (line.match(/}/g) ?? []).length
         if (/[{[]/.test(line)) sawBrace = true
@@ -835,6 +929,7 @@ export class Singularity {
       kept.push(line)
     }
 
+    if (resultPayload) summaries.push(this.resultSummary(resultPayload))
     return { prose: kept.join('\n'), summaries }
   }
 
@@ -900,7 +995,8 @@ export class Singularity {
   }
 
   private cleanEvidenceLine(text: string, maxLength = 220): string {
-    let cleaned = this.maskFencedBlocks(text)
+    const kept = text.split('\n').filter((line) => !line.includes('\\r\\n')).join('\n')
+    let cleaned = this.maskFencedBlocks(kept)
       .replace(/[-\s]*exported session \d+\s*-*/gi, ' ')
       .replace(/\{?"?(?:role|content|parts|text|metadata|source)"?\s*:\s*/gi, ' ')
       .replace(/(?:^|\s)(?:#{1,3}\s*)?(?:\*\*|__)?(?:human|assistant|user|system|model)(?:\*\*|__)?\s*:/gi, ' ')
@@ -1187,24 +1283,23 @@ export class Singularity {
     const turns = this.extractTurns(text)
     let lastUser = ''
     let lastAssistant = ''
-    for (const turn of turns) {
-      if (turn.role === 'user') lastUser = turn.text
-      else lastAssistant = turn.text
-    }
-    if (!turns.length) {
+    if (turns.length) {
+      const picked = this.latestSubstantiveTurns(turns)
+      lastUser = picked.user
+      lastAssistant = picked.assistant
+    } else {
       const close = this.unstructuredClose(text)
       lastUser = close.user
       lastAssistant = close.assistant
     }
 
-    const tail = `${lastUser}\n${lastAssistant}\n${text.slice(Math.max(0, text.length - 2500))}`
-    const mentioned = [...this.tailCommits(tail), ...this.tailFiles(tail)].slice(0, 8)
+    const mentioned = [...this.tailCommits(text), ...this.tailFiles(text)].slice(0, 8)
     const next = this.statedNextStep(lastAssistant, lastUser)
 
     return [
       '## WHERE IT STOPPED',
       'last user message:',
-      lastUser ? this.capVerbatim(this.maskFencedBlocks(lastUser), 600) : 'not clearly detected',
+      lastUser ? this.renderStopUser(lastUser) : 'not clearly detected',
       'last assistant reply:',
       lastAssistant ? this.trimReply(lastAssistant) : 'not clearly detected',
       'last commits/files:',
@@ -1213,6 +1308,66 @@ export class Singularity {
       next || 'not clearly detected',
       '',
     ]
+  }
+
+  private latestSubstantiveTurns(turns: Array<{ role: 'user' | 'assistant'; text: string }>): { user: string; assistant: string } {
+    let user = ''
+    let assistant = ''
+    for (let index = turns.length - 1; index >= 0; index -= 1) {
+      const turn = turns[index]
+      if (this.isSkippableTurn(turn.text)) continue
+      if (turn.role === 'user' && !user) user = turn.text
+      if (turn.role === 'assistant' && !assistant) assistant = turn.text
+      if (user && assistant) break
+    }
+    return { user, assistant }
+  }
+
+  private renderStopUser(text: string): string {
+    const body = this.shortFenceBody(text)
+    if (body) return this.capVerbatim(body, 600)
+    return this.capVerbatim(this.maskFencedBlocks(text), 600)
+  }
+
+  private shortFenceBody(text: string): string | null {
+    const match = text.trim().match(/^```[A-Za-z0-9_+-]*[ \t]*\n([\s\S]*?)\n```$/)
+    if (!match) return null
+    const body = match[1].trim()
+    if (!body || body.length > 600) return null
+    return body
+  }
+
+  private isSkippableTurn(text: string): boolean {
+    if (this.shortFenceBody(text)) return false
+    if (this.isOnlyCodeFence(text)) return true
+    const stripped = this.stripToolPayloads(text)
+    if (!stripped.prose.trim() && stripped.summaries.length) return true
+    return this.isSocialTurn(stripped.prose || text)
+  }
+
+  private isOnlyCodeFence(text: string): boolean {
+    if (!text.includes('```')) return false
+    const without = text.replace(/```[A-Za-z0-9_+-]*[ \t]*\n[\s\S]*?\n```/g, ' ')
+    return without.replace(/[^A-Za-z0-9]+/g, '').length < 8
+  }
+
+  private isSocialTurn(text: string): boolean {
+    const plain = text
+      .replace(/[^\u0020-\u007E]/g, ' ')
+      .replace(/[^A-Za-z0-9'\s]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+    if (!plain) return true
+    if (plain.length > 90 || plain.split(' ').length > 14) return false
+    return /\b(thanks|thank you|thx|bye|goodbye|cheers|lol|haha|babe|awesome|you(?:'| a)?re the best|love you|good night|talk later|ttyl)\b/i.test(plain)
+  }
+
+  private stripExportChrome(text: string): string {
+    const start = Math.max(0, text.length - 4000)
+    const tail = text.slice(start)
+      .replace(/\n*-{5,}[\s\S]*chatboxai\.app[\s\S]*$/i, '')
+      .replace(/\n*<a\b[^>\n]*chatboxai\.app[\s\S]*$/i, '')
+    return `${text.slice(0, start)}${tail}`.replace(/https?:\/\/(?:www\.)?chatboxai\.app\S*/gi, '')
   }
 
   private extractTurns(text: string): Array<{ role: 'user' | 'assistant'; text: string }> {
@@ -1256,7 +1411,7 @@ export class Singularity {
     const paragraphs = text
       .split(/\n{2,}/)
       .map((paragraph) => paragraph.trim())
-      .filter((paragraph) => paragraph.length >= 8 && !this.isToolPayload(paragraph) && !/^exec:\s+/i.test(paragraph))
+      .filter((paragraph) => paragraph.length >= 8 && !this.isToolPayload(paragraph) && !/^exec:\s+/i.test(paragraph) && !this.isSkippableTurn(paragraph))
     if (!paragraphs.length) return { user: '', assistant: '' }
     const commandLines = text.split('\n').filter((line) => this.looksLikeCommand(line) || /^exec:\s+/i.test(line.trim())).length
     if (commandLines >= 3) return { user: '', assistant: paragraphs[paragraphs.length - 1] }
@@ -1293,9 +1448,10 @@ export class Singularity {
 
   private tailCommits(text: string): string[] {
     const found: string[] = []
+    const source = text.replace(/https?:\/\/\S+/g, ' ')
     const pattern = /\b(?:commit\s+)?([0-9a-f]{7,40})\b/gi
     let match: RegExpExecArray | null
-    while ((match = pattern.exec(text))) {
+    while ((match = pattern.exec(source))) {
       if (!/[a-f]/i.test(match[1])) continue
       found.push(match[1].toLowerCase())
     }
@@ -1312,11 +1468,22 @@ export class Singularity {
   }
 
   private tailFiles(text: string): string[] {
-    const matches = text.match(FILE_OR_URL_PATTERN) ?? []
+    const source = text
+      .split('\n')
+      .filter((line) => {
+        const trimmed = line.trim()
+        if (!trimmed || trimmed.includes('\\r\\n')) return false
+        if (/^result:\s*[[{]/i.test(trimmed)) return false
+        return !(this.isToolPayload(trimmed) && (trimmed.startsWith('{') || trimmed.startsWith('[')))
+      })
+      .join('\n')
+      .replace(/https?:\/\/\S+/g, ' ')
+    const matches = source.match(FILE_OR_URL_PATTERN) ?? []
     const unique: string[] = []
     const seen = new Set<string>()
     for (let index = matches.length - 1; index >= 0; index -= 1) {
       const file = matches[index].replace(/[.,;:)]+$/, '')
+      if (/^https?:\/\//i.test(file) || /chatboxai\.app/i.test(file)) continue
       const key = file.toLowerCase()
       if (seen.has(key)) continue
       seen.add(key)
@@ -1340,5 +1507,72 @@ export class Singularity {
 
   private estimateTokens(chars: number): number {
     return Math.ceil(chars / 4)
+  }
+
+  private capNarrative(output: string): string {
+    const lines = output.split('\n')
+    const dictStart = lines.findIndex((line) => line.startsWith('## REFERENCE DICTIONARY'))
+    let dictEnd = -1
+    if (dictStart >= 0) {
+      const next = lines.findIndex((line, index) => index > dictStart && line.startsWith('## '))
+      dictEnd = next < 0 ? lines.length : next
+    }
+    const clusterStart = lines.findIndex((line) => line.startsWith('## ['))
+    if (clusterStart < 0) return output
+
+    const narrativeLength = () => {
+      let total = 0
+      for (let index = 0; index < lines.length; index += 1) {
+        if (dictStart >= 0 && index >= dictStart && index < dictEnd) continue
+        total += lines[index].length + 1
+      }
+      return total
+    }
+
+    let guard = 0
+    while (narrativeLength() > NARRATIVE_BUDGET && guard < 5000) {
+      const index = this.lowestBudgetLine(lines, clusterStart)
+      if (index < 0) break
+      lines.splice(index, 1)
+      guard += 1
+    }
+    return lines.join('\n')
+  }
+
+  private lowestBudgetLine(lines: string[], clusterStart: number): number {
+    let section: 'detail' | 'list' | 'other' = 'other'
+    const details: Array<{ index: number; score: number }> = []
+    const lists: Array<{ index: number; score: number }> = []
+    const summaries: number[] = []
+    for (let index = clusterStart; index < lines.length; index += 1) {
+      const line = lines[index]
+      if (line.startsWith('## [')) {
+        section = 'other'
+        continue
+      }
+      if (line === 'compressed detail stream:') {
+        section = 'detail'
+        continue
+      }
+      if (line === 'key actions:' || line === 'decisions:' || line === 'open loops:' || line === 'important commands/files:') {
+        section = 'list'
+        continue
+      }
+      if (line.startsWith('summary:')) {
+        section = 'other'
+        summaries.push(index)
+        continue
+      }
+      if (!line.startsWith('- ')) continue
+      const score = this.signalScore(line) + this.markerRankFromLine(line)
+      if (section === 'detail') details.push({ index, score })
+      else if (section === 'list') lists.push({ index, score })
+    }
+    const pool = details.length ? details : lists
+    if (pool.length) {
+      pool.sort((a, b) => a.score - b.score || a.index - b.index)
+      return pool[0].index
+    }
+    return summaries.length ? summaries[summaries.length - 1] : -1
   }
 }
