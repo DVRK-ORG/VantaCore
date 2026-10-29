@@ -626,16 +626,21 @@ export class Singularity {
       .map((part) => this.restoreChoppedSegment(part))
   }
 
-  // JSON string escapes are separators. Collapse `\\` first so a real segment
-  // such as `tests` is not eaten, then treat a leftover `\n` / `\t` / `\r` as
-  // a separator too. The escape letter must not stay glued to the next piece.
+  // JSON string escapes are separators inside a path. Collapse `\\` first so a
+  // real segment such as `tests` is not eaten. A leftover `\n` / `\t` / `\r`
+  // is a separator only when the next character continues the path. An escape
+  // before a space is a newline in prose, not a slash.
   private normalizePath(raw: string): string {
     return raw
-      .replace(/\\r\\n/g, '/')
+      .replace(/\\r\\n(?=[A-Za-z0-9_])/g, '/')
+      .replace(/\\r\\n/g, ' ')
       .replace(/\\\\/g, '/')
-      .replace(/\\n/g, '/')
-      .replace(/\\t/g, '/')
-      .replace(/\\r/g, '/')
+      .replace(/\\n(?=[A-Za-z0-9_])/g, '/')
+      .replace(/\\t(?=[A-Za-z0-9_])/g, '/')
+      .replace(/\\r(?=[A-Za-z0-9_])/g, '/')
+      .replace(/\\n/g, ' ')
+      .replace(/\\t/g, ' ')
+      .replace(/\\r/g, ' ')
       .replace(/\\"/g, '"')
   }
 
@@ -938,59 +943,85 @@ export class Singularity {
   }
 
   private stripToolPayloads(text: string): { prose: string; summaries: string[] } {
+    const lines = text.split('\n')
     const kept: string[] = []
     const summaries: string[] = []
-    let skipping = false
-    let depth = 0
-    let sawBrace = false
-    let resultPayload = ''
-
-    const finishSkip = () => {
-      if (resultPayload) summaries.push(this.resultSummary(resultPayload))
-      skipping = false
-      depth = 0
-      sawBrace = false
-      resultPayload = ''
+    let index = 0
+    while (index < lines.length) {
+      const trimmed = lines[index].trim()
+      if (/use offset=\d+ to continue/i.test(trimmed) || trimmed.includes('\\r\\n')) {
+        index += 1
+        continue
+      }
+      if (!this.isToolBlockStart(lines, index)) {
+        kept.push(lines[index])
+        index += 1
+        continue
+      }
+      const end = this.consumeToolBlock(lines, index)
+      const block = lines.slice(index, end).join('\n')
+      const summary = /\bresult\s*:/i.test(block) ? this.resultSummary(block) : this.toolCallSummary(block)
+      if (summary) summaries.push(summary)
+      index = end
     }
-
-    for (const line of text.split('\n')) {
-      const trimmed = line.trim()
-      const resultCall = /\bresult:\s*[[{]/i.test(trimmed)
-      const toolCall = /\btool\s*call\s*:/i.test(trimmed)
-      const execCall = /^exec:\s+\S+/i.test(trimmed)
-      if (!skipping && /use offset=\d+ to continue/i.test(trimmed)) continue
-      if (!skipping && resultCall) {
-        resultPayload = trimmed
-        depth = (line.match(/{/g) ?? []).length - (line.match(/}/g) ?? []).length
-        sawBrace = true
-        if (depth <= 0) finishSkip()
-        else skipping = true
-        continue
-      }
-      if (!skipping && trimmed.includes('\\r\\n')) continue
-      if (!skipping && (toolCall || execCall || (this.isToolPayload(trimmed) && (trimmed.startsWith('[') || trimmed.startsWith('{'))))) {
-        summaries.push(this.toolCallSummary(trimmed))
-        depth = (line.match(/{/g) ?? []).length - (line.match(/}/g) ?? []).length
-        sawBrace = /[{[]/.test(line)
-        if (sawBrace && depth <= 0) finishSkip()
-        else skipping = true
-        continue
-      }
-
-      if (skipping) {
-        if (resultPayload) resultPayload = `${resultPayload}\n${trimmed}`
-        depth += (line.match(/{/g) ?? []).length
-        depth -= (line.match(/}/g) ?? []).length
-        if (/[{[]/.test(line)) sawBrace = true
-        if ((sawBrace && depth <= 0 && /[}\]]/.test(line)) || (!sawBrace && trimmed === '')) finishSkip()
-        continue
-      }
-
-      kept.push(line)
-    }
-
-    if (resultPayload) summaries.push(this.resultSummary(resultPayload))
     return { prose: kept.join('\n'), summaries }
+  }
+
+  private isToolBlockStart(lines: string[], index: number): boolean {
+    const trimmed = lines[index]?.trim() ?? ''
+    if (/^tool\s*call\s*:/i.test(trimmed) || /^exec:\s+\S+/i.test(trimmed)) return true
+    if (/^result\s*:/i.test(trimmed)) {
+      if (/[[{]/.test(trimmed)) return true
+      const next = lines[index + 1]?.trim() ?? ''
+      return next.startsWith('{') || next.startsWith('[')
+    }
+    return (trimmed.startsWith('{') || trimmed.startsWith('[')) && this.isToolPayload(trimmed)
+  }
+
+  private braceDepth(line: string): number {
+    return (line.match(/[{[]/g) ?? []).length - (line.match(/[}\]]/g) ?? []).length
+  }
+
+  private consumeToolBlock(lines: string[], start: number): number {
+    const first = lines[start] ?? ''
+    let depth = this.braceDepth(first)
+    let sawJson = /[{[]/.test(first)
+    let index = start + 1
+    const pendingResult = (): boolean => {
+      let cursor = index
+      while (cursor < lines.length && lines[cursor].trim() === '') cursor += 1
+      if (!/^result\s*:/i.test(lines[cursor]?.trim() ?? '')) return false
+      index = cursor
+      return true
+    }
+    if (sawJson && depth <= 0 && !pendingResult()) return index
+
+    while (index < lines.length) {
+      const raw = lines[index] ?? ''
+      const trimmed = raw.trim()
+      if (/^tool\s*call\s*:/i.test(trimmed) && depth <= 0) break
+      if (trimmed === '' && depth <= 0 && sawJson) {
+        if (pendingResult()) continue
+        break
+      }
+      if (/^(?:args|result)\s*:/i.test(trimmed) && depth <= 0) {
+        const headerDepth = this.braceDepth(raw)
+        depth += headerDepth
+        if (/[{[]/.test(raw)) sawJson = true
+        index += 1
+        if (/[{[]/.test(raw) && depth <= 0 && !pendingResult()) break
+        continue
+      }
+      const opens = (raw.match(/[{[]/g) ?? []).length
+      const closes = (raw.match(/[}\]]/g) ?? []).length
+      const jsonToken = opens > 0 || closes > 0 || /^[[\]"'{},]/.test(trimmed) || /^\s+\S/.test(raw)
+      if (!jsonToken && depth <= 0) break
+      depth += opens - closes
+      if (opens > 0 || closes > 0) sawJson = true
+      index += 1
+      if (sawJson && depth <= 0 && closes > 0 && !pendingResult()) break
+    }
+    return index
   }
 
   private renderDetailSnippet(segment: Segment, entries: ReferenceEntry[]): string | null {
@@ -1055,7 +1086,7 @@ export class Singularity {
   }
 
   private cleanEvidenceLine(text: string, maxLength = 220): string {
-    const kept = this.cleanPathText(this.stripNoise(text)).split('\n').filter((line) => !line.includes('\\r\\n')).join('\n')
+    const kept = this.cleanPathText(this.stripNoise(this.turnProse(text))).split('\n').filter((line) => !line.includes('\\r\\n')).join('\n')
     let cleaned = this.maskFencedBlocks(kept)
       .replace(/[-\s]*exported session \d+\s*-*/gi, ' ')
       .replace(/\{?"?(?:role|content|parts|text|metadata|source)"?\s*:\s*/gi, ' ')
@@ -1384,11 +1415,10 @@ export class Singularity {
   }
 
   private hasWorkSignal(text: string): boolean {
-    const fence = this.shortFenceBody(text)
-    const prose = fence ?? this.stripToolPayloads(text).prose
-    const plain = this.stripNoise(prose || text)
+    const prose = this.turnProse(text)
+    const plain = this.stripNoise(prose)
     if (plain.trim() && this.hasConcreteArtifact(plain)) return true
-    if (/```[^\n]*\n[\s\S]*?\b(?:export|import|def|class|function|const|let|return)\b/.test(text)) return true
+    if (/```[^\n]*\n[\s\S]*?\b(?:export|import|def|class|function|const|let|return)\b/.test(prose)) return true
     return false
   }
 
@@ -1399,13 +1429,19 @@ export class Singularity {
     if (/\b[\w.-]+\.(?:tsx|ts|jsx|js|json|md|txt|html|css|py|sh|ps1|bat|log)\b/i.test(plain)) return true
     if (this.looksLikeCommand(plain)) return true
     if (/\b(?:error|exception|traceback|stack trace)\b/i.test(plain)) return true
-    if (/https?:\/\/(?!(?:www\.)?chatboxai\.app\b)/i.test(plain)) return true
-    if (/\b(?:localhost|127\.0\.0\.1):\d{2,5}\b/i.test(plain) || /\bport\s+\d{2,5}\b/i.test(plain)) return true
-    if (/\b\d+\s+(?:lines?|files?|chars?|characters|bytes|kb|mb|gb|ms|secs?|seconds?|mins?|minutes?|tests?|insertions?|deletions?)\b/i.test(plain)) return true
-    if (/`[^`\n]*\b[\w.-]+\.(?:tsx|ts|jsx|js|json|py|html|css|md)\b[^`\n]*`/i.test(plain)) return true
+    if (/`[^`\n]*[-_./\\][^`\n]*`/.test(plain)) return true
     if (/`[^`\n]*[0-9a-f]{7,40}[^`\n]*`/i.test(plain)) return true
     if (/`[^`\n]*\w+\([^`\n]*\)[^`\n]*`/.test(plain)) return true
     return false
+  }
+
+  private unwrapUntaggedFence(text: string): string {
+    const match = text.trim().match(/^```[ \t]*\n([\s\S]*?)\n```$/)
+    return match ? match[1].trim() : text
+  }
+
+  private turnProse(text: string): string {
+    return this.stripToolPayloads(this.unwrapUntaggedFence(text)).prose.trim()
   }
 
   private stripNoise(text: string): string {
@@ -1427,23 +1463,13 @@ export class Singularity {
   }
 
   private renderStopUser(text: string): string {
-    const body = this.shortFenceBody(text)
-    if (body) return this.capVerbatim(body, 600)
-    return this.capVerbatim(this.maskFencedBlocks(text), 600)
-  }
-
-  private shortFenceBody(text: string): string | null {
-    const match = text.trim().match(/^```[A-Za-z0-9_+-]*[ \t]*\n([\s\S]*?)\n```$/)
-    if (!match) return null
-    const body = match[1].trim()
-    if (!body || body.length > 600) return null
-    return body
+    return this.capVerbatim(this.turnProse(text), 600)
   }
 
   private stripExportChrome(text: string): string {
     const start = Math.max(0, text.length - 4000)
     const tail = text.slice(start)
-      .replace(/\n*-{5,}[\s\S]*chatboxai\.app[\s\S]*$/i, '')
+      .replace(/\n[ \t]*-{5,}[ \t]*\n[\s\S]*chatboxai\.app[\s\S]*$/i, '')
       .replace(/\n*<a\b[^>\n]*chatboxai\.app[\s\S]*$/i, '')
     return `${text.slice(0, start)}${tail}`.replace(/https?:\/\/(?:www\.)?chatboxai\.app\S*/gi, '')
   }
@@ -1466,7 +1492,7 @@ export class Singularity {
     }
     for (let index = 0; index < marks.length; index += 1) {
       const end = index + 1 < marks.length ? marks[index + 1].start : text.length
-      const body = text.slice(marks[index].end, end).trim()
+      const body = this.unwrapUntaggedFence(text.slice(marks[index].end, end).trim())
       if (body) turns.push({ role: marks[index].role, text: body })
     }
     return turns
@@ -1503,23 +1529,53 @@ export class Singularity {
   }
 
   private trimReply(text: string): string {
-    return this.cleanEvidenceLine(text, 500) || 'not clearly detected'
+    return this.cleanEvidenceLine(this.turnProse(text), 500) || 'not clearly detected'
   }
 
   private statedNextStep(assistant: string, user: string): string {
     for (const chunk of [assistant, user]) {
       if (!chunk.trim()) continue
-      const sentences = this.cleanEvidenceLine(chunk, 4000)
+      const prose = this.turnProse(chunk)
+      const listed = this.nextStepFromList(prose)
+      if (listed) return this.cleanEvidenceLine(listed, 300)
+      const sentences = this.cleanEvidenceLine(prose, 4000)
         .replace(/```[\s\S]*?```/g, ' ')
         .replace(/\[code block \d+ chars\]/g, ' ')
         .split(/(?<=[.!?])\s+/)
       for (let index = sentences.length - 1; index >= 0; index -= 1) {
         const sentence = sentences[index]?.trim() ?? ''
-        if (sentence.length < 8 || !this.hasWorkSignal(sentence)) continue
-        if (NEXT_PATTERN.test(sentence) || /\b(?:todo|next step)\b/i.test(sentence)) {
+        if (sentence.length < 8) continue
+        if (/\bone last thing\b/i.test(sentence) || /\bthen run\b/i.test(sentence) || /\bnext steps?\s*:/i.test(sentence)) {
+          return this.cleanEvidenceLine(sentence, 300)
+        }
+        if (this.hasWorkSignal(sentence) && (NEXT_PATTERN.test(sentence) || /\b(?:todo|next step)\b/i.test(sentence))) {
           return this.cleanEvidenceLine(sentence, 300)
         }
       }
+    }
+    return ''
+  }
+
+  private nextStepFromList(text: string): string {
+    const lines = text.split('\n')
+    for (let index = 0; index < lines.length; index += 1) {
+      if (!/\bnext steps?\b/i.test(lines[index] ?? '')) continue
+      const items: string[] = []
+      for (let cursor = index + 1; cursor < lines.length && cursor < index + 8; cursor += 1) {
+        const line = lines[cursor].trim()
+        if (!line) {
+          if (items.length) break
+          continue
+        }
+        if (/^#{1,3}\s/.test(line)) break
+        if (!/^(?:\d+[.)]|[-*])\s+/.test(line)) {
+          if (items.length) break
+          continue
+        }
+        items.push(line.replace(/^\d+[.)]\s*/, '').replace(/^[-*]\s*/, ''))
+      }
+      if (!items.length) continue
+      return items.find((item) => /\b(?:pdf|export|run)\b/i.test(item)) ?? items[items.length - 1]
     }
     return ''
   }
@@ -1532,10 +1588,10 @@ export class Singularity {
       .replace(/https?:\/\/\S+/g, ' ')
     const dropped = new Set<string>()
     let match: RegExpExecArray | null
-    const resetPattern = /git\s+reset\s+--hard\s+HEAD~(\d+)/gi
+    const resetPattern = /(?:^|\n)[^\n]{0,24}?git\s+reset\s+--hard\s+HEAD~(\d+)|"command"\s*:\s*"git\s+reset\s+--hard\s+HEAD~(\d+)/gi
     while ((match = resetPattern.exec(source))) {
-      const count = Number(match[1])
-      const prior = this.onelineHashes(source.slice(0, match.index))
+      const count = Number(match[1] || match[2])
+      const prior = this.commitsBeforeReset(source.slice(0, match.index))
       for (const hash of prior.slice(0, count)) dropped.add(hash)
     }
     const revertPattern = /git\s+revert\b[^\n]{0,80}?\b([0-9a-f]{7,40})\b/gi
@@ -1557,7 +1613,44 @@ export class Singularity {
     for (const hash of heads) push(hash)
     push(logHead)
     const removed = [...dropped]
-    return [...ordered.slice(0, 4), ...removed.map((hash) => `${hash} (dropped)`)].slice(0, 4)
+    const labels = removed.map((hash) => `${hash} (dropped)`)
+    const room = Math.max(1, 4 - labels.length)
+    return [...ordered.slice(0, room), ...labels].slice(0, 4)
+  }
+
+  private commitsBeforeReset(source: string): string[] {
+    const logged = this.latestOnelineLog(source)
+    if (logged.length >= 2) return logged
+    return this.createdHashes(source)
+  }
+
+  private latestOnelineLog(source: string): string[] {
+    const lines = source.split('\n')
+    let best: string[] = []
+    let bestEnd = -1
+    let index = 0
+    while (index < lines.length) {
+      const hash = this.lineHash(lines[index] ?? '')
+      if (!hash) {
+        index += 1
+        continue
+      }
+      const run = [hash]
+      let cursor = index + 1
+      while (cursor < lines.length) {
+        const next = this.lineHash(lines[cursor] ?? '')
+        if (!next) break
+        run.push(next)
+        cursor += 1
+      }
+      const message = /\b[0-9a-f]{7,40}\b\s+\S/.test(lines[index] ?? '')
+      if ((run.length >= 2 || message) && cursor - 1 >= bestEnd) {
+        bestEnd = cursor - 1
+        best = run
+      }
+      index = cursor
+    }
+    return best
   }
 
   private isCommitHash(value: string): boolean {
@@ -1620,20 +1713,6 @@ export class Singularity {
       index = cursor
     }
     return bestHead
-  }
-
-  private onelineHashes(beforeReset: string): string[] {
-    const lines = beforeReset.split('\n')
-    const collected: string[] = []
-    for (let index = lines.length - 1; index >= 0; index -= 1) {
-      const hash = this.lineHash(lines[index] ?? '')
-      if (!hash) {
-        if (collected.length) break
-        continue
-      }
-      collected.push(hash)
-    }
-    return collected.reverse()
   }
 
   private lineHash(line: string): string {
