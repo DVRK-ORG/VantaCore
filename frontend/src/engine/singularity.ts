@@ -495,10 +495,10 @@ export class Singularity {
 
   private renderReferenceEntry(entry: ReferenceEntry): string {
     if (entry.kind === 'CMD' && entry.text.length <= 220 && !entry.text.includes('\n')) {
-      return `[${entry.id} repeated ${entry.count}x]: ${entry.text}`
+      return `[${entry.id} repeated ${entry.count}x]: ${this.cleanPathText(entry.text)}`
     }
 
-    return `[${entry.id} repeated ${entry.count}x]:\n<<<${entry.id}\n${entry.text}\n>>>`
+    return `[${entry.id} repeated ${entry.count}x]:\n<<<${entry.id}\n${this.cleanPathText(entry.text)}\n>>>`
   }
 
   private makeSegments(text: string): Segment[] {
@@ -609,18 +609,73 @@ export class Singularity {
 
   private pathHits(text: string): string[] {
     const hits: string[] = []
-    const windows = /[A-Za-z]:\\(?:[^\\/:*?"<>|\r\n]+\\)+[^\\/:*?"<>|\r\n]+\.[A-Za-z0-9]+/g
+    const windows = /[A-Za-z]:(?:\\+|\/)[^\s"'<>|]+/g
     const posix = /(?:^|[\s"'`(])((?:[\w.-]+\/)+[\w.-]+\.[A-Za-z0-9]+)/gm
     let match: RegExpExecArray | null
-    while ((match = windows.exec(text))) hits.push(match[0])
+    while ((match = windows.exec(text))) hits.push(match[0].replace(/[),.;:]+$/, ''))
     while ((match = posix.exec(text))) hits.push(match[1])
     return hits
   }
 
+  private pathSegments(raw: string): string[] {
+    return this.normalizePath(raw)
+      .replace(/^[A-Za-z]:/, '')
+      .split(/[/\\]+/)
+      .map((part) => part.replace(/^["']+|["']+$/g, '').trim())
+      .filter((part) => part.length > 0 && !/^[A-Za-z]:$/.test(part))
+      .map((part) => this.restoreChoppedSegment(part))
+  }
+
+  // JSON string escapes are separators. Collapse `\\` first so a real segment
+  // such as `tests` is not eaten, then treat a leftover `\n` / `\t` / `\r` as
+  // a separator too. The escape letter must not stay glued to the next piece.
+  private normalizePath(raw: string): string {
+    return raw
+      .replace(/\\r\\n/g, '/')
+      .replace(/\\\\/g, '/')
+      .replace(/\\n/g, '/')
+      .replace(/\\t/g, '/')
+      .replace(/\\r/g, '/')
+      .replace(/\\"/g, '"')
+  }
+
+  private restoreChoppedSegment(part: string): string {
+    if (/^ests$/i.test(part)) return 'tests'
+    if (/^est(?=[_.])/i.test(part)) return `t${part}`
+    if (/^emp$/i.test(part)) return 'temp'
+    if (/^mp$/i.test(part)) return 'tmp'
+    if (/^ew$/i.test(part)) return 'new'
+    if (/^ode_modules$/i.test(part)) return 'node_modules'
+    if (/^esults$/i.test(part)) return 'results'
+    if (/^eadme(?:\.[A-Za-z0-9]+)?$/i.test(part)) return `r${part}`
+    return part
+  }
+
+  private cleanDisplayPath(raw: string): string {
+    if (!/\\/.test(raw)) return raw
+    const segments = this.pathSegments(raw)
+    if (!segments.length) return raw
+    const drive = raw.match(/^[A-Za-z]:/)?.[0]
+    return drive ? `${drive}\\${segments.join('\\')}` : segments.join('/')
+  }
+
+  private cleanPathText(text: string): string {
+    if (!text.includes('\\')) return text
+    const hits = [...this.pathHits(text)].sort((a, b) => b.length - a.length)
+    let cleaned = text
+    for (const hit of hits) {
+      const display = this.cleanDisplayPath(hit)
+      if (!display || display === hit) continue
+      cleaned = cleaned.split(hit).join(display)
+    }
+    return cleaned
+  }
+
   private projectFromPath(raw: string): string {
-    const parts = raw.replace(/\\+/g, '/').split('/').filter(Boolean)
-    const file = parts[parts.length - 1] ?? ''
-    const dirs = parts.slice(0, -1).filter((part) => !/^[A-Za-z]:$/.test(part))
+    const segments = this.pathSegments(raw)
+    const last = segments[segments.length - 1] ?? ''
+    const file = /\.[A-Za-z0-9]+$/.test(last) ? segments.pop() ?? '' : ''
+    const dirs = segments.filter((part) => !/^[A-Za-z]:$/.test(part))
     const isRoot = (part: string) => {
       const key = part.toLowerCase()
       return key.length < 2 || GENERIC_PATH_DIRS.has(key) || PATH_NAMED_ROOTS.has(key) || PATH_HOME_ROOTS.has(key)
@@ -651,7 +706,7 @@ export class Singularity {
     for (const dir of dirs) {
       if (!isRoot(dir) && !this.isGenericTopic(dir)) return dir
     }
-    const stem = file.replace(/\..*$/, '')
+    const stem = (file || last).replace(/\..*$/, '')
     if (!stem || this.isGenericTopic(stem)) return ''
     return stem
   }
@@ -855,13 +910,7 @@ export class Singularity {
 
   private resultSummary(text: string): string {
     const quoted = text.match(/"(?:file_path|path|command|cmd)"\s*:\s*"((?:\\.|[^"\\])*)"/)
-    const target = (quoted?.[1] ?? 'tool result')
-      .replace(/\\r\\n/g, ' ')
-      .replace(/\\n/g, ' ')
-      .replace(/\\"/g, '"')
-      .replace(/\\\\/g, '\\')
-      .replace(/\s+/g, ' ')
-      .trim()
+    const target = this.cleanDisplayPath((quoted?.[1] ?? 'tool result').replace(/\\"/g, '"').replace(/\s+/g, ' ').trim())
     const failed = /"error"\s*:/i.test(text) || /"success"\s*:\s*false/i.test(text) || /"exitCode"\s*:\s*(?!0\b)\d/.test(text)
     const ok = /"success"\s*:\s*true/i.test(text) || /"exitCode"\s*:\s*0\b/.test(text)
     const status = failed ? 'failed' : ok ? 'succeeded' : 'returned'
@@ -873,7 +922,7 @@ export class Singularity {
     const quoted = text.match(/"(?:path|file_path|command|cmd)"\s*:\s*"((?:\\.|[^"\\]){1,120})"/)?.[1]
     const inline = text.match(/\b(?:read_file|write_file|apply_patch|run_command)\s+([^\s"{]{1,120})/)?.[1]
     const exec = text.match(/^exec:\s+(\S+(?:\s+\S+)?)/im)?.[1]
-    const target = (quoted ?? inline ?? exec ?? '').replace(/\\n/g, ' ').replace(/\\"/g, '"')
+    const target = this.cleanDisplayPath((quoted ?? inline ?? exec ?? '').replace(/\\"/g, '"'))
     const line = [name, target].filter((part) => Boolean(part)).join(' ').replace(/\s+/g, ' ').trim()
     return (line || 'tool call').slice(0, 160)
   }
@@ -896,9 +945,10 @@ export class Singularity {
 
     for (const line of text.split('\n')) {
       const trimmed = line.trim()
-      const resultCall = /^result:\s*[[{]/i.test(trimmed)
+      const resultCall = /\bresult:\s*[[{]/i.test(trimmed)
       const toolCall = /\btool\s*call\s*:/i.test(trimmed)
       const execCall = /^exec:\s+\S+/i.test(trimmed)
+      if (!skipping && /use offset=\d+ to continue/i.test(trimmed)) continue
       if (!skipping && resultCall) {
         resultPayload = trimmed
         depth = (line.match(/{/g) ?? []).length - (line.match(/}/g) ?? []).length
@@ -995,7 +1045,7 @@ export class Singularity {
   }
 
   private cleanEvidenceLine(text: string, maxLength = 220): string {
-    const kept = text.split('\n').filter((line) => !line.includes('\\r\\n')).join('\n')
+    const kept = this.cleanPathText(this.stripNoise(text)).split('\n').filter((line) => !line.includes('\\r\\n')).join('\n')
     let cleaned = this.maskFencedBlocks(kept)
       .replace(/[-\s]*exported session \d+\s*-*/gi, ' ')
       .replace(/\{?"?(?:role|content|parts|text|metadata|source)"?\s*:\s*/gi, ' ')
@@ -1019,7 +1069,7 @@ export class Singularity {
     }
 
     for (const match of text.match(FILE_OR_URL_PATTERN) ?? []) {
-      artifacts.push(match.replace(/[.,;:]+$/, ''))
+      artifacts.push(this.cleanDisplayPath(match.replace(/[.,;:]+$/, '')))
     }
 
     for (const match of text.match(/\b(?:codex|feature|fix|release|main|master)\/[\w./-]+|\b[0-9a-f]{7,12}\b/gi) ?? []) {
@@ -1258,7 +1308,7 @@ export class Singularity {
     return cleaned
       .split(/(?<=[.!?])\s+/)
       .map((sentence) => this.cleanEvidenceLine(sentence, 220))
-      .filter((sentence) => sentence.length >= 12)
+      .filter((sentence) => sentence.length >= 12 && this.hasWorkSignal(sentence) && !/\bresult:\s*[[{]/i.test(sentence))
   }
 
   private classifyEvidence(sentence: string): 'completed' | 'verified' | 'pending' | 'next' | 'doNot' | 'decisions' | null {
@@ -1284,7 +1334,7 @@ export class Singularity {
     let lastUser = ''
     let lastAssistant = ''
     if (turns.length) {
-      const picked = this.latestSubstantiveTurns(turns)
+      const picked = this.latestWorkTurns(turns)
       lastUser = picked.user
       lastAssistant = picked.assistant
     } else {
@@ -1293,7 +1343,7 @@ export class Singularity {
       lastAssistant = close.assistant
     }
 
-    const mentioned = [...this.tailCommits(text), ...this.tailFiles(text)].slice(0, 8)
+    const mentioned = [...this.commitReport(text), ...this.tailFiles(text)].slice(0, 8)
     const next = this.statedNextStep(lastAssistant, lastUser)
 
     return [
@@ -1310,17 +1360,54 @@ export class Singularity {
     ]
   }
 
-  private latestSubstantiveTurns(turns: Array<{ role: 'user' | 'assistant'; text: string }>): { user: string; assistant: string } {
+  private latestWorkTurns(turns: Array<{ role: 'user' | 'assistant'; text: string }>): { user: string; assistant: string } {
     let user = ''
     let assistant = ''
     for (let index = turns.length - 1; index >= 0; index -= 1) {
       const turn = turns[index]
-      if (this.isSkippableTurn(turn.text)) continue
+      if (!this.hasWorkSignal(turn.text)) continue
       if (turn.role === 'user' && !user) user = turn.text
       if (turn.role === 'assistant' && !assistant) assistant = turn.text
       if (user && assistant) break
     }
     return { user, assistant }
+  }
+
+  private hasWorkSignal(text: string): boolean {
+    const fence = this.shortFenceBody(text)
+    const prose = fence ?? this.stripToolPayloads(text).prose
+    const plain = this.stripNoise(prose || text)
+    if (!plain.trim()) return false
+    const hash = plain.match(/\b[0-9a-f]{7,40}\b/i)?.[0] ?? ''
+    if (hash && /[a-f]/i.test(hash)) return true
+    if (this.pathHits(plain).length) return true
+    if (/\b[\w.-]+\.(?:tsx|ts|jsx|js|json|md|txt|html|css|py|sh|ps1|bat|log)\b/i.test(plain)) return true
+    if (this.looksLikeCommand(plain)) return true
+    if (/\b(?:error|exception|traceback)\b/i.test(plain)) return true
+    if (/https?:\/\/(?!(?:www\.)?chatboxai\.app\b)/i.test(plain)) return true
+    if (/\b(?:fix(?:es|ed)?|commit(?:s|ted)?|run|running|test(?:s|ed|ing)?|errors?|tokens?|downloads?|download(?:ed|er)?|builds?|building)\b/i.test(plain)) return true
+    if (/\b[A-Za-z_][A-Za-z0-9_]*\s*\(/.test(plain)) return true
+    if (/\b[a-z][a-z0-9]*_[a-z0-9_]+\b/i.test(plain)) return true
+    if (/```[^\n]*\n[\s\S]*?\b(?:export|import|def|class|function|const|let|return)\b/.test(text)) return true
+    return false
+  }
+
+  private stripNoise(text: string): string {
+    return text
+      .replace(/<\/?deliver-assets\b[^>]*>/gi, ' ')
+      .replace(/<\/?media\b[^>]*>/gi, ' ')
+      .split('\n')
+      .flatMap((line) => {
+        if (/use offset=\d+ to continue/i.test(line)) return []
+        if (line.includes('\\r\\n')) return []
+        const cut = line.search(/\bresult:\s*[[{]/i)
+        if (cut >= 0) {
+          const head = line.slice(0, cut).trim()
+          return head ? [head] : []
+        }
+        return [line]
+      })
+      .join('\n')
   }
 
   private renderStopUser(text: string): string {
@@ -1335,31 +1422,6 @@ export class Singularity {
     const body = match[1].trim()
     if (!body || body.length > 600) return null
     return body
-  }
-
-  private isSkippableTurn(text: string): boolean {
-    if (this.shortFenceBody(text)) return false
-    if (this.isOnlyCodeFence(text)) return true
-    const stripped = this.stripToolPayloads(text)
-    if (!stripped.prose.trim() && stripped.summaries.length) return true
-    return this.isSocialTurn(stripped.prose || text)
-  }
-
-  private isOnlyCodeFence(text: string): boolean {
-    if (!text.includes('```')) return false
-    const without = text.replace(/```[A-Za-z0-9_+-]*[ \t]*\n[\s\S]*?\n```/g, ' ')
-    return without.replace(/[^A-Za-z0-9]+/g, '').length < 8
-  }
-
-  private isSocialTurn(text: string): boolean {
-    const plain = text
-      .replace(/[^\u0020-\u007E]/g, ' ')
-      .replace(/[^A-Za-z0-9'\s]/g, ' ')
-      .replace(/\s+/g, ' ')
-      .trim()
-    if (!plain) return true
-    if (plain.length > 90 || plain.split(' ').length > 14) return false
-    return /\b(thanks|thank you|thx|bye|goodbye|cheers|lol|haha|babe|awesome|you(?:'| a)?re the best|love you|good night|talk later|ttyl)\b/i.test(plain)
   }
 
   private stripExportChrome(text: string): string {
@@ -1411,7 +1473,7 @@ export class Singularity {
     const paragraphs = text
       .split(/\n{2,}/)
       .map((paragraph) => paragraph.trim())
-      .filter((paragraph) => paragraph.length >= 8 && !this.isToolPayload(paragraph) && !/^exec:\s+/i.test(paragraph) && !this.isSkippableTurn(paragraph))
+      .filter((paragraph) => paragraph.length >= 8 && !this.isToolPayload(paragraph) && !/^exec:\s+/i.test(paragraph) && this.hasWorkSignal(paragraph))
     if (!paragraphs.length) return { user: '', assistant: '' }
     const commandLines = text.split('\n').filter((line) => this.looksLikeCommand(line) || /^exec:\s+/i.test(line.trim())).length
     if (commandLines >= 3) return { user: '', assistant: paragraphs[paragraphs.length - 1] }
@@ -1437,7 +1499,7 @@ export class Singularity {
         .split(/(?<=[.!?])\s+/)
       for (let index = sentences.length - 1; index >= 0; index -= 1) {
         const sentence = sentences[index]?.trim() ?? ''
-        if (sentence.length < 8) continue
+        if (sentence.length < 8 || !this.hasWorkSignal(sentence)) continue
         if (NEXT_PATTERN.test(sentence) || /\b(?:todo|next step)\b/i.test(sentence)) {
           return this.cleanEvidenceLine(sentence, 300)
         }
@@ -1446,29 +1508,65 @@ export class Singularity {
     return ''
   }
 
-  private tailCommits(text: string): string[] {
-    const found: string[] = []
-    const source = text.replace(/https?:\/\/\S+/g, ' ')
-    const pattern = /\b(?:commit\s+)?([0-9a-f]{7,40})\b/gi
+  private commitReport(text: string): string[] {
+    const source = text
+      .replace(/\\r\\n/g, '\n')
+      .replace(/\\n/g, '\n')
+      .replace(/\\t/g, '\t')
+      .replace(/https?:\/\/\S+/g, ' ')
+    const hits: Array<{ hash: string; index: number }> = []
+    const pattern = /\b([0-9a-f]{7,40})\b/gi
     let match: RegExpExecArray | null
     while ((match = pattern.exec(source))) {
       if (!/[a-f]/i.test(match[1])) continue
-      found.push(match[1].toLowerCase())
+      hits.push({ hash: match[1].toLowerCase(), index: match.index })
     }
-    const unique: string[] = []
-    const seen = new Set<string>()
-    for (let index = found.length - 1; index >= 0; index -= 1) {
-      const hash = found[index]
-      if (seen.has(hash)) continue
-      seen.add(hash)
-      unique.push(hash)
-      if (unique.length >= 4) break
+
+    const dropped = new Set<string>()
+    const resetPattern = /git\s+reset\s+--hard\s+HEAD~(\d+)/gi
+    while ((match = resetPattern.exec(source))) {
+      const count = Number(match[1])
+      const prior = this.onelineHashes(source.slice(0, match.index))
+      for (const hash of prior.slice(0, count)) dropped.add(hash)
     }
-    return unique
+    const revertPattern = /git\s+revert\b[^\n]{0,80}?\b([0-9a-f]{7,40})\b/gi
+    while ((match = revertPattern.exec(source))) {
+      if (/[a-f]/i.test(match[1])) dropped.add(match[1].toLowerCase())
+    }
+
+    const lastIndex = new Map<string, number>()
+    for (const hit of hits) lastIndex.set(hit.hash, hit.index)
+    const ordered = [...lastIndex.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+    const surviving = ordered.filter(([hash]) => !dropped.has(hash)).map(([hash]) => hash)
+    const removed = [...dropped].filter((hash) => lastIndex.has(hash))
+    return [...surviving, ...removed.map((hash) => `${hash} (dropped)`)].slice(0, 6)
+  }
+
+  private onelineHashes(beforeReset: string): string[] {
+    const lines = beforeReset.split('\n')
+    const collected: string[] = []
+    for (let index = lines.length - 1; index >= 0; index -= 1) {
+      const hash = this.lineHash(lines[index] ?? '')
+      if (!hash) {
+        if (collected.length) break
+        continue
+      }
+      collected.push(hash)
+    }
+    return collected.reverse()
+  }
+
+  private lineHash(line: string): string {
+    const trimmed = line.trim()
+    const direct = trimmed.match(/^["']?([0-9a-f]{7,40})\b/i)?.[1] ?? ''
+    const embedded = direct ? '' : (trimmed.match(/["']([0-9a-f]{7,40})\b/i)?.[1] ?? '')
+    const hash = direct || embedded
+    if (!hash || !/[a-f]/i.test(hash)) return ''
+    return hash.toLowerCase()
   }
 
   private tailFiles(text: string): string[] {
-    const source = text
+    const source = this.stripNoise(text)
       .split('\n')
       .filter((line) => {
         const trimmed = line.trim()
@@ -1482,7 +1580,7 @@ export class Singularity {
     const unique: string[] = []
     const seen = new Set<string>()
     for (let index = matches.length - 1; index >= 0; index -= 1) {
-      const file = matches[index].replace(/[.,;:)]+$/, '')
+      const file = this.cleanDisplayPath(matches[index].replace(/[.,;:)]+$/, ''))
       if (/^https?:\/\//i.test(file) || /chatboxai\.app/i.test(file)) continue
       const key = file.toLowerCase()
       if (seen.has(key)) continue
