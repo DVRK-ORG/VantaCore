@@ -64,6 +64,8 @@ const STOP_WORDS = new Set([
   'does', 'did', 'can', 'could', 'would', 'may', 'might', 'must',
   'up', 'out', 'new', 'get', 'use', 'using', 'used',
   't', 's', 'm', 're', 've', 'd', 'll',
+  'i', 'me', 'my', 'mine', 'we', 'our', 'ours', 'you', 'yours',
+  'he', 'him', 'his', 'she', 'hers', 'us', 'who', 'whom', 'whose',
 ])
 
 const TECH_LANG_NAMES = new Set([
@@ -133,7 +135,7 @@ const DECISION_PATTERN = /\b(decided|decision|chose|selected|agreed|accepted|rej
 const SIGNAL_PATTERN = /\b(user wants|agent should|already fixed|verified|pending|next|blocked|passed|failed|commit|pushed|deployed|do not|todo|remaining|open loop)\b/i
 
 const COMMAND_PATTERN = /^(?:PS\s+[A-Z]:\\.*?>\s*)?(?:\$|>)?\s*(?:git|rg|npm|pnpm|yarn|node|npx|powershell|pwsh|curl|wrangler|vercel|python|py|tsc|vite|gh|cat|ls|dir|Get-ChildItem|Select-String|Start-Process|netstat|tasklist|taskkill|code)\b/i
-const FILE_OR_URL_PATTERN = /(?:https?:\/\/[^\s)<>"']+|[A-Za-z]:[/\\][^\s<>"']+|(?:[\w.-]+\/)+[\w.-]+\.[A-Za-z0-9]+|\b[\w.-]+\.(?:tsx|ts|jsx|js|json|md|txt|html|css|png|jpg|jpeg|webp|xml|yml|yaml|toml|py|sh|ps1|bat|log)\b)/g
+const FILE_OR_URL_PATTERN = /(?:https?:\/\/[^\s)<>"']+|(?<![A-Za-z])[A-Za-z]:[/\\][^\s<>"']+|(?:[\w.-]+\/)+[\w.-]+\.[A-Za-z0-9]+|\b[\w.-]+\.(?:tsx|ts|jsx|js|json|md|txt|html|css|png|jpg|jpeg|webp|xml|yml|yaml|toml|py|sh|ps1|bat|log)\b)/g
 const REFERENCE_PATTERN = /\[(?:CMD|PROMPT|CODE)-\d{2}\]/
 
 export class Singularity {
@@ -641,7 +643,7 @@ export class Singularity {
 
   private pathHits(text: string): string[] {
     const hits: string[] = []
-    const windows = /[A-Za-z]:(?:\\+|\/)[^\s"'<>|]+/g
+    const windows = /(?<![A-Za-z])[A-Za-z]:(?:\\+|\/)[^\s"'<>|]+/g
     const posix = /(?:^|[\s"'`(])((?:[\w.-]+\/)+[\w.-]+\.[A-Za-z0-9]+)/gm
     let match: RegExpExecArray | null
     while ((match = windows.exec(text))) hits.push(match[0].replace(/[),.;:]+$/, ''))
@@ -1167,7 +1169,7 @@ export class Singularity {
 
     for (const match of this.cleanPathText(this.stripUrls(text)).match(FILE_OR_URL_PATTERN) ?? []) {
       const file = this.presentFile(match.replace(/[.,;:]+$/, ''))
-      if (/^https?:\/\//i.test(file) || /(?:^|\.)(?:com|org|net|io|ai|dev)$/i.test(file)) continue
+      if (/^https?:\/\//i.test(file) || this.isUrlOrFragment(file) || /(?:^|\.)(?:com|org|net|io|ai|dev)$/i.test(file)) continue
       artifacts.push(file)
     }
 
@@ -1227,20 +1229,61 @@ export class Singularity {
   }
 
   private findFences(text: string): Array<{ start: number; end: number; text: string }> {
-    const spans: Array<{ start: number; end: number; text: string }> = []
+    return this.scanFences(text).outer
+  }
+
+  private codeFenceSpans(text: string): Array<{ start: number; end: number; text: string }> {
+    return this.scanFences(text).code
+  }
+
+  private lineClosesFence(line: string, minLength: number): { endOffset: number; wholeLine: boolean } | null {
+    const mark = /^(\s*)(`{3,})(.*)$/.exec(line)
+    if (!mark || mark[2].length < minLength) return null
+    if (!(mark[3].trim() === '' || /^\s/.test(mark[3]))) return null
+    return { endOffset: mark[1].length + mark[2].length, wholeLine: mark[3].trim() === '' }
+  }
+
+  private scanFences(text: string): {
+    outer: Array<{ start: number; end: number; text: string }>
+    code: Array<{ start: number; end: number; text: string }>
+  } {
+    const outer: Array<{ start: number; end: number; text: string }> = []
+    const code: Array<{ start: number; end: number; text: string }> = []
+    const stack: Array<{ start: number; length: number; lang: string }> = []
     let cursor = 0
+    const pushSpan = (start: number, end: number) => {
+      const raw = text.slice(start, end)
+      const normalized = this.fenceText(raw)
+      const isCode = this.isCodeFence(normalized)
+      if (isCode) code.push({ start, end, text: raw })
+      if (!stack.length) outer.push({ start, end, text: raw })
+    }
     while (cursor < text.length) {
       const open = this.nextFenceOpen(text, cursor)
       if (!open) break
-      const close = this.nextFenceClose(text, open.contentStart, open.length)
-      if (!close || close.end <= open.start) {
-        cursor = open.start + open.length
+      const lineStart = text.lastIndexOf('\n', open.start - 1) + 1
+      const atLineStart = /^\s*$/.test(text.slice(lineStart, open.start))
+      if (!atLineStart) {
+        const close = this.nextFenceClose(text, open.contentStart, open.length)
+        if (close && close.end > open.start) pushSpan(open.start, close.end)
+        cursor = close && close.end > open.start ? close.end : open.start + open.length
         continue
       }
-      spans.push({ start: open.start, end: close.end, text: text.slice(open.start, close.end) })
-      cursor = close.end
+      const lineEnd = text.indexOf('\n', open.start)
+      const line = text.slice(lineStart, lineEnd < 0 ? text.length : lineEnd)
+      const lang = (line.trim().replace(/^`+/, '').trim().split(/\s/)[0] ?? '').toLowerCase()
+      const closer = stack.length ? this.lineClosesFence(line, stack[stack.length - 1].length) : null
+      if (closer) {
+        const top = stack.pop()
+        const end = closer.wholeLine && lineEnd >= 0 ? lineEnd + 1 : lineStart + closer.endOffset
+        if (top) pushSpan(top.start, end)
+        cursor = end
+        continue
+      }
+      stack.push({ start: open.start, length: open.length, lang })
+      cursor = open.contentStart
     }
-    return spans
+    return { outer, code }
   }
 
   private nextFenceOpen(text: string, from: number): { start: number; contentStart: number; length: number } | null {
@@ -1357,6 +1400,8 @@ export class Singularity {
     const { lang, body } = this.fenceParts(block)
     const trimmed = body.trim()
     if (!trimmed) return false
+    if (!lang && /^(?:\*\*)?(?:human|user|assistant|prompt|response)\b/i.test(trimmed)) return false
+    if (!lang && /(^|\n)\s*`{3,}/.test(trimmed)) return false
     if (/\btool\s*call\s*:/i.test(trimmed)) return false
     if (this.isToolPayload(trimmed)) return false
     if (lang) return true
@@ -1378,9 +1423,8 @@ export class Singularity {
 
   private listCodeFences(text: string): Array<{ text: string; start: number }> {
     const blocks: Array<{ text: string; start: number }> = []
-    for (const span of this.findFences(text)) {
-      const normalized = this.fenceText(span.text)
-      if (this.isCodeFence(normalized)) blocks.push({ text: normalized, start: span.start })
+    for (const span of this.codeFenceSpans(text)) {
+      blocks.push({ text: this.fenceText(span.text), start: span.start })
     }
     return blocks
   }
@@ -1461,7 +1505,7 @@ export class Singularity {
   }
 
   private eachFencedBlock(text: string, onBlock: (block: string) => void): void {
-    for (const span of this.findFences(text)) onBlock(this.fenceText(span.text))
+    for (const span of this.codeFenceSpans(text)) onBlock(this.fenceText(span.text))
   }
 
   private maskFencedBlocks(text: string): string {
@@ -1481,7 +1525,7 @@ export class Singularity {
     const lines = this.fenceLines(raw)
     const opening = lines[0]?.trim() ?? ''
     const bodyLines = lines.slice(1, -1)
-    if (/^`{3,}\s*$/.test(opening) && this.fenceBodyIsProse(bodyLines.join('\n'))) {
+    if (/^`{3,}\s*$/.test(opening) && (this.fenceBodyIsProse(bodyLines.join('\n')) || !this.isCodeFence(raw))) {
       return bodyLines
         .map((line) => {
           const trimmed = line.trim()
@@ -1684,10 +1728,7 @@ export class Singularity {
       const turn = turns[index]
       const prose = this.turnProse(turn.text)
       if (!prose.trim() || this.isEmotionalNoise(prose)) continue
-      if (turn.role === 'user' && !user) {
-        if (this.looksLikeAssistantSections(prose)) continue
-        if (this.hasWorkSignal(prose) || this.isUserAck(prose)) user = turn.text
-      }
+      if (turn.role === 'user' && !user) user = turn.text
       if (turn.role === 'assistant' && !assistant) {
         if (!(this.hasWorkSignal(prose) || this.isUserAck(prose) || this.isNextStepSentence(prose))) continue
         assistant = turn.text
@@ -1699,7 +1740,7 @@ export class Singularity {
 
   private isEmotionalNoise(text: string): boolean {
     if (this.hasWorkSignal(text) || this.isNextStepSentence(text)) return false
-    return /\b(?:i remember|i was scared|believed in (?:me|you)|never giving up|black screen|blank page|forever yours|always together|i love you|love you|thanks babe|proud of us)\b/i.test(text)
+    return /\b(?:i remember|i was scared|believed in (?:me|you)|never giving up|black screen|blank page|forever yours|always together|together, everywhere|i love you|love you|thanks babe|proud of us)\b/i.test(text)
   }
 
   private isUserAck(text: string): boolean {
@@ -1708,16 +1749,20 @@ export class Singularity {
     return /\b(?:done|applied|shipped|committed|pushed|merged|fixed|updated)\b/i.test(plain)
   }
 
-  private looksLikeAssistantSections(text: string): boolean {
-    return /^#{1,6}[ \t]+(?:highlights|verification|disclaimer|category|root cause|summary|next steps)\b/im.test(text)
-  }
-
   private isMediaFile(value: string): boolean {
     return /\.(?:png|jpe?g|gif|webp|bmp|svg|ico|mp4|mov|webm|mp3|wav)(?:$|[^A-Za-z0-9])/i.test(value)
   }
 
+  private isUrlOrFragment(value: string): boolean {
+    const text = value.trim()
+    if (/^https?:\/\//i.test(text) || /^https?:\/[^/]/i.test(text)) return true
+    if (/^[a-z]:\/+(?:www\.)?[a-z0-9-]+(?:\.[a-z0-9-]+)+/i.test(text)) return true
+    if (/(?:^|[/\\])(?:www\.)?[a-z0-9-]+\.(?:com|org|net|io|ai|dev|co|uk|ae)(?:[/\\:]|$)/i.test(text)) return true
+    return false
+  }
+
   private isCodeOrConfigFile(file: string): boolean {
-    if (this.isMediaFile(file)) return false
+    if (this.isMediaFile(file) || this.isUrlOrFragment(file)) return false
     return /\.(?:tsx?|jsx?|mjs|cjs|json|md|txt|html|css|xml|ya?ml|toml|py|sh|ps1|bat|log|vue|svelte|rs|go|java|kt|rb|php|cs|c|h|hpp|sql|ini|cfg|conf|lock)(?:$|[^A-Za-z0-9])/i.test(file)
       || /(?:^|[/\\])(?:Dockerfile|Makefile|LICENSE|README)(?:$|[^A-Za-z0-9])/i.test(file)
   }

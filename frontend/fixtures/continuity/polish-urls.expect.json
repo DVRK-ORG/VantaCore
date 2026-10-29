@@ -1,0 +1,40 @@
+{
+  "facts": [
+    "https://ae.indeed.com/jobs/view",
+    "https://www.bestchange.com/rates",
+    "https://www.prnewswire.com/news/note.html",
+    "harbor-notes/quay.ts",
+    "a1b2c3d"
+  ],
+  "stopPointFacts": [
+    "https://ae.indeed.com/jobs/view",
+    "https://www.bestchange.com/rates",
+    "https://www.prnewswire.com/news/note.html",
+    "a1b2c3d",
+    "harbor-notes/quay.ts"
+  ],
+  "topicTop3": "quay",
+  "secrets": [],
+  "absent": [
+    "https:/ae.indeed.com",
+    "https:/www.bestchange.com",
+    "https:/www.prnewswire.com",
+    "s:/ae.indeed.com",
+    "s:/www.bestchange.com",
+    "s:/www.prnewswire.com"
+  ],
+  "stopFields": {
+    "last commits/files:": ["a1b2c3d", "quay.ts"]
+  },
+  "stopFieldAbsent": {
+    "last commits/files:": [
+      "s:/ae.indeed.com",
+      "s:/www.bestchange.com",
+      "s:/www.prnewswire.com",
+      "https://",
+      "indeed.com",
+      "bestchange",
+      "prnewswire"
+    ]
+  }
+}

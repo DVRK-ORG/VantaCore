@@ -1,0 +1,33 @@
+{
+  "facts": [
+    "quaynote",
+    "harbor-notes/quay.ts",
+    "Does that still look right?"
+  ],
+  "stopPointFacts": [
+    "Does that still look right?",
+    "harbor-notes/quay.ts"
+  ],
+  "topicTop3": "quaynote",
+  "secrets": [],
+  "absent": [
+    "] our (",
+    ": our]",
+    "## Highlights",
+    "## Root cause"
+  ],
+  "absentHeadings": [
+    "## Highlights",
+    "## Root cause"
+  ],
+  "stopFields": {
+    "last user message:": ["Does that still look right?"]
+  },
+  "stopFieldAbsent": {
+    "last user message:": [
+      "Look at that",
+      "pasted note is not the latest",
+      "Highlights"
+    ]
+  }
+}

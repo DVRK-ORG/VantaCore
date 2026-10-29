@@ -1,0 +1,22 @@
+{
+  "facts": [
+    "export const quaynote",
+    "export const quayReady",
+    "harbor-notes/quay.ts",
+    "The ledger list matches"
+  ],
+  "stopPointFacts": [
+    "Look at the last quay note",
+    "harbor-notes/quay.ts"
+  ],
+  "topicTop3": "quaynote",
+  "secrets": [],
+  "absent": [
+    "```\nUpdated quaynote row 0. The ledger list matches.\n```ts"
+  ],
+  "codeBlocks": {
+    "minInput": 9,
+    "minKept": 1,
+    "minFolded": 8
+  }
+}

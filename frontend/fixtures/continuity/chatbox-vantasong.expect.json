@@ -6,10 +6,13 @@
     "suno"
   ],
   "stopPointFacts": [
-    "fix the downloader token in server.py",
+    "Tell me when it works",
     "VantaSong",
     "run the downloader tests"
   ],
+  "stopFields": {
+    "last user message:": ["Tell me when it works"]
+  },
   "topicTop3": "vantasong",
   "secrets": [],
   "absent": [
@@ -19,7 +22,6 @@
     "Result: {",
     "deliver-assets",
     "<media",
-    "Tell me when it works",
     "Use offset",
     "Together, everywhere",
     "I love you",

@@ -1,0 +1,142 @@
+# Chatbox export
+
+**user**:
+
+```
+Keep quaynote row 0 in harbor-notes/quay.ts. Do not change the berth map.
+```
+
+**assistant**:
+
+```
+Updated quaynote row 0. The ledger list matches.
+```ts
+export const quaynote = (hours: number) => hours * 12
+```
+Row 0 is stored.
+```
+
+**user**:
+
+```
+Keep quaynote row 1 in harbor-notes/quay.ts. Do not change the berth map.
+```
+
+**assistant**:
+
+```
+Updated quaynote row 1. The ledger list matches.
+```ts
+export const quaynote = (hours: number) => hours * 12
+```
+Row 1 is stored.
+```
+
+**user**:
+
+```
+Keep quaynote row 2 in harbor-notes/quay.ts. Do not change the berth map.
+```
+
+**assistant**:
+
+```
+Updated quaynote row 2. The ledger list matches.
+```ts
+export const quaynote = (hours: number) => hours * 12
+```
+Row 2 is stored.
+```
+
+**user**:
+
+```
+Keep quaynote row 3 in harbor-notes/quay.ts. Do not change the berth map.
+```
+
+**assistant**:
+
+```
+Updated quaynote row 3. The ledger list matches.
+```ts
+export const quaynote = (hours: number) => hours * 12
+```
+Row 3 is stored.
+```
+
+**user**:
+
+```
+Keep quaynote row 4 in harbor-notes/quay.ts. Do not change the berth map.
+```
+
+**assistant**:
+
+```
+Updated quaynote row 4. The ledger list matches.
+```ts
+export const quaynote = (hours: number) => hours * 12
+```
+Row 4 is stored.
+```
+
+**user**:
+
+```
+Keep quaynote row 5 in harbor-notes/quay.ts. Do not change the berth map.
+```
+
+**assistant**:
+
+```
+Updated quaynote row 5. The ledger list matches.
+```ts
+export const quaynote = (hours: number) => hours * 12
+```
+Row 5 is stored.
+```
+
+**user**:
+
+```
+Keep quaynote row 6 in harbor-notes/quay.ts. Do not change the berth map.
+```
+
+**assistant**:
+
+```
+Updated quaynote row 6. The ledger list matches.
+```ts
+export const quaynote = (hours: number) => hours * 12
+```
+Row 6 is stored.
+```
+
+**user**:
+
+```
+Keep quaynote row 7 in harbor-notes/quay.ts. Do not change the berth map.
+```
+
+**assistant**:
+
+```
+Updated quaynote row 7. The ledger list matches.
+```ts
+export const quaynote = (hours: number) => hours * 12
+```
+Row 7 is stored.
+```
+
+```
+**user**:
+
+```
+Look at the last quay note.
+```
+
+**assistant**:
+
+```ts
+export const quayReady = true
+```
