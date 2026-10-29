@@ -11,5 +11,8 @@ export interface CompressionResult {
   dictionaryReferencesCreated: number
   clustersDetected: number
   codeBlocksProtected: number
+  codeBlocksKept: number
+  codeBlocksFolded: number
+  codeBlocksDropped: number
   codeBlocksIntegrityOk: boolean
 }

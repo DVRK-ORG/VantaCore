@@ -94,6 +94,8 @@ const GENERIC_TOPIC_WORDS = new Set([
   'updated', 'created', 'added', 'build', 'class', 'public', 'private',
   'package', 'decision', 'change', 'changes', 'error', 'data', 'type', 'name',
   'fail', 'npm', 'node', 'git', 'http', 'https', 'www', 'com', 'org',
+  'chrome', 'chatgpt', 'openai', 'prompt', 'response', 'sidebar', 'navbar',
+  'cookie', 'cookies', 'avatar', 'hostname',
   'value', 'args', 'argument', 'arguments', 'tool', 'call', 'exec', 'output',
   'input', 'result', 'results', 'same', 'only', 'still', 'into', 'each',
   'index', 'server', 'main', 'app', 'job', 'jobs', 'origin', 'origins',
@@ -230,16 +232,18 @@ export class Singularity {
         dictionaryReferencesCreated: 0,
         clustersDetected: 0,
         codeBlocksProtected: 0,
+        codeBlocksKept: 0,
+        codeBlocksFolded: 0,
+        codeBlocksDropped: 0,
         codeBlocksIntegrityOk: true,
       }
     }
 
     const source = this.stripExportChrome(text)
     const redacted = this.redactSecrets(source)
-    const codeBlocksInInput = this.countFencedCodeBlocks(redacted)
     const fold = this.foldRepeatedBlocks(redacted)
     const capsule = this.renderMemoryCapsule(redacted, fold)
-    let compressed = capsule.output.replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim()
+    let compressed = this.stripExportHeadings(capsule.output).replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim()
     if (originalChars <= 4000 && compressed.length > originalChars) {
       compressed = redacted.length <= originalChars ? redacted : redacted.slice(0, originalChars)
     }
@@ -260,13 +264,19 @@ export class Singularity {
       repeatedBlocksFolded: fold.foldedOccurrences,
       dictionaryReferencesCreated: fold.entries.length,
       clustersDetected: capsule.clustersDetected,
-      codeBlocksProtected: codeBlocksInInput,
-      codeBlocksIntegrityOk: codeBlocksInInput === this.countFencedCodeBlocks(compressed)
-        && !compressed.includes('__VANTA_FENCE_'),
+      codeBlocksProtected: capsule.codeBlocks.input,
+      codeBlocksKept: capsule.codeBlocks.kept,
+      codeBlocksFolded: capsule.codeBlocks.folded,
+      codeBlocksDropped: capsule.codeBlocks.dropped,
+      codeBlocksIntegrityOk: this.fencesBalanced(compressed) && !compressed.includes('__VANTA_FENCE_'),
     }
   }
 
-  private renderMemoryCapsule(originalText: string, fold: FoldResult): { output: string; clustersDetected: number } {
+  private renderMemoryCapsule(originalText: string, fold: FoldResult): {
+    output: string
+    clustersDetected: number
+    codeBlocks: { input: number; kept: number; folded: number; dropped: number }
+  } {
     const segments = this.makeSegments(originalText)
     const topics = this.detectTopics(originalText)
     const topicScores = this.detectTopicScores(segments, topics)
@@ -326,13 +336,22 @@ export class Singularity {
     lines.push(...this.renderBulletList(artifacts, 'no commands/files/domains detected'))
     lines.push('')
 
+    const codeReport = this.codeBlockReport(originalText, fold)
     lines.push('## REFERENCE DICTIONARY')
+    lines.push(codeReport.summary)
     if (fold.entries.length) {
       for (const entry of fold.entries) {
         lines.push(this.renderReferenceEntry(entry))
       }
     } else {
       lines.push('- no repeated command/prompt/code blocks met folding thresholds')
+    }
+    if (codeReport.kept.length) {
+      lines.push('')
+      for (const block of codeReport.kept) {
+        lines.push(block)
+        lines.push('')
+      }
     }
     lines.push('')
 
@@ -381,7 +400,16 @@ export class Singularity {
       lines.push('')
     }
 
-    return { output: this.capNarrative(lines.join('\n')), clustersDetected: Math.max(clusters.length, 1) }
+    return {
+      output: this.capNarrative(lines.join('\n')),
+      clustersDetected: Math.max(clusters.length, 1),
+      codeBlocks: {
+        input: codeReport.input,
+        kept: codeReport.keptCount,
+        folded: codeReport.foldedCount,
+        dropped: codeReport.droppedCount,
+      },
+    }
   }
 
   private foldRepeatedBlocks(text: string): FoldResult {
@@ -400,7 +428,7 @@ export class Singularity {
     }
 
     this.eachFencedBlock(text, (block) => {
-      if (block.length >= 80) addCandidate('CODE', block)
+      if (this.isCodeFence(block) && block.length >= 12) addCandidate('CODE', block)
     })
 
     for (const match of text.match(/`[^`\n]+`/g) ?? []) {
@@ -439,17 +467,18 @@ export class Singularity {
         }
       })
       .filter((entry) => {
-        const threshold = 3
+        if (entry.kind === 'CODE') return entry.count >= 2 && entry.text.length >= 12
         const minLength = entry.kind === 'CMD' ? 8 : 80
         const replacementCost = `[${entry.kind}-00]`.length * entry.count + entry.text.length
         const uncompressedCost = entry.text.length * entry.count
-        return entry.count >= threshold && entry.text.length >= minLength && uncompressedCost - replacementCost > 500
+        return entry.count >= 3 && entry.text.length >= minLength && uncompressedCost - replacementCost > 500
       })
       .sort((a, b) => (b.text.length * b.count) - (a.text.length * a.count))
-      .slice(0, 50)
 
+    const codeEntries = entries.filter((entry) => entry.kind === 'CODE')
+    const otherEntries = entries.filter((entry) => entry.kind !== 'CODE').slice(0, Math.max(0, 50 - codeEntries.length))
     const counters: Record<ReferenceKind, number> = { CMD: 0, PROMPT: 0, CODE: 0 }
-    const numberedEntries = entries.map((entry) => {
+    const numberedEntries = [...codeEntries, ...otherEntries].map((entry) => {
       counters[entry.kind] += 1
       return { ...entry, id: `${entry.kind}-${String(counters[entry.kind]).padStart(2, '0')}` }
     })
@@ -494,6 +523,9 @@ export class Singularity {
   }
 
   private renderReferenceEntry(entry: ReferenceEntry): string {
+    if (entry.kind === 'CODE') {
+      return `[${entry.id} repeated ${entry.count}x]:\n<<<${entry.id}\n${entry.text}\n>>>`
+    }
     if (entry.kind === 'CMD' && entry.text.length <= 220 && !entry.text.includes('\n')) {
       return `[${entry.id} repeated ${entry.count}x]: ${this.cleanPathText(entry.text)}`
     }
@@ -582,7 +614,7 @@ export class Singularity {
       .map((turn) => turn.text)
       .join('\n')
     const source = userText.trim().length >= 24 ? userText : text
-    return source
+    return this.stripUrls(source)
       .split('\n')
       .filter((line) => {
         const trimmed = line.trim()
@@ -593,7 +625,7 @@ export class Singularity {
 
   private projectNames(text: string): string[] {
     const counts = new Map<string, { count: number; label: string }>()
-    for (const path of this.pathHits(text)) {
+    for (const path of this.pathHits(this.stripUrls(text))) {
       const name = this.projectFromPath(path)
       const key = name.toLowerCase()
       if (!name || key.length < 3 || this.isGenericTopic(key)) continue
@@ -1090,7 +1122,7 @@ export class Singularity {
     let cleaned = this.maskFencedBlocks(kept)
       .replace(/[-\s]*exported session \d+\s*-*/gi, ' ')
       .replace(/\{?"?(?:role|content|parts|text|metadata|source)"?\s*:\s*/gi, ' ')
-      .replace(/(?:^|\s)(?:#{1,3}\s*)?(?:\*\*|__)?(?:human|assistant|user|system|model)(?:\*\*|__)?\s*:/gi, ' ')
+      .replace(/(?:^|\s)(?:#{1,3}\s*)?(?:\*\*|__)?(?:human|assistant|user|system|model|prompt|response|question|answer)(?:\*\*|__)?\s*:/gi, ' ')
       .replace(/\s+/g, ' ')
       .trim()
 
@@ -1109,8 +1141,10 @@ export class Singularity {
       if (this.looksLikeCommand(cleaned)) artifacts.push(cleaned)
     }
 
-    for (const match of this.cleanPathText(text).match(FILE_OR_URL_PATTERN) ?? []) {
-      artifacts.push(this.presentFile(match.replace(/[.,;:]+$/, '')))
+    for (const match of this.cleanPathText(this.stripUrls(text)).match(FILE_OR_URL_PATTERN) ?? []) {
+      const file = this.presentFile(match.replace(/[.,;:]+$/, ''))
+      if (/^https?:\/\//i.test(file) || /(?:^|\.)(?:com|org|net|io|ai|dev)$/i.test(file)) continue
+      artifacts.push(file)
     }
 
     for (const match of text.match(/\b(?:codex|feature|fix|release|main|master)\/[\w./-]+|\b[0-9a-f]{7,12}\b/gi) ?? []) {
@@ -1142,6 +1176,7 @@ export class Singularity {
 
   private normalizeForDedupe(kind: ReferenceKind, text: string): string {
     let normalized = text.replace(/\r\n/g, '\n').trim()
+    if (kind === 'CODE') normalized = normalized.split('\n').map((line) => line.trim()).join('\n')
     normalized = kind === 'CMD'
       ? normalized.replace(/\s+/g, ' ')
       : normalized
@@ -1154,6 +1189,143 @@ export class Singularity {
 
   private isFenceDelimiter(line: string): boolean {
     return /^\s*```[A-Za-z0-9_+-]*\s*$/.test(line)
+  }
+
+  private stripUrls(text: string): string {
+    return text
+      .replace(/https?:\/\/\S+/gi, ' ')
+      .replace(/\b(?:www\.)?(?:[a-z0-9-]+\.)+(?:com|org|net|io|ai|dev)\b/gi, ' ')
+  }
+
+  private stripExportHeadings(text: string): string {
+    const protectedFences = this.protectFencedCode(text)
+    const cleaned = protectedFences.text
+      .replace(/^([ \t]*)(?:#{1,3}[ \t]*)?(?:\*\*|__)?(?:prompt|response|question|answer)(?:\*\*|__)?[ \t]*:[ \t]*/gim, '$1')
+      .replace(/^[ \t]+$/gm, '')
+    return this.restoreProtected(cleaned, protectedFences.blocks)
+  }
+
+  private fencesBalanced(text: string): boolean {
+    let open = false
+    for (const line of text.split('\n')) {
+      if (!this.isFenceDelimiter(line)) continue
+      open = !open
+    }
+    return !open
+  }
+
+  private fenceParts(block: string): { lang: string; body: string } {
+    const lines = block.split('\n')
+    const lang = (lines[0] ?? '').trim().replace(/^```/, '').trim().toLowerCase()
+    return { lang, body: lines.slice(1, -1).join('\n') }
+  }
+
+  private isCodeFence(block: string): boolean {
+    const { lang, body } = this.fenceParts(block)
+    const trimmed = body.trim()
+    if (!trimmed) return false
+    if (/\btool\s*call\s*:/i.test(trimmed)) return false
+    if (this.isToolPayload(trimmed)) return false
+    if (lang) return true
+    if (this.isCommandFence(block)) return true
+    if (this.fenceBodyIsProse(trimmed)) return false
+    if (/^\s*(?:import |export |def |class |function |const |let |var |return |#include|package |public |private )/m.test(trimmed)) return true
+    const symbols = (trimmed.match(/[{}[\]();=<>]/g) ?? []).length
+    return symbols / trimmed.length > 0.03
+  }
+
+  private isCommandFence(block: string): boolean {
+    const { lang, body } = this.fenceParts(block)
+    if (['bash', 'sh', 'shell', 'zsh', 'powershell', 'ps1', 'pwsh', 'cmd', 'bat', 'console'].includes(lang)) return true
+    const lines = body.split('\n').map((line) => line.trim()).filter(Boolean)
+    if (!lines.length) return false
+    const commands = lines.filter((line) => this.looksLikeCommand(line)).length
+    return commands * 2 >= lines.length
+  }
+
+  private listCodeFences(text: string): Array<{ text: string; start: number }> {
+    const lines = text.split('\n')
+    const starts: number[] = []
+    let offset = 0
+    for (const line of lines) {
+      starts.push(offset)
+      offset += line.length + 1
+    }
+    const blocks: Array<{ text: string; start: number }> = []
+    let openAt = -1
+    for (let index = 0; index < lines.length; index += 1) {
+      if (!this.isFenceDelimiter(lines[index] ?? '')) continue
+      if (openAt < 0) {
+        openAt = index
+        continue
+      }
+      const textBlock = lines.slice(openAt, index + 1).join('\n')
+      if (this.isCodeFence(textBlock)) blocks.push({ text: textBlock, start: starts[openAt] ?? 0 })
+      openAt = -1
+    }
+    return blocks
+  }
+
+  private keepCodeBlock(start: number, length: number, block: string, text: string): boolean {
+    if (length > 0 && start / length >= 0.9) return true
+    if (this.isCommandFence(block)) return true
+    const context = text.slice(Math.max(0, start - 400), start)
+    if (/\b(?:decision|decided)\b/i.test(context)) return true
+    if (/\b(?:final state|final-known-state)\b/i.test(context)) return true
+    return false
+  }
+
+  private codeBlockReport(text: string, fold: FoldResult): {
+    summary: string
+    kept: string[]
+    input: number
+    keptCount: number
+    foldedCount: number
+    droppedCount: number
+  } {
+    const normalized = text.replace(/\r\n/g, '\n')
+    const blocks = this.listCodeFences(normalized)
+    const foldedKeys = new Set(
+      fold.entries
+        .filter((entry) => entry.kind === 'CODE')
+        .map((entry) => this.normalizeForDedupe('CODE', entry.text)),
+    )
+    const groups = new Map<string, number>()
+    for (const block of blocks) {
+      const key = this.normalizeForDedupe('CODE', block.text)
+      groups.set(key, (groups.get(key) ?? 0) + 1)
+    }
+    const kept: string[] = []
+    const seenKept = new Set<string>()
+    let keptCount = 0
+    let foldedCount = 0
+    let droppedCount = 0
+    for (const block of blocks) {
+      const key = this.normalizeForDedupe('CODE', block.text)
+      if ((groups.get(key) ?? 0) >= 2 && foldedKeys.has(key)) {
+        foldedCount += 1
+        continue
+      }
+      if (this.keepCodeBlock(block.start, normalized.length, block.text, normalized)) {
+        if (!seenKept.has(key)) {
+          seenKept.add(key)
+          kept.push(block.text)
+          keptCount += 1
+        } else {
+          droppedCount += 1
+        }
+        continue
+      }
+      droppedCount += 1
+    }
+    return {
+      summary: `code blocks: ${blocks.length} in input, ${keptCount} kept, ${foldedCount} folded, ${droppedCount} dropped`,
+      kept,
+      input: blocks.length,
+      keptCount,
+      foldedCount,
+      droppedCount,
+    }
   }
 
   private eachFencedBlock(text: string, onBlock: (block: string) => void): void {
@@ -1362,14 +1534,6 @@ export class Singularity {
     return null
   }
 
-  private countFencedCodeBlocks(text: string): number {
-    let count = 0
-    this.eachFencedBlock(text, () => {
-      count += 1
-    })
-    return count
-  }
-
   private renderStopPoint(text: string): string[] {
     const turns = this.extractTurns(text)
     let lastUser = ''
@@ -1483,13 +1647,13 @@ export class Singularity {
     if (fromJson.length) return fromJson
 
     const turns: Array<{ role: 'user' | 'assistant'; text: string }> = []
-    const marker = /(?:^|\n)\s*(?:#{1,3}\s*)?(?:\*\*|__)?(human|user|assistant)(?:\*\*|__)?\s*:\s*/gi
+    const marker = /(?:^|\n)\s*(?:#{1,3}\s*)?(?:\*\*|__)?(human|user|assistant|prompt|response|question|answer)(?:\*\*|__)?\s*:\s*/gi
     const marks: Array<{ role: 'user' | 'assistant'; start: number; end: number }> = []
     let match: RegExpExecArray | null
     while ((match = marker.exec(text))) {
       const label = match[1].toLowerCase()
       marks.push({
-        role: label === 'assistant' ? 'assistant' : 'user',
+        role: label === 'assistant' || label === 'response' || label === 'answer' ? 'assistant' : 'user',
         start: match.index,
         end: match.index + match[0].length,
       })
@@ -1781,7 +1945,7 @@ export class Singularity {
     const dictStart = lines.findIndex((line) => line.startsWith('## REFERENCE DICTIONARY'))
     let dictEnd = -1
     if (dictStart >= 0) {
-      const next = lines.findIndex((line, index) => index > dictStart && line.startsWith('## '))
+      const next = lines.findIndex((line, index) => index > dictStart && line.startsWith('## ['))
       dictEnd = next < 0 ? lines.length : next
     }
     const clusterStart = lines.findIndex((line) => line.startsWith('## ['))

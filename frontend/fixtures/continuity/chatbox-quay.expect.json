@@ -7,7 +7,7 @@
     "8de77c0",
     "4c91ab2",
     "run the berth-hours fixture",
-    "[code block"
+    "mooringFee"
   ],
   "stopPointFacts": [
     "Revert the bad rate change and commit the single-count mooring fix.",
