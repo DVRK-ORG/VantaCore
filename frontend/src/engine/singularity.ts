@@ -286,27 +286,37 @@ export class Singularity {
     }
     lines.push('')
 
+    const used = new Set<string>()
+    const completed = this.freshLines(evidence.completed, 4, used)
+    const verified = this.freshLines(evidence.verified, 4, used)
+    const pending = this.freshLines(evidence.pending, 4, used)
+    const next = this.freshLines(evidence.next, 4, used)
+    const openLoops = this.freshLines([...evidence.pending, ...evidence.next], 6, used)
+    const doNot = this.freshLines(evidence.doNot, 6, used)
+    const decisions = this.freshLines(evidence.decisions, 6, used)
+    const artifacts = this.freshLines(evidence.artifacts, 6, used)
+
     lines.push('## CURRENT FINAL STATE')
-    lines.push(...this.renderStateGroup('completed', evidence.completed))
-    lines.push(...this.renderStateGroup('verified', evidence.verified))
-    lines.push(...this.renderStateGroup('pending', evidence.pending))
-    lines.push(...this.renderStateGroup('next likely step', evidence.next.length ? evidence.next : evidence.pending.slice(0, 2)))
+    lines.push(...this.renderStateGroup('completed', completed))
+    lines.push(...this.renderStateGroup('verified', verified))
+    lines.push(...this.renderStateGroup('pending', pending))
+    lines.push(...this.renderStateGroup('next likely step', next))
     lines.push('')
 
     lines.push('## OPEN LOOPS / NEXT ACTIONS')
-    lines.push(...this.renderBulletList(evidence.pending.length ? evidence.pending : evidence.next, 'none clearly detected; continue from final-known-state cluster and re-check latest artifacts'))
+    lines.push(...this.renderBulletList(openLoops, 'none clearly detected; continue from final-known-state cluster and re-check latest artifacts'))
     lines.push('')
 
     lines.push('## DO NOT REPEAT / DO NOT CHANGE')
-    lines.push(...this.renderBulletList(evidence.doNot, 'no explicit do-not-change instruction detected'))
+    lines.push(...this.renderBulletList(doNot, 'no explicit do-not-change instruction detected'))
     lines.push('')
 
     lines.push('## DECISION LOG')
-    lines.push(...this.renderBulletList(evidence.decisions, 'no explicit decision statements detected'))
+    lines.push(...this.renderBulletList(decisions, 'no explicit decision statements detected'))
     lines.push('')
 
     lines.push('## KEY COMMANDS / FILES / ARTIFACTS')
-    lines.push(...this.renderBulletList(evidence.artifacts, 'no commands/files/domains detected'))
+    lines.push(...this.renderBulletList(artifacts, 'no commands/files/domains detected'))
     lines.push('')
 
     lines.push('## REFERENCE DICTIONARY')
@@ -322,30 +332,41 @@ export class Singularity {
     for (const [clusterIndex, cluster] of clusters.entries()) {
       const clusterId = `CLUSTER-${String(clusterIndex + 1).padStart(2, '0')}`
       const clusterEvidence = this.extractEvidence(cluster.segments)
-      const selected = this.selectDetailSegments(cluster.segments)
-      const detail = selected
-        .map((segment) => this.renderDetailSnippet(segment, fold.entries))
-        .filter((line): line is string => Boolean(line))
+      const actions = this.freshLines(clusterEvidence.completed, 4, used)
+      const clusterDecisions = this.freshLines(clusterEvidence.decisions, 3, used)
+      const clusterLoops = this.freshLines(clusterEvidence.pending, 4, used)
+      const clusterFiles = this.freshLines(clusterEvidence.artifacts, 5, used)
+      const detail = this.freshLines(
+        this.selectDetailSegments(cluster.segments)
+          .map((segment) => this.renderDetailSnippet(segment, fold.entries))
+          .filter((line): line is string => Boolean(line)),
+        MAX_DETAIL_SNIPPETS_PER_CLUSTER,
+        used,
+      )
 
       lines.push(`## [${clusterId}: ${cluster.label}]`)
       lines.push(`summary: ${this.clusterSummary(cluster, clusterEvidence)}`)
       lines.push('key actions:')
-      lines.push(...this.renderBulletList(clusterEvidence.completed, 'no completed action isolated in this cluster', 4))
+      lines.push(...this.renderBulletList(actions, 'no completed action isolated in this cluster', 4))
       lines.push('decisions:')
-      lines.push(...this.renderBulletList(clusterEvidence.decisions, 'none isolated', 3))
+      lines.push(...this.renderBulletList(clusterDecisions, 'none isolated', 3))
       lines.push('open loops:')
-      lines.push(...this.renderBulletList(clusterEvidence.pending, 'none isolated', 4))
+      lines.push(...this.renderBulletList(clusterLoops, 'none isolated', 4))
       lines.push('important commands/files:')
-      lines.push(...this.renderBulletList(clusterEvidence.artifacts, 'none isolated', 5))
+      lines.push(...this.renderBulletList(clusterFiles, 'none isolated', 5))
       lines.push('compressed detail stream:')
       lines.push(...(detail.length ? detail : ['- no high-signal detail lines isolated']))
       lines.push('')
     }
 
     if (!clusters.length) {
-      const detail = this.selectDetailSegments(segments)
-        .map((segment) => this.renderDetailSnippet(segment, fold.entries))
-        .filter((line): line is string => Boolean(line))
+      const detail = this.freshLines(
+        this.selectDetailSegments(segments)
+          .map((segment) => this.renderDetailSnippet(segment, fold.entries))
+          .filter((line): line is string => Boolean(line)),
+        MAX_DETAIL_SNIPPETS_PER_CLUSTER,
+        used,
+      )
       lines.push('## [CLUSTER-01: General Session Continuity]')
       lines.push('summary: fallback cluster built from high-signal continuity lines')
       lines.push('compressed detail stream:')
@@ -623,15 +644,17 @@ export class Singularity {
       const source = stripped.prose
       if (source.trim().length < 12) continue
 
-      const cleaned = this.cleanEvidenceLine(source)
-      if (!cleaned) continue
-
-      if (COMPLETED_PATTERN.test(source)) completed.push(`[${segment.marker}] ${cleaned}`)
-      if (VERIFIED_PATTERN.test(source)) verified.push(`[${segment.marker}] ${cleaned}`)
-      if (PENDING_PATTERN.test(source)) pending.push(`[${segment.marker}] ${cleaned}`)
-      if (NEXT_PATTERN.test(source)) next.push(`[${segment.marker}] ${cleaned}`)
-      if (DO_NOT_PATTERN.test(source)) doNot.push(`[${segment.marker}] ${cleaned}`)
-      if (DECISION_PATTERN.test(source)) decisions.push(`[${segment.marker}] ${cleaned}`)
+      for (const sentence of this.evidenceSentences(source)) {
+        const bucket = this.classifyEvidence(sentence)
+        if (!bucket) continue
+        const line = `[${segment.marker}] ${sentence}`
+        if (bucket === 'completed') completed.push(line)
+        else if (bucket === 'verified') verified.push(line)
+        else if (bucket === 'pending') pending.push(line)
+        else if (bucket === 'next') next.push(line)
+        else if (bucket === 'doNot') doNot.push(line)
+        else decisions.push(line)
+      }
 
       for (const artifact of this.extractArtifacts(source)) {
         artifacts.push(artifact)
@@ -957,13 +980,46 @@ export class Singularity {
   private detailSignature(text: string): string {
     return text
       .toLowerCase()
+      .replace(/^\s*-\s*/, '')
       .replace(/\[(?:early-session|mid-session|late-session|final-known-state)\]\s*/g, '')
       .replace(/[-\s]*exported session \d+\s*-*/g, '')
       .replace(/\bsession\s+\d+\b/g, 'session <n>')
-      .replace(/\b\d{1,6}\b/g, '<n>')
+      .replace(/\b[0-9a-f]{7,40}\b/g, '<hex>')
+      .replace(/\b\d+\b/g, '<n>')
       .replace(/\s+/g, ' ')
       .trim()
       .slice(0, 240)
+  }
+
+  private freshLines(items: string[], limit: number, used: Set<string>): string[] {
+    const picked: string[] = []
+    for (const item of items) {
+      const key = this.detailSignature(item)
+      if (!key || used.has(key)) continue
+      used.add(key)
+      picked.push(item)
+      if (picked.length >= limit) break
+    }
+    return picked
+  }
+
+  private evidenceSentences(text: string): string[] {
+    const cleaned = this.cleanEvidenceLine(text, 8000)
+    if (!cleaned) return []
+    return cleaned
+      .split(/(?<=[.!?])\s+/)
+      .map((sentence) => this.cleanEvidenceLine(sentence, 220))
+      .filter((sentence) => sentence.length >= 12)
+  }
+
+  private classifyEvidence(sentence: string): 'completed' | 'verified' | 'pending' | 'next' | 'doNot' | 'decisions' | null {
+    if (DO_NOT_PATTERN.test(sentence)) return 'doNot'
+    if (DECISION_PATTERN.test(sentence)) return 'decisions'
+    if (NEXT_PATTERN.test(sentence)) return 'next'
+    if (PENDING_PATTERN.test(sentence)) return 'pending'
+    if (VERIFIED_PATTERN.test(sentence)) return 'verified'
+    if (COMPLETED_PATTERN.test(sentence)) return 'completed'
+    return null
   }
 
   private countFencedCodeBlocks(text: string): number {
