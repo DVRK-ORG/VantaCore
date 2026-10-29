@@ -927,8 +927,7 @@ export class Singularity {
       if (this.isFenceDelimiter(line)) {
         if (buf) {
           buf.push(line)
-          const block = buf.join('\n')
-          out.push(`[code block ${block.length} chars]`)
+          out.push(this.renderFencedBlock(buf))
           buf = null
         } else {
           buf = [line]
@@ -940,6 +939,35 @@ export class Singularity {
     }
     if (buf) out.push(...buf)
     return out.join('\n')
+  }
+
+  private renderFencedBlock(lines: string[]): string {
+    const opening = lines[0]?.trim() ?? ''
+    const bodyLines = lines.slice(1, -1)
+    if (/^```\s*$/.test(opening) && this.fenceBodyIsProse(bodyLines.join('\n'))) {
+      return bodyLines
+        .map((line) => {
+          const trimmed = line.trim()
+          if (trimmed.length <= 220) return trimmed
+          const capped = trimmed.slice(0, 220).replace(/\s+\S*$/, '')
+          return `${capped}...`
+        })
+        .filter(Boolean)
+        .join('\n')
+    }
+    return `[code block ${lines.join('\n').length} chars]`
+  }
+
+  private fenceBodyIsProse(body: string): boolean {
+    const trimmed = body.trim()
+    if (trimmed.length < 24) return false
+    const symbols = (trimmed.match(/[{}[\]();=<>]/g) ?? []).length
+    if (symbols / trimmed.length > 0.03) return false
+    if (/^\s*(?:import |export |def |class |function |const |let |var |if |for |return |#include|package |public |private )/m.test(trimmed)) return false
+    const words = trimmed.split(/\s+/).filter(Boolean)
+    if (words.length < 8) return false
+    const longWords = words.filter((word) => /[A-Za-z]{3,}/.test(word)).length
+    return longWords / words.length >= 0.6
   }
 
   private protectFencedCode(text: string): { text: string; blocks: Map<string, string> } {
