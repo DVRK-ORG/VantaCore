@@ -934,13 +934,13 @@ export class Singularity {
   }
 
   private renderStateGroup(label: string, items: string[]): string[] {
-    const values = items.length ? items.slice(0, 4) : ['not clearly detected']
-    return [`${label}:`, ...values.map((item) => `- ${item}`)]
+    if (!items.length) return [`${label}: not clearly detected`]
+    return [`${label}:`, ...items.slice(0, 4).map((item) => `- ${item}`)]
   }
 
   private renderBulletList(items: string[], fallback: string, limit = 6): string[] {
-    const values = items.length ? items.slice(0, limit) : [fallback]
-    return values.map((item) => `- ${item}`)
+    if (!items.length) return [fallback]
+    return items.slice(0, limit).map((item) => `- ${item}`)
   }
 
   private clusterSummary(cluster: ClusterDraft, evidence: Evidence): string {
@@ -1276,7 +1276,10 @@ export class Singularity {
   private statedNextStep(assistant: string, user: string): string {
     for (const chunk of [assistant, user]) {
       if (!chunk.trim()) continue
-      const sentences = this.cleanEvidenceLine(chunk, 4000).replace(/```[\s\S]*?```/g, ' ').split(/(?<=[.!?])\s+/)
+      const sentences = this.cleanEvidenceLine(chunk, 4000)
+        .replace(/```[\s\S]*?```/g, ' ')
+        .replace(/\[code block \d+ chars\]/g, ' ')
+        .split(/(?<=[.!?])\s+/)
       for (let index = sentences.length - 1; index >= 0; index -= 1) {
         const sentence = sentences[index]?.trim() ?? ''
         if (sentence.length < 8) continue
