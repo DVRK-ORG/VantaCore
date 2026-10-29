@@ -1,0 +1,25 @@
+{
+  "facts": [
+    "cf6fbcc",
+    "83d889c (dropped)",
+    "363f2ee (dropped)",
+    "VantaSong",
+    "server.py"
+  ],
+  "stopPointFacts": [
+    "repair the download path in server.py",
+    "last commits/files:\n- cf6fbcc",
+    "cf6fbcc",
+    "83d889c (dropped)",
+    "363f2ee (dropped)",
+    "run the downloader tests"
+  ],
+  "topicTop3": "vantasong",
+  "secrets": [],
+  "absent": [
+    "cf6fbcc (dropped)",
+    "Result: {",
+    "I love you",
+    "Together, everywhere"
+  ]
+}

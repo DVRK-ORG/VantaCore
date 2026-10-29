@@ -70,6 +70,9 @@ const buildFallbackResult = (compressed: string): CompressionResult => {
     dictionaryReferencesCreated: 0,
     clustersDetected: clusterCount || 1,
     codeBlocksProtected: Math.floor(fenceMarkers / 2),
+    codeBlocksKept: 0,
+    codeBlocksFolded: 0,
+    codeBlocksDropped: 0,
     codeBlocksIntegrityOk: fenceMarkers % 2 === 0,
   }
 }
@@ -143,8 +146,11 @@ const resultFromTrustedStats = (compressed: string, stats: TrustedStats): Compre
   dictionaryReferencesCreated: stats.dictionaryReferencesCreated,
   clustersDetected: stats.clustersDetected,
   codeBlocksProtected: stats.codeBlocksProtected,
+  codeBlocksKept: 0,
+  codeBlocksFolded: 0,
+  codeBlocksDropped: 0,
   codeBlocksIntegrityOk: stats.codeBlocksIntegrityOk,
-})
+  })
 
 const detectFormat = (fileName: string, rawContent: string): ImportedCapsuleFormat => {
   const lower = fileName.toLowerCase()

@@ -1,0 +1,15 @@
+{
+  "facts": [
+    "Tomatoes",
+    "drip irrigation",
+    "compost",
+    "Basil"
+  ],
+  "stopPointFacts": [
+    "Tomatoes go in the south bed",
+    "drip irrigation",
+    "buy 20m hose"
+  ],
+  "topicTop3": "tomatoes",
+  "secrets": []
+}

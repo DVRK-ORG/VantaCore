@@ -1,5 +1,6 @@
 import { readFile, writeFile } from 'node:fs/promises'
 import { basename, dirname, extname, join } from 'node:path'
+import { pathToFileURL } from 'node:url'
 import { Singularity } from '../src/engine/singularity.ts'
 
 interface CliOptions {
@@ -63,7 +64,7 @@ node scripts/validate-compression.ts merged-session.md --write`,
   `final-known-state: C.H.P Monetization / Product Strategy. User wants a practical product direction without reopening completed website work. Decision: keep strategy notes separate from the Chrome Web Store execution trail. Pending: pricing and monetization details remain open.`,
 ]
 
-const generateSyntheticMergedSession = (): string => {
+export const generateSyntheticMergedSession = (): string => {
   let merged = ''
   let index = 0
   while (merged.length < 1_607_470) {
@@ -93,7 +94,7 @@ const main = async () => {
   console.log(`repeated blocks folded: ${formatNumber(result.repeatedBlocksFolded)}`)
   console.log(`dictionary references created: ${formatNumber(result.dictionaryReferencesCreated)}`)
   console.log(`clusters detected: ${formatNumber(result.clustersDetected)}`)
-  console.log(`code blocks protected: ${result.codeBlocksProtected > 0 ? 'yes' : 'none detected'} (${formatNumber(result.codeBlocksProtected)} fenced; output balanced: ${result.codeBlocksIntegrityOk ? 'yes' : 'no'})`)
+  console.log(`code blocks: ${formatNumber(result.codeBlocksProtected)} in input, ${formatNumber(result.codeBlocksKept)} kept, ${formatNumber(result.codeBlocksFolded)} folded, ${formatNumber(result.codeBlocksDropped)} dropped`)
 
   if (options.writeOutput || options.outputPath) {
     const outputPath = options.outputPath ?? defaultOutputPath(options.inputPath)
@@ -102,7 +103,10 @@ const main = async () => {
   }
 }
 
-main().catch((error) => {
-  console.error(error)
-  process.exitCode = 1
-})
+const isDirectRun = process.argv[1] !== undefined && import.meta.url === pathToFileURL(process.argv[1]).href
+if (isDirectRun) {
+  main().catch((error) => {
+    console.error(error)
+    process.exitCode = 1
+  })
+}

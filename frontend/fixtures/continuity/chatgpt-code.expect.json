@@ -1,0 +1,28 @@
+{
+  "facts": [
+    "keel-ledger",
+    "keelMargin",
+    "keel-export-key",
+    "keel-ledger/src/margin.ts",
+    "npm run keel:export"
+  ],
+  "stopPointFacts": [
+    "Ship the exporter in keel-ledger/src/export.ts and run a real PDF export.",
+    "keel-export-key",
+    "real PDF export"
+  ],
+  "topicTop3": "keel",
+  "secrets": [],
+  "absent": [
+    "chatgpt.com",
+    "## Prompt:",
+    "## Response:",
+    "chrome",
+    "keelDraftOnly"
+  ],
+  "codeBlocks": {
+    "minInput": 30,
+    "minKept": 1,
+    "minFolded": 2
+  }
+}
