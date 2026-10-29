@@ -661,14 +661,24 @@ export class Singularity {
 
   private cleanPathText(text: string): string {
     if (!text.includes('\\')) return text
-    const hits = [...this.pathHits(text)].sort((a, b) => b.length - a.length)
-    let cleaned = text
+    const normalized = this.restoreLooseSegments(this.normalizePath(text))
+    const hits = [...this.pathHits(normalized)].sort((a, b) => b.length - a.length)
+    let cleaned = normalized
     for (const hit of hits) {
       const display = this.cleanDisplayPath(hit)
       if (!display || display === hit) continue
       cleaned = cleaned.split(hit).join(display)
     }
     return cleaned
+  }
+
+  private restoreLooseSegments(text: string): string {
+    return text.split(/([/\\])/).map((part) => this.restoreChoppedSegment(part)).join('')
+  }
+
+  private presentFile(token: string): string {
+    const cleaned = this.cleanDisplayPath(this.restoreLooseSegments(this.normalizePath(token)))
+    return cleaned.replace(/(^|[\\/])t(?=test[_.-]|suno-)/gi, '$1')
   }
 
   private projectFromPath(raw: string): string {
@@ -1068,8 +1078,8 @@ export class Singularity {
       if (this.looksLikeCommand(cleaned)) artifacts.push(cleaned)
     }
 
-    for (const match of text.match(FILE_OR_URL_PATTERN) ?? []) {
-      artifacts.push(this.cleanDisplayPath(match.replace(/[.,;:]+$/, '')))
+    for (const match of this.cleanPathText(text).match(FILE_OR_URL_PATTERN) ?? []) {
+      artifacts.push(this.presentFile(match.replace(/[.,;:]+$/, '')))
     }
 
     for (const match of text.match(/\b(?:codex|feature|fix|release|main|master)\/[\w./-]+|\b[0-9a-f]{7,12}\b/gi) ?? []) {
@@ -1377,18 +1387,24 @@ export class Singularity {
     const fence = this.shortFenceBody(text)
     const prose = fence ?? this.stripToolPayloads(text).prose
     const plain = this.stripNoise(prose || text)
-    if (!plain.trim()) return false
+    if (plain.trim() && this.hasConcreteArtifact(plain)) return true
+    if (/```[^\n]*\n[\s\S]*?\b(?:export|import|def|class|function|const|let|return)\b/.test(text)) return true
+    return false
+  }
+
+  private hasConcreteArtifact(plain: string): boolean {
     const hash = plain.match(/\b[0-9a-f]{7,40}\b/i)?.[0] ?? ''
     if (hash && /[a-f]/i.test(hash)) return true
     if (this.pathHits(plain).length) return true
     if (/\b[\w.-]+\.(?:tsx|ts|jsx|js|json|md|txt|html|css|py|sh|ps1|bat|log)\b/i.test(plain)) return true
     if (this.looksLikeCommand(plain)) return true
-    if (/\b(?:error|exception|traceback)\b/i.test(plain)) return true
+    if (/\b(?:error|exception|traceback|stack trace)\b/i.test(plain)) return true
     if (/https?:\/\/(?!(?:www\.)?chatboxai\.app\b)/i.test(plain)) return true
-    if (/\b(?:fix(?:es|ed)?|commit(?:s|ted)?|run|running|test(?:s|ed|ing)?|errors?|tokens?|downloads?|download(?:ed|er)?|builds?|building)\b/i.test(plain)) return true
-    if (/\b[A-Za-z_][A-Za-z0-9_]*\s*\(/.test(plain)) return true
-    if (/\b[a-z][a-z0-9]*_[a-z0-9_]+\b/i.test(plain)) return true
-    if (/```[^\n]*\n[\s\S]*?\b(?:export|import|def|class|function|const|let|return)\b/.test(text)) return true
+    if (/\b(?:localhost|127\.0\.0\.1):\d{2,5}\b/i.test(plain) || /\bport\s+\d{2,5}\b/i.test(plain)) return true
+    if (/\b\d+\s+(?:lines?|files?|chars?|characters|bytes|kb|mb|gb|ms|secs?|seconds?|mins?|minutes?|tests?|insertions?|deletions?)\b/i.test(plain)) return true
+    if (/`[^`\n]*\b[\w.-]+\.(?:tsx|ts|jsx|js|json|py|html|css|md)\b[^`\n]*`/i.test(plain)) return true
+    if (/`[^`\n]*[0-9a-f]{7,40}[^`\n]*`/i.test(plain)) return true
+    if (/`[^`\n]*\w+\([^`\n]*\)[^`\n]*`/.test(plain)) return true
     return false
   }
 
@@ -1512,17 +1528,10 @@ export class Singularity {
     const source = text
       .replace(/\\r\\n/g, '\n')
       .replace(/\\n/g, '\n')
-      .replace(/\\t/g, '\t')
+      .replace(/\\t/g, ' ')
       .replace(/https?:\/\/\S+/g, ' ')
-    const hits: Array<{ hash: string; index: number }> = []
-    const pattern = /\b([0-9a-f]{7,40})\b/gi
-    let match: RegExpExecArray | null
-    while ((match = pattern.exec(source))) {
-      if (!/[a-f]/i.test(match[1])) continue
-      hits.push({ hash: match[1].toLowerCase(), index: match.index })
-    }
-
     const dropped = new Set<string>()
+    let match: RegExpExecArray | null
     const resetPattern = /git\s+reset\s+--hard\s+HEAD~(\d+)/gi
     while ((match = resetPattern.exec(source))) {
       const count = Number(match[1])
@@ -1531,15 +1540,86 @@ export class Singularity {
     }
     const revertPattern = /git\s+revert\b[^\n]{0,80}?\b([0-9a-f]{7,40})\b/gi
     while ((match = revertPattern.exec(source))) {
-      if (/[a-f]/i.test(match[1])) dropped.add(match[1].toLowerCase())
+      if (this.isCommitHash(match[1])) dropped.add(match[1].toLowerCase())
     }
 
-    const lastIndex = new Map<string, number>()
-    for (const hit of hits) lastIndex.set(hit.hash, hit.index)
-    const ordered = [...lastIndex.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
-    const surviving = ordered.filter(([hash]) => !dropped.has(hash)).map(([hash]) => hash)
-    const removed = [...dropped].filter((hash) => lastIndex.has(hash))
-    return [...surviving, ...removed.map((hash) => `${hash} (dropped)`)].slice(0, 6)
+    const created = this.createdHashes(source)
+    const heads = this.headMarkedHashes(source)
+    const logHead = this.latestLogHead(source)
+    const ordered: string[] = []
+    const seen = new Set<string>()
+    const push = (hash: string) => {
+      if (!hash || seen.has(hash) || dropped.has(hash)) return
+      seen.add(hash)
+      ordered.push(hash)
+    }
+    for (const hash of created) push(hash)
+    for (const hash of heads) push(hash)
+    push(logHead)
+    const removed = [...dropped]
+    return [...ordered.slice(0, 4), ...removed.map((hash) => `${hash} (dropped)`)].slice(0, 4)
+  }
+
+  private isCommitHash(value: string): boolean {
+    return /^[0-9a-f]{7,40}$/i.test(value) && /[a-f]/i.test(value)
+  }
+
+  private createdHashes(source: string): string[] {
+    const found: string[] = []
+    const seen = new Set<string>()
+    const pattern = /\[(?:[A-Za-z][\w./-]*)\s+([0-9a-f]{7,40})\]/gi
+    let match: RegExpExecArray | null
+    while ((match = pattern.exec(source))) {
+      if (!this.isCommitHash(match[1])) continue
+      const hash = match[1].toLowerCase()
+      if (seen.has(hash)) continue
+      seen.add(hash)
+      found.push(hash)
+    }
+    return found.reverse()
+  }
+
+  private headMarkedHashes(source: string): string[] {
+    const found: string[] = []
+    const seen = new Set<string>()
+    const pattern = /`([0-9a-f]{7,40})`[^\n]{0,80}HEAD|HEAD[^\n]{0,80}`([0-9a-f]{7,40})`/gi
+    let match: RegExpExecArray | null
+    while ((match = pattern.exec(source))) {
+      const raw = match[1] || match[2] || ''
+      if (!this.isCommitHash(raw)) continue
+      const hash = raw.toLowerCase()
+      if (seen.has(hash)) continue
+      seen.add(hash)
+      found.push(hash)
+    }
+    return found.reverse()
+  }
+
+  private latestLogHead(source: string): string {
+    const lines = source.split('\n')
+    let bestEnd = -1
+    let bestHead = ''
+    let index = 0
+    while (index < lines.length) {
+      const hash = this.lineHash(lines[index] ?? '')
+      if (!hash) {
+        index += 1
+        continue
+      }
+      let end = index
+      let cursor = index + 1
+      while (cursor < lines.length && this.lineHash(lines[cursor] ?? '')) {
+        end = cursor
+        cursor += 1
+      }
+      const looksLikeLog = end > index || /\b[0-9a-f]{7,40}\b\s+\S/.test(lines[index] ?? '')
+      if (looksLikeLog && end >= bestEnd) {
+        bestEnd = end
+        bestHead = hash
+      }
+      index = cursor
+    }
+    return bestHead
   }
 
   private onelineHashes(beforeReset: string): string[] {
@@ -1566,7 +1646,7 @@ export class Singularity {
   }
 
   private tailFiles(text: string): string[] {
-    const source = this.stripNoise(text)
+    const source = this.cleanPathText(this.stripNoise(text))
       .split('\n')
       .filter((line) => {
         const trimmed = line.trim()
@@ -1580,15 +1660,21 @@ export class Singularity {
     const unique: string[] = []
     const seen = new Set<string>()
     for (let index = matches.length - 1; index >= 0; index -= 1) {
-      const file = this.cleanDisplayPath(matches[index].replace(/[.,;:)]+$/, ''))
+      const file = this.presentFile(matches[index].replace(/[.,;:)]+$/, ''))
       if (/^https?:\/\//i.test(file) || /chatboxai\.app/i.test(file)) continue
       const key = file.toLowerCase()
       if (seen.has(key)) continue
       seen.add(key)
       unique.push(file)
     }
+    const canonical = (file: string) => file.replace(/[\\/]+/g, '/').toLowerCase()
     return unique
-      .filter((file) => !unique.some((other) => other !== file && other.length > file.length && other.includes(file)))
+      .filter((file) => !unique.some((other) => {
+        if (other === file) return false
+        const long = canonical(other)
+        const short = canonical(file)
+        return long.length > short.length && (long.endsWith(short) || long.endsWith(`/${short}`))
+      }))
       .slice(0, 4)
   }
 
