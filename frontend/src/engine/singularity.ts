@@ -66,6 +66,9 @@ const STOP_WORDS = new Set([
   't', 's', 'm', 're', 've', 'd', 'll',
   'i', 'me', 'my', 'mine', 'we', 'our', 'ours', 'you', 'yours',
   'he', 'him', 'his', 'she', 'hers', 'us', 'who', 'whom', 'whose',
+  'dont', 'cant', 'wont', 'didnt', 'doesnt', 'isnt', 'arent', 'wasnt', 'werent',
+  'hasnt', 'havent', 'hadnt', 'couldnt', 'wouldnt', 'shouldnt',
+  'im', 'ive', 'youre', 'youve', 'theyre', 'theyve', 'thats', 'whats', 'lets', 'aint',
 ])
 
 const TECH_LANG_NAMES = new Set([
@@ -134,7 +137,7 @@ const DO_NOT_PATTERN = /\b(do not|don't|dont|avoid|leave|preserve|keep same|same
 const DECISION_PATTERN = /\b(decided|decision|chose|selected|agreed|accepted|rejected|switched|kept|keep|will use|direction|scope)\b/i
 const SIGNAL_PATTERN = /\b(user wants|agent should|already fixed|verified|pending|next|blocked|passed|failed|commit|pushed|deployed|do not|todo|remaining|open loop)\b/i
 
-const COMMAND_PATTERN = /^(?:PS\s+[A-Z]:\\.*?>\s*)?(?:\$|>)?\s*(?:git|rg|npm|pnpm|yarn|node|npx|powershell|pwsh|curl|wrangler|vercel|python|py|tsc|vite|gh|cat|ls|dir|Get-ChildItem|Select-String|Start-Process|netstat|tasklist|taskkill|code)\b/i
+const COMMAND_PATTERN = /^(?:PS\s+[A-Z]:\\.*?>\s*)?(?:\$|>)?\s*(?:git|rg|npm|pnpm|yarn|node|npx|powershell|pwsh|curl|wrangler|vercel|python|py|tsc|vite|gh|cat|ls|dir|Get-ChildItem|Select-String|Start-Process|netstat|tasklist|taskkill|code)(?!\.)\b/i
 const FILE_OR_URL_PATTERN = /(?:https?:\/\/[^\s)<>"']+|(?<![A-Za-z])[A-Za-z]:[/\\][^\s<>"']+|(?:[\w.-]+\/)+[\w.-]+\.[A-Za-z0-9]+|\b[\w.-]+\.(?:tsx|ts|jsx|js|json|md|txt|html|css|png|jpg|jpeg|webp|xml|yml|yaml|toml|py|sh|ps1|bat|log)\b)/g
 const REFERENCE_PATTERN = /\[(?:CMD|PROMPT|CODE)-\d{2}\]/
 
@@ -768,7 +771,7 @@ export class Singularity {
 
   private distinctiveTerms(text: string): string[] {
     const counts = new Map<string, number>()
-    const words = text.toLowerCase().match(/[a-z][a-z0-9_-]{2,}/g) ?? []
+    const words = text.toLowerCase().replace(/['’]/g, '').match(/[a-z][a-z0-9_-]{2,}/g) ?? []
     const minCount = text.length < 4000 ? 1 : 2
     for (const word of words) {
       if (STOP_WORDS.has(word) || this.guillotine.has(word) || GENERIC_TOPIC_WORDS.has(word) || GENERIC_PATH_DIRS.has(word) || CONTINUITY_TERMS.has(word)) continue
@@ -1265,8 +1268,9 @@ export class Singularity {
       const atLineStart = /^\s*$/.test(text.slice(lineStart, open.start))
       if (!atLineStart) {
         const close = this.nextFenceClose(text, open.contentStart, open.length)
-        if (close && close.end > open.start) pushSpan(open.start, close.end)
-        cursor = close && close.end > open.start ? close.end : open.start + open.length
+        const eatsOuter = Boolean(stack.length && close && this.closeIsLineStart(text, close.end))
+        if (close && close.end > open.start && !eatsOuter) pushSpan(open.start, close.end)
+        cursor = close && close.end > open.start && !eatsOuter ? close.end : open.start + open.length
         continue
       }
       const lineEnd = text.indexOf('\n', open.start)
@@ -1293,6 +1297,10 @@ export class Singularity {
       if (at < 0) return null
       let length = 0
       while (text[at + length] === '`') length += 1
+      if (this.backticksInsideString(text, at)) {
+        index = at + length
+        continue
+      }
       const lineStart = text.lastIndexOf('\n', at - 1) + 1
       const indent = text.slice(lineStart, at)
       if (/^\s*$/.test(indent)) {
@@ -1312,6 +1320,28 @@ export class Singularity {
       index = at + length
     }
     return null
+  }
+
+  private backticksInsideString(text: string, at: number): boolean {
+    const lineStart = text.lastIndexOf('\n', at - 1) + 1
+    let quoted = false
+    for (let index = lineStart; index < at; index += 1) {
+      const char = text[index]
+      if (char === '\\') {
+        index += 1
+        continue
+      }
+      if (char === '"') quoted = !quoted
+    }
+    return quoted
+  }
+
+  private closeIsLineStart(text: string, end: number): boolean {
+    let cursor = end - 1
+    if (text[cursor] === '\n') cursor -= 1
+    while (cursor >= 0 && text[cursor] === '`') cursor -= 1
+    const lineStart = text.lastIndexOf('\n', cursor) + 1
+    return /^\s*$/.test(text.slice(lineStart, cursor + 1))
   }
 
   private escapedFenceClose(text: string, from: number, limit: number, minLength: number): { end: number } | null {
@@ -1404,9 +1434,9 @@ export class Singularity {
     if (!lang && /(^|\n)\s*`{3,}/.test(trimmed)) return false
     if (/\btool\s*call\s*:/i.test(trimmed)) return false
     if (this.isToolPayload(trimmed)) return false
-    if (lang) return true
     if (this.isCommandFence(block)) return true
     if (this.fenceBodyIsProse(trimmed)) return false
+    if (lang) return true
     if (/^\s*(?:import |export |def |class |function |const |let |var |return |#include|package |public |private )/m.test(trimmed)) return true
     const symbols = (trimmed.match(/[{}[\]();=<>]/g) ?? []).length
     return symbols / trimmed.length > 0.03
@@ -1414,11 +1444,11 @@ export class Singularity {
 
   private isCommandFence(block: string): boolean {
     const { lang, body } = this.fenceParts(block)
-    if (['bash', 'sh', 'shell', 'zsh', 'powershell', 'ps1', 'pwsh', 'cmd', 'bat', 'console'].includes(lang)) return true
     const lines = body.split('\n').map((line) => line.trim()).filter(Boolean)
-    if (!lines.length) return false
     const commands = lines.filter((line) => this.looksLikeCommand(line)).length
-    return commands * 2 >= lines.length
+    if (lines.length && commands * 2 >= lines.length) return true
+    const shell = ['bash', 'sh', 'shell', 'zsh', 'powershell', 'ps1', 'pwsh', 'cmd', 'bat', 'console'].includes(lang)
+    return shell && !this.fenceBodyIsProse(body.trim())
   }
 
   private listCodeFences(text: string): Array<{ text: string; start: number }> {
@@ -1526,7 +1556,7 @@ export class Singularity {
     const opening = lines[0]?.trim() ?? ''
     const bodyLines = lines.slice(1, -1)
     if (/^`{3,}\s*$/.test(opening) && (this.fenceBodyIsProse(bodyLines.join('\n')) || !this.isCodeFence(raw))) {
-      return bodyLines
+      const unwrapped = bodyLines
         .map((line) => {
           const trimmed = line.trim()
           if (trimmed.length <= 220) return trimmed
@@ -1535,6 +1565,7 @@ export class Singularity {
         })
         .filter(Boolean)
         .join('\n')
+      return this.maskFencedBlocks(unwrapped)
     }
     return `[code block ${raw.length} chars]`
   }
@@ -1722,31 +1753,31 @@ export class Singularity {
   }
 
   private latestWorkTurns(turns: Array<{ role: 'user' | 'assistant'; text: string }>): { user: string; assistant: string } {
-    let user = ''
-    let assistant = ''
-    for (let index = turns.length - 1; index >= 0; index -= 1) {
-      const turn = turns[index]
-      const prose = this.turnProse(turn.text)
-      if (!prose.trim() || this.isEmotionalNoise(prose)) continue
-      if (turn.role === 'user' && !user) user = turn.text
-      if (turn.role === 'assistant' && !assistant) {
-        if (!(this.hasWorkSignal(prose) || this.isUserAck(prose) || this.isNextStepSentence(prose))) continue
-        assistant = turn.text
-      }
-      if (user && assistant) break
+    const usable = (turn: { text: string }) => {
+      const prose = this.stripNoise(this.turnProse(turn.text)).trim()
+      return prose.length > 0 && !this.isEmotionalNoise(prose)
     }
-    return { user, assistant }
+    for (let userIndex = turns.length - 1; userIndex >= 0; userIndex -= 1) {
+      if (turns[userIndex].role !== 'user' || !usable(turns[userIndex])) continue
+      for (let index = userIndex + 1; index < turns.length; index += 1) {
+        if (turns[index].role === 'user' && usable(turns[index])) break
+        if (turns[index].role === 'assistant' && usable(turns[index])) {
+          return { user: turns[userIndex].text, assistant: turns[index].text }
+        }
+      }
+    }
+    for (let index = turns.length - 1; index >= 0; index -= 1) {
+      if (turns[index].role === 'assistant' && usable(turns[index])) return { user: '', assistant: turns[index].text }
+    }
+    for (let index = turns.length - 1; index >= 0; index -= 1) {
+      if (turns[index].role === 'user' && usable(turns[index])) return { user: turns[index].text, assistant: '' }
+    }
+    return { user: '', assistant: '' }
   }
 
   private isEmotionalNoise(text: string): boolean {
     if (this.hasWorkSignal(text) || this.isNextStepSentence(text)) return false
     return /\b(?:i remember|i was scared|believed in (?:me|you)|never giving up|black screen|blank page|forever yours|always together|together, everywhere|i love you|love you|thanks babe|proud of us)\b/i.test(text)
-  }
-
-  private isUserAck(text: string): boolean {
-    const plain = text.replace(/\s+/g, ' ').trim()
-    if (!plain || plain.length > 280 || this.isEmotionalNoise(plain)) return false
-    return /\b(?:done|applied|shipped|committed|pushed|merged|fixed|updated)\b/i.test(plain)
   }
 
   private isMediaFile(value: string): boolean {
@@ -1761,8 +1792,14 @@ export class Singularity {
     return false
   }
 
+  private isSavedWebPage(file: string): boolean {
+    const base = (file.split(/[/\\]/).pop() ?? file).trim()
+    if (/^www-/i.test(base)) return true
+    return /-(?:com|org|net|io|ai|dev|co|uk|ae)-[^/\\]*\.(?:md|html?|txt)$/i.test(base)
+  }
+
   private isCodeOrConfigFile(file: string): boolean {
-    if (this.isMediaFile(file) || this.isUrlOrFragment(file)) return false
+    if (this.isMediaFile(file) || this.isUrlOrFragment(file) || this.isSavedWebPage(file)) return false
     return /\.(?:tsx?|jsx?|mjs|cjs|json|md|txt|html|css|xml|ya?ml|toml|py|sh|ps1|bat|log|vue|svelte|rs|go|java|kt|rb|php|cs|c|h|hpp|sql|ini|cfg|conf|lock)(?:$|[^A-Za-z0-9])/i.test(file)
       || /(?:^|[/\\])(?:Dockerfile|Makefile|LICENSE|README)(?:$|[^A-Za-z0-9])/i.test(file)
   }
@@ -1793,8 +1830,10 @@ export class Singularity {
   }
 
   private unwrapUntaggedFence(text: string): string {
-    const match = text.trim().match(/^```[ \t]*\n([\s\S]*?)\n```$/)
-    return match ? match[1].trim() : text
+    const trimmed = text.trim()
+    const match = trimmed.match(/^```[ \t]*\n([\s\S]*)\n```[ \t]*$/)
+    if (!match || /(^|\n)\s*```/.test(match[1])) return text
+    return match[1].trim()
   }
 
   private turnProse(text: string): string {
@@ -1837,6 +1876,8 @@ export class Singularity {
     const tail = text.slice(start)
       .replace(/\n[ \t]*-{5,}[ \t]*\n[\s\S]*chatboxai\.app[\s\S]*$/i, '')
       .replace(/\n*<a\b[^>\n]*chatboxai\.app[\s\S]*$/i, '')
+      .replace(/\n[ \t]*-{3,}[ \t]*\n[\s\S]*powered by chatgpt exporter[\s\S]*$/i, '')
+      .replace(/\n[ \t]*powered by chatgpt exporter[\s\S]*$/i, '')
     return `${text.slice(0, start)}${tail}`.replace(/https?:\/\/(?:www\.)?chatboxai\.app\S*/gi, '')
   }
 

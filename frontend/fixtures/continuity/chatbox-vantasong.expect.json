@@ -6,12 +6,17 @@
     "suno"
   ],
   "stopPointFacts": [
-    "Tell me when it works",
+    "fix the downloader token",
     "VantaSong",
     "run the downloader tests"
   ],
   "stopFields": {
-    "last user message:": ["Tell me when it works"]
+    "last user message:": ["fix the downloader token"],
+    "last assistant reply:": ["Updated the token check"]
+  },
+  "stopFieldAbsent": {
+    "last user message:": ["Tell me when it works"],
+    "last assistant reply:": ["Tell me when it works"]
   },
   "topicTop3": "vantasong",
   "secrets": [],

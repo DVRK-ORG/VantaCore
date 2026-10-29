@@ -16,6 +16,7 @@ interface Expectation {
   stopFields?: Record<string, string[]>
   stopFieldAbsent?: Record<string, string[]>
   codeBlocks?: { minInput?: number; minKept?: number; minFolded?: number }
+  dictionaryAbsent?: string[]
 }
 
 interface CapsuleEngine {
@@ -139,6 +140,11 @@ const main = async () => {
       for (const fact of facts) {
         if (fact && field.includes(fact)) errors.push(`field ${label} has ${fact.slice(0, 40)}`)
       }
+    }
+
+    const dictionary = output.split('## REFERENCE DICTIONARY')[1]?.split(/\n## /)[0] ?? ''
+    for (const banned of expectation.dictionaryAbsent ?? []) {
+      if (banned && dictionary.includes(banned)) errors.push(`dictionary has ${banned.slice(0, 40)}`)
     }
 
     if (expectation.codeBlocks) {

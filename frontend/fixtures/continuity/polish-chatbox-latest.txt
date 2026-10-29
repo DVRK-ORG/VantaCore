@@ -1,3 +1,5 @@
+Human: dont dont dont dont dont dont dont dont dont dont dont dont dont dont dont dont dont dont dont dont dont dont dont dont dont dont dont dont dont dont dont dont
+
 Human: Keep quaynote row 0 in harbor-notes/quay.ts.
 
 Assistant: Updated quaynote row 0 in harbor-notes/quay.ts. Next step: run the quay fixture.

@@ -2,10 +2,11 @@
   "facts": [
     "quaynote",
     "harbor-notes/quay.ts",
-    "Does that still look right?"
+    "Updated one more quaynote note"
   ],
   "stopPointFacts": [
-    "Does that still look right?",
+    "Keep one more quaynote note",
+    "Updated one more quaynote note",
     "harbor-notes/quay.ts"
   ],
   "topicTop3": "quaynote",
@@ -14,20 +15,27 @@
     "] our (",
     ": our]",
     "## Highlights",
-    "## Root cause"
+    "## Root cause",
+    "dont"
   ],
   "absentHeadings": [
     "## Highlights",
     "## Root cause"
   ],
   "stopFields": {
-    "last user message:": ["Does that still look right?"]
+    "last user message:": ["Keep one more quaynote note"],
+    "last assistant reply:": ["Updated one more quaynote note"]
   },
   "stopFieldAbsent": {
     "last user message:": [
       "Look at that",
+      "Does that still look right?",
       "pasted note is not the latest",
       "Highlights"
+    ],
+    "last assistant reply:": [
+      "Does that still look right?",
+      "Look at that"
     ]
   }
 }

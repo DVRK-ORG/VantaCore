@@ -1,0 +1,35 @@
+{
+  "facts": [
+    "quaynote",
+    "harbor-notes/quay.ts",
+    "Done, applied",
+    "The final reply is the one that landed"
+  ],
+  "stopPointFacts": [
+    "Done, applied",
+    "The final reply is the one that landed"
+  ],
+  "topicTop3": "quaynote",
+  "secrets": [],
+  "absent": [
+    "## Prompt:",
+    "## Response:"
+  ],
+  "absentHeadings": [
+    "## Highlights"
+  ],
+  "stopFields": {
+    "last user message:": ["Done, applied"],
+    "last assistant reply:": ["The final reply is the one that landed"],
+    "stated next step:": ["none stated"]
+  },
+  "stopFieldAbsent": {
+    "last user message:": ["The earlier reply recorded the ledger", "The final reply is the one that landed"],
+    "last assistant reply:": ["The earlier reply recorded the ledger", "Powered by ChatGPT Exporter", "Done, applied"],
+    "last commits/files:": ["screenshot.png"]
+  },
+  "codeBlocks": {
+    "minInput": 8,
+    "minFolded": 8
+  }
+}
