@@ -6,7 +6,7 @@
     "list mooring fees once",
     "8de77c0",
     "4c91ab2",
-    "replay the berth-hours fixture",
+    "run the berth-hours fixture",
     "[code block"
   ],
   "stopPointFacts": [
@@ -15,7 +15,7 @@
     "8de77c0",
     "harbor-ledger/src/fees/mooring.ts",
     "list mooring fees once",
-    "replay the berth-hours fixture"
+    "run the berth-hours fixture"
   ],
   "topicTop3": "harbor-ledger",
   "secrets": [

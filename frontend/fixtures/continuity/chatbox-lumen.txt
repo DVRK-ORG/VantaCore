@@ -118,10 +118,10 @@ Authorization: Bearer lumenquillsecret99
 
 Human:
 ```
-tighten the quill sidebearing
+fix index.html quill sidebearing
 ```
 
-Assistant: Reverted the bad kerning. New commit c0ffee1 updates C:\Users\X\Desktop\Projects\LumenQuill\static\index.html. Next step: replay the kerning fixture before tagging.
+Assistant: Reverted the bad kerning. New commit c0ffee1 updates C:\Users\X\Desktop\Projects\LumenQuill\static\index.html. Next step: run the kerning fixture before tagging.
 
 Human: thanks babe 💖
 

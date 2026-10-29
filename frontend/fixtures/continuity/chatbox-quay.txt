@@ -241,4 +241,4 @@ The quay invoice should list mooring fees once, after the berth hours, and the t
 export const mooringFee = (hours: number) => hours * 12
 ```
 
-Next step: replay the berth-hours fixture before tagging the quay release.
+Next step: run the berth-hours fixture before tagging the quay release.

@@ -3,15 +3,15 @@
     "LumenQuill",
     "kerning",
     "c0ffee1",
-    "tighten the quill sidebearing",
-    "replay the kerning fixture",
+    "fix index.html quill sidebearing",
+    "run the kerning fixture",
     "column widths"
   ],
   "stopPointFacts": [
-    "tighten the quill sidebearing",
+    "fix index.html quill sidebearing",
     "c0ffee1",
     "LumenQuill",
-    "replay the kerning fixture"
+    "run the kerning fixture"
   ],
   "topicTop3": "lumenquill",
   "secrets": [
