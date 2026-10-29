@@ -618,17 +618,22 @@ export class Singularity {
     const artifacts: string[] = []
 
     for (const segment of segments) {
-      const cleaned = this.cleanEvidenceLine(segment.text)
+      const stripped = this.stripToolPayloads(segment.text)
+      for (const summary of stripped.summaries) artifacts.push(summary)
+      const source = stripped.prose
+      if (source.trim().length < 12) continue
+
+      const cleaned = this.cleanEvidenceLine(source)
       if (!cleaned) continue
 
-      if (COMPLETED_PATTERN.test(segment.text)) completed.push(`[${segment.marker}] ${cleaned}`)
-      if (VERIFIED_PATTERN.test(segment.text)) verified.push(`[${segment.marker}] ${cleaned}`)
-      if (PENDING_PATTERN.test(segment.text)) pending.push(`[${segment.marker}] ${cleaned}`)
-      if (NEXT_PATTERN.test(segment.text)) next.push(`[${segment.marker}] ${cleaned}`)
-      if (DO_NOT_PATTERN.test(segment.text)) doNot.push(`[${segment.marker}] ${cleaned}`)
-      if (DECISION_PATTERN.test(segment.text)) decisions.push(`[${segment.marker}] ${cleaned}`)
+      if (COMPLETED_PATTERN.test(source)) completed.push(`[${segment.marker}] ${cleaned}`)
+      if (VERIFIED_PATTERN.test(source)) verified.push(`[${segment.marker}] ${cleaned}`)
+      if (PENDING_PATTERN.test(source)) pending.push(`[${segment.marker}] ${cleaned}`)
+      if (NEXT_PATTERN.test(source)) next.push(`[${segment.marker}] ${cleaned}`)
+      if (DO_NOT_PATTERN.test(source)) doNot.push(`[${segment.marker}] ${cleaned}`)
+      if (DECISION_PATTERN.test(source)) decisions.push(`[${segment.marker}] ${cleaned}`)
 
-      for (const artifact of this.extractArtifacts(segment.text)) {
+      for (const artifact of this.extractArtifacts(source)) {
         artifacts.push(artifact)
       }
     }
@@ -664,20 +669,85 @@ export class Singularity {
   }
 
   private signalScore(text: string): number {
+    const stripped = this.stripToolPayloads(text)
+    if (stripped.summaries.length && stripped.prose.trim().length < 12) return 0
+    const source = stripped.summaries.length ? stripped.prose : text
+
     let score = 0
-    if (SIGNAL_PATTERN.test(text)) score += 4
-    if (COMPLETED_PATTERN.test(text)) score += 3
-    if (VERIFIED_PATTERN.test(text)) score += 3
-    if (PENDING_PATTERN.test(text)) score += 3
-    if (DO_NOT_PATTERN.test(text)) score += 4
-    if (DECISION_PATTERN.test(text)) score += 2
-    if (this.extractArtifacts(text).length) score += 2
-    if (this.looksLikeCommand(text.trim())) score += 4
+    if (SIGNAL_PATTERN.test(source)) score += 4
+    if (COMPLETED_PATTERN.test(source)) score += 3
+    if (VERIFIED_PATTERN.test(source)) score += 3
+    if (PENDING_PATTERN.test(source)) score += 3
+    if (DO_NOT_PATTERN.test(source)) score += 4
+    if (DECISION_PATTERN.test(source)) score += 2
+    if (this.extractArtifacts(source).length) score += 2
+    if (this.looksLikeCommand(source.trim())) score += 4
     return score
   }
 
+  private isToolPayload(text: string): boolean {
+    const trimmed = text.trim()
+    if (/\btool\s*call\s*:/i.test(trimmed)) return true
+    if (/^exec:\s+\S+/i.test(trimmed) && /[{"]/.test(trimmed)) return true
+    if (!/^[\[{]/.test(trimmed)) return false
+    const marks = (trimmed.match(/[{}\[\]":]/g) ?? []).length
+    return marks >= 6 && /"(?:name|arguments|command|path|tool|ok|file)"\s*:/.test(trimmed)
+  }
+
+  private toolCallSummary(text: string): string {
+    const name = text.match(/\b(run_command|read_file|write_file|search_files|apply_patch|execute_command|list_dir)\b/i)?.[1]
+    const quoted = text.match(/"(?:path|file_path|command|cmd)"\s*:\s*"((?:\\.|[^"\\]){1,120})"/)?.[1]
+    const inline = text.match(/\b(?:read_file|write_file|apply_patch|run_command)\s+([^\s"{]{1,120})/)?.[1]
+    const exec = text.match(/^exec:\s+(\S+(?:\s+\S+)?)/im)?.[1]
+    const target = (quoted ?? inline ?? exec ?? '').replace(/\\n/g, ' ').replace(/\\"/g, '"')
+    const line = [name, target].filter((part) => Boolean(part)).join(' ').replace(/\s+/g, ' ').trim()
+    return (line || 'tool call').slice(0, 160)
+  }
+
+  private stripToolPayloads(text: string): { prose: string; summaries: string[] } {
+    const kept: string[] = []
+    const summaries: string[] = []
+    let skipping = false
+    let depth = 0
+    let sawBrace = false
+
+    const finishSkip = () => {
+      skipping = false
+      depth = 0
+      sawBrace = false
+    }
+
+    for (const line of text.split('\n')) {
+      const trimmed = line.trim()
+      const toolCall = /\btool\s*call\s*:/i.test(trimmed)
+      const execCall = /^exec:\s+\S+/i.test(trimmed)
+      if (!skipping && (toolCall || execCall || (this.isToolPayload(trimmed) && /^[\[{]/.test(trimmed)))) {
+        summaries.push(this.toolCallSummary(trimmed))
+        depth = (line.match(/{/g) ?? []).length - (line.match(/}/g) ?? []).length
+        sawBrace = /[{[]/.test(line)
+        if (sawBrace && depth <= 0) finishSkip()
+        else skipping = true
+        continue
+      }
+
+      if (skipping) {
+        depth += (line.match(/{/g) ?? []).length
+        depth -= (line.match(/}/g) ?? []).length
+        if (/[{[]/.test(line)) sawBrace = true
+        if ((sawBrace && depth <= 0 && /[}\]]/.test(line)) || (!sawBrace && trimmed === '')) finishSkip()
+        continue
+      }
+
+      kept.push(line)
+    }
+
+    return { prose: kept.join('\n'), summaries }
+  }
+
   private renderDetailSnippet(segment: Segment, entries: ReferenceEntry[]): string | null {
-    const referenced = this.applyDictionaryReferences(segment.text, entries).text
+    const source = this.stripToolPayloads(segment.text).prose
+    if (source.trim().length < 12) return null
+    const referenced = this.applyDictionaryReferences(source, entries).text
     const compressed = this.compressSnippet(referenced)
     if (!compressed) return null
     return `- [${segment.marker}] ${compressed}`
