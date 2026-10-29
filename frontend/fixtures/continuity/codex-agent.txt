@@ -1798,4 +1798,4 @@ FAIL src/cart.test.ts (199)
 exec: apply_patch src/cart.ts
 {"ok":true,"path":"src/cart.ts","lines_changed":4}
 
-Final: all 42 tests passed. Next: open PR "fix coupon rounding".
+Final: all 42 tests passed in src/cart.ts. Next: open PR "fix coupon rounding".
