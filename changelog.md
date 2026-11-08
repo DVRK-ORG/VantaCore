@@ -2,6 +2,14 @@
 
 ---
 
+## [4.7.0] -- Unreleased -- STITCH VISUAL REFRESH
+> *Homepage visual refresh (Stitch-inspired polish) with accurate benchmark tiles and restored copy.*
+
+### Visual Refresh
+- Homepage visual refresh (Stitch-inspired polish) with accurate benchmark tiles and restored copy.
+
+---
+
 ## [4.5.0] -- Unreleased -- IMPORT CAPSULE V1
 > *VantaCore closes the local capsule loop with safe client-side restore.*
 
