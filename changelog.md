@@ -17,6 +17,43 @@
 
 ---
 
+## [4.6.0] -- 2026-11-08 -- CONTINUITY, PRIVACY, AND THE STOP POINT
+> *VantaCore ships a truer stop point, a public privacy page, and cleaner capsule labels. Live on vantacore.net.*
+
+### Shipped
+- Capsule continuity landed in PR #4 (`98fc464`, 2026-10-29).
+- The public privacy page, MIT license, and manifest correction landed in PR #5 (`c403f86`, 2026-10-29).
+- Heading, file-list, and code-accounting polish landed in PR #6 (`973a8c6`, 2026-11-08).
+
+### Capsule Continuity
+- **WHERE IT STOPPED** shows the latest user turn that still has a reply, plus that reply.
+- Language-tagged fences stay code.
+- Chatbox column-0 bare fences that only wrap a turn are delimiters, not code; real code inside them is kept.
+- Fences inside JSON tool results are unescaped and scanned separately.
+- Topic names come from session content, not URLs.
+- Continuity fixtures and a continuity check were added.
+
+### Privacy Page
+- Published the `/security` privacy page. Reports go to GitHub Issues.
+- Routed `/security` via `_redirects`.
+- Added MIT `LICENSE`.
+- Corrected `manifest.json` from 98.87% to 96.2%.
+- Scrubbed a private local path out of the README.
+
+### Capsule Labels and Code Accounting
+- Source headings in the chat are demoted so they cannot become capsule section headers.
+- The code-block line now says kept inline / stored in dictionary / dropped.
+- The files list excludes images, full URLs, URL fragments, www- saved-page names, and truncated `...` paths.
+- `https://` is no longer rewritten to `https:/`.
+- If the final reply has no next step, that field says "none stated".
+- Clusters and the session map share one stopword list so filler words are not labels.
+- The validator independently counts recoverable code fences.
+
+### Official Benchmark
+- Public official demo benchmark remains 1,607,470 → 61,109 chars, **96.20%**.
+
+---
+
 ## [4.4.0] -- 2026-05-31 -- COMPRESSION PROFILES V1
 > *VantaCore expands its arsenal with targeted profiles and robust export capabilities.*
 
