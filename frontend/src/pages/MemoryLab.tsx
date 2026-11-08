@@ -126,7 +126,7 @@ function SectionHeading({ kicker, title }: { kicker?: string; title: string }) {
 
 function BenchmarkPanel({ compact = false }: { compact?: boolean }) {
   return (
-    <aside className={compact ? 'memory-lab-benchmark compact' : 'memory-lab-benchmark'} aria-label="VantaCore benchmark metrics">
+    <aside className={compact ? 'memory-lab-benchmark compact' : 'memory-lab-benchmark'} aria-label="VantaCore benchmark metrics" style={{ boxShadow: '0 0 30px rgba(196,30,58,0.06)', border: '1px solid rgba(196,30,58,0.2)' }}>
       <div className="memory-lab-panel-title">
         <Gauge size={16} />
         <span>Benchmark Metrics</span>
@@ -149,24 +149,41 @@ function BenchmarkPanel({ compact = false }: { compact?: boolean }) {
 }
 
 function NoteCard({ note, featured = false }: { note: MemoryLabNote; featured?: boolean }) {
+  const isLive = note.status === 'Live'
   const content = (
     <>
       <div className="memory-lab-card-topline">
         <span>Note {note.number}</span>
-        <strong>{note.status}</strong>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          {/* Stitch: pulse dot on status badges */}
+          <div style={{
+            width: '6px',
+            height: '6px',
+            borderRadius: '50%',
+            background: isLive ? 'var(--blood-ruby)' : 'var(--obsidian-silver)',
+            boxShadow: isLive ? '0 0 8px rgba(196,30,58,0.6)' : 'none',
+            animation: isLive ? 'statusPulse 2.4s ease-in-out infinite' : 'none',
+            flexShrink: 0,
+          }} />
+          <strong>{note.status}</strong>
+        </div>
       </div>
       <h3>{note.title}</h3>
       <p>{note.summary}</p>
       <div className="memory-lab-card-footer">
         <span>{note.category}</span>
-        {note.status === 'Live' && <ArrowRight size={16} />}
+        {isLive && <ArrowRight size={16} />}
       </div>
     </>
   )
 
-  if (note.status === 'Live') {
+  if (isLive) {
     return (
-      <a className={featured ? 'memory-lab-note-card featured' : 'memory-lab-note-card'} href={note.href}>
+      <a
+        className={featured ? 'memory-lab-note-card featured' : 'memory-lab-note-card'}
+        href={note.href}
+        style={featured ? { borderColor: 'rgba(196,30,58,0.4)', boxShadow: '0 0 24px rgba(196,30,58,0.08)' } : {}}
+      >
         {content}
       </a>
     )

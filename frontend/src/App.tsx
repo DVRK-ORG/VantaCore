@@ -31,6 +31,7 @@ function HomePage({ onHistoryToggle }: { onHistoryToggle: () => void }) {
     <>
       <Header onHistoryToggle={onHistoryToggle} />
       <HeroSection />
+      <hr className="section-divider-red" />
 
       {/* Tool Section */}
       <section id="tool" style={{ padding: '96px 0', position: 'relative' }}>
@@ -51,10 +52,15 @@ function HomePage({ onHistoryToggle }: { onHistoryToggle: () => void }) {
         </div>
       </section>
 
+      <hr className="section-divider-red" />
       <BenchmarkProof />
+      <hr className="section-divider-red" />
       <WhoIsItFor />
+      <hr className="section-divider-red" />
       <HowItWorks />
+      <hr className="section-divider-red" />
       <ProductPromise />
+      <hr className="section-divider-red-tight" />
       <Footer />
     </>
   )
