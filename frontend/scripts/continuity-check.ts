@@ -12,7 +12,11 @@ interface Expectation {
   topicTop3: string
   secrets: string[]
   absent?: string[]
+  absentHeadings?: string[]
+  stopFields?: Record<string, string[]>
+  stopFieldAbsent?: Record<string, string[]>
   codeBlocks?: { minInput?: number; minKept?: number; minFolded?: number }
+  dictionaryAbsent?: string[]
 }
 
 interface CapsuleEngine {
@@ -45,6 +49,25 @@ const sessionMap = (output: string): string => {
 const stopText = (output: string): string => {
   if (!output.includes('## WHERE IT STOPPED')) return output
   return output.split('## WHERE IT STOPPED')[1]?.split(/\n## /)[0] ?? output
+}
+
+const STOP_LABELS = new Set([
+  'last user message:',
+  'last assistant reply:',
+  'last commits/files:',
+  'stated next step:',
+])
+
+const stopField = (stop: string, label: string): string => {
+  const lines = stop.split('\n')
+  const start = lines.findIndex((line) => line === label)
+  if (start < 0) return ''
+  const body: string[] = []
+  for (let index = start + 1; index < lines.length; index += 1) {
+    if (STOP_LABELS.has(lines[index] ?? '')) break
+    body.push(lines[index] ?? '')
+  }
+  return body.join('\n')
 }
 
 const twoMegabyteSession = (): string => {
@@ -101,8 +124,31 @@ const main = async () => {
       if (banned && output.includes(banned)) errors.push(`present: ${banned.slice(0, 40)}`)
     }
 
+    for (const heading of expectation.absentHeadings ?? []) {
+      if (heading && output.includes(`\n${heading}`)) errors.push(`heading ${heading}`)
+    }
+
+    const stopped = stopText(output)
+    for (const [label, facts] of Object.entries(expectation.stopFields ?? {})) {
+      const field = stopField(stopped, label)
+      for (const fact of facts) {
+        if (!field.includes(fact)) errors.push(`field ${label} missing ${fact}`)
+      }
+    }
+    for (const [label, facts] of Object.entries(expectation.stopFieldAbsent ?? {})) {
+      const field = stopField(stopped, label)
+      for (const fact of facts) {
+        if (fact && field.includes(fact)) errors.push(`field ${label} has ${fact.slice(0, 40)}`)
+      }
+    }
+
+    const dictionary = output.split('## REFERENCE DICTIONARY')[1]?.split(/\n## /)[0] ?? ''
+    for (const banned of expectation.dictionaryAbsent ?? []) {
+      if (banned && dictionary.includes(banned)) errors.push(`dictionary has ${banned.slice(0, 40)}`)
+    }
+
     if (expectation.codeBlocks) {
-      const counted = output.match(/code blocks: (\d+) in input, (\d+) kept, (\d+) folded, (\d+) dropped/)
+      const counted = output.match(/code blocks: (\d+) in input, (\d+) kept inline, (\d+) stored in dictionary, (\d+) dropped/)
       if (!counted) {
         errors.push('code block counts missing')
       } else {

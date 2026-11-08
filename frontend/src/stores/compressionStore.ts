@@ -17,6 +17,9 @@ interface HistoryEntry {
   estimatedTokensAfter: number
   tokenEstimationMethod: string
   codeBlocksProtected: number
+  codeBlocksKept: number
+  codeBlocksFolded: number
+  codeBlocksDropped: number
   repeatedBlocksFolded: number
   dictionaryReferencesCreated: number
   clustersDetected: number
@@ -106,6 +109,9 @@ const loadHistory = (): HistoryEntry[] => {
         estimatedTokensAfter: entry.estimatedTokensAfter ?? Math.ceil((entry.compressedChars ?? 0) / 4),
         tokenEstimationMethod: entry.tokenEstimationMethod ?? 'approximate: ceil(characters / 4)',
         codeBlocksProtected: entry.codeBlocksProtected ?? 0,
+        codeBlocksKept: entry.codeBlocksKept ?? 0,
+        codeBlocksFolded: entry.codeBlocksFolded ?? 0,
+        codeBlocksDropped: entry.codeBlocksDropped ?? 0,
         repeatedBlocksFolded: entry.repeatedBlocksFolded ?? 0,
         dictionaryReferencesCreated: entry.dictionaryReferencesCreated ?? 0,
         clustersDetected: entry.clustersDetected ?? 0,
@@ -212,9 +218,9 @@ export const useCompressionStore = create<CompressionStore>((set, get) => ({
         dictionaryReferencesCreated: entry.dictionaryReferencesCreated,
         clustersDetected: entry.clustersDetected,
         codeBlocksProtected: entry.codeBlocksProtected,
-        codeBlocksKept: 0,
-        codeBlocksFolded: 0,
-        codeBlocksDropped: 0,
+        codeBlocksKept: entry.codeBlocksKept,
+        codeBlocksFolded: entry.codeBlocksFolded,
+        codeBlocksDropped: entry.codeBlocksDropped,
         codeBlocksIntegrityOk: entry.codeBlocksIntegrityOk,
       },
       hasResult: true,

@@ -1,7 +1,7 @@
 import { readFile, writeFile } from 'node:fs/promises'
 import { basename, dirname, extname, join } from 'node:path'
 import { pathToFileURL } from 'node:url'
-import { Singularity } from '../src/engine/singularity.ts'
+import { recoverableCodeBodies, Singularity } from '../src/engine/singularity.ts'
 
 interface CliOptions {
   inputPath: string | null
@@ -30,6 +30,23 @@ const parseArgs = (argv: string[]): CliOptions => {
 }
 
 const formatNumber = (value: number): string => value.toLocaleString('en-US')
+
+const recoverableBlockBodies = (text: string): string[] => recoverableCodeBodies(text)
+
+const assertBlocksRecovered = (input: string, output: string, engineCount: number): void => {
+  const bodies = recoverableBlockBodies(input).filter((body) => body.trim().length > 0)
+  const missing = bodies.filter((body) => !output.includes(body))
+  console.log(`independent code blocks: ${formatNumber(bodies.length)}`)
+  if (engineCount < bodies.length) {
+    console.error(`FAIL engine counted ${engineCount} code blocks, line scan found ${bodies.length}`)
+    process.exitCode = 1
+  }
+  if (missing.length) {
+    console.error(`FAIL ${missing.length} code block bodies missing from output`)
+    for (const body of missing.slice(0, 8)) console.error(body.slice(0, 160))
+    process.exitCode = 1
+  }
+}
 
 const defaultOutputPath = (inputPath: string | null): string => {
   if (!inputPath) return join(process.cwd(), 'vantacore-validation-output.md')
@@ -94,7 +111,8 @@ const main = async () => {
   console.log(`repeated blocks folded: ${formatNumber(result.repeatedBlocksFolded)}`)
   console.log(`dictionary references created: ${formatNumber(result.dictionaryReferencesCreated)}`)
   console.log(`clusters detected: ${formatNumber(result.clustersDetected)}`)
-  console.log(`code blocks: ${formatNumber(result.codeBlocksProtected)} in input, ${formatNumber(result.codeBlocksKept)} kept, ${formatNumber(result.codeBlocksFolded)} folded, ${formatNumber(result.codeBlocksDropped)} dropped`)
+  console.log(`code blocks: ${formatNumber(result.codeBlocksProtected)} in input, ${formatNumber(result.codeBlocksKept)} kept inline, ${formatNumber(result.codeBlocksFolded)} stored in dictionary, ${formatNumber(result.codeBlocksDropped)} dropped`)
+  assertBlocksRecovered(input, result.compressed, result.codeBlocksProtected)
 
   if (options.writeOutput || options.outputPath) {
     const outputPath = options.outputPath ?? defaultOutputPath(options.inputPath)

@@ -1,0 +1,40 @@
+{
+  "facts": [
+    "npx skills add vercel-labs/agent-skills",
+    "Uvicorn running on http://127.0.0.1:8000",
+    "rea capture-browser-scenario --url https://example.com/quay",
+    "def due(hours: int) -> int:",
+    "harbor-notes/quay.ts"
+  ],
+  "stopPointFacts": [
+    "Keep the quaynote ledger in harbor-notes/quay.ts.",
+    "Updated the quaynote ledger in harbor-notes/quay.ts.",
+    "harbor-notes/quay.ts"
+  ],
+  "topicTop3": "quaynote",
+  "secrets": [],
+  "absent": [
+    "Let me run them separately:",
+    "Look at that baby",
+    "[image: quay-photo.png]"
+  ],
+  "dictionaryAbsent": [
+    "Let me run them separately:",
+    "Let me check the ledger:",
+    "Look at that baby",
+    "[image: quay-photo.png]"
+  ],
+  "stopFields": {
+    "last user message:": ["Keep the quaynote ledger in harbor-notes/quay.ts."],
+    "last assistant reply:": ["Updated the quaynote ledger in harbor-notes/quay.ts."]
+  },
+  "stopFieldAbsent": {
+    "last assistant reply:": ["Let me run them separately:", "Look at that baby", "chatboxai.app"],
+    "last user message:": ["Look at that baby", "Let me run them separately:"]
+  },
+  "codeBlocks": {
+    "minInput": 7,
+    "minKept": 1,
+    "minFolded": 6
+  }
+}

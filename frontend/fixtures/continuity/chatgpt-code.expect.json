@@ -4,7 +4,8 @@
     "keelMargin",
     "keel-export-key",
     "keel-ledger/src/margin.ts",
-    "npm run keel:export"
+    "npm run keel:export",
+    "def keelDraftOnly"
   ],
   "stopPointFacts": [
     "Ship the exporter in keel-ledger/src/export.ts and run a real PDF export.",
@@ -17,8 +18,7 @@
     "chatgpt.com",
     "## Prompt:",
     "## Response:",
-    "chrome",
-    "keelDraftOnly"
+    "chrome"
   ],
   "codeBlocks": {
     "minInput": 30,
