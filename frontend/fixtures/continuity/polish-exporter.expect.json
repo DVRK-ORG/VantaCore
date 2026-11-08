@@ -1,0 +1,48 @@
+{
+  "facts": [
+    "quaynote",
+    "harbor-notes/quay.ts",
+    "a1b2c3d",
+    "inlineQuay",
+    "Done, applied",
+    "run the quay fixture"
+  ],
+  "stopPointFacts": [
+    "Done, applied",
+    "run the quay fixture",
+    "a1b2c3d",
+    "harbor-notes/quay.ts"
+  ],
+  "topicTop3": "quaynote",
+  "secrets": [],
+  "absent": [
+    "## Prompt:",
+    "## Response:",
+    "## Highlights",
+    "## Verification",
+    "## Disclaimer",
+    "## Category",
+    "## Root cause"
+  ],
+  "absentHeadings": [
+    "## Highlights",
+    "## Verification",
+    "## Disclaimer",
+    "## Category",
+    "## Root cause"
+  ],
+  "stopFields": {
+    "last user message:": ["Done, applied"],
+    "stated next step:": ["run the quay fixture"],
+    "last commits/files:": ["a1b2c3d", "harbor-notes/quay.ts"]
+  },
+  "stopFieldAbsent": {
+    "last user message:": ["Root cause landed", "Applied the quaynote"],
+    "last commits/files:": ["screenshot.png", "photo.jpg"]
+  },
+  "codeBlocks": {
+    "minInput": 20,
+    "minKept": 1,
+    "minFolded": 8
+  }
+}

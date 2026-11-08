@@ -1,0 +1,14 @@
+{
+  "facts": [
+    "PrimaryButton",
+    "src/Button.tsx",
+    "Build passed"
+  ],
+  "stopPointFacts": [
+    "rename the Button component to PrimaryButton",
+    "src/Button.tsx",
+    "Build passed"
+  ],
+  "topicTop3": "button",
+  "secrets": []
+}

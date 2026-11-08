@@ -1,0 +1,293 @@
+## Prompt:
+Keep quaynote row 0 in harbor-notes/quay.ts. Do not change the berth map.
+
+## Response:
+Updated quaynote row 0 in harbor-notes/quay.ts.
+
+## Highlights
+The quaynote row stays on one line.
+
+## Verification
+Checked harbor-notes/quay.ts for row 0.
+
+## Disclaimer
+Synthetic fixture only.
+
+## Category
+Parser
+
+## Root cause
+The heading leak came from the reply body.
+
+```ts
+export const quaynote = (hours: number) => hours * 12
+```
+
+```c#
+public class QuayNote { public int Hours = 0; }
+```
+
+Parser snippet: ```ts\nexport const inlineQuay = 1\n```
+New commit a1b2c3d records the quaynote change.
+Attachment left in the thread: screenshot.png and photo.jpg.
+
+## Prompt:
+Keep quaynote row 1 in harbor-notes/quay.ts. Do not change the berth map.
+
+## Response:
+Updated quaynote row 1 in harbor-notes/quay.ts.
+
+## Highlights
+The quaynote row stays on one line.
+
+## Verification
+Checked harbor-notes/quay.ts for row 1.
+
+## Disclaimer
+Synthetic fixture only.
+
+## Category
+Parser
+
+## Root cause
+The heading leak came from the reply body.
+
+```ts
+export const quaynote = (hours: number) => hours * 12
+```
+
+```c#
+public class QuayNote { public int Hours = 1; }
+```
+
+Parser snippet: ```ts\nexport const inlineQuay = 1\n```
+New commit a1b2c3d records the quaynote change.
+Attachment left in the thread: screenshot.png and photo.jpg.
+
+## Prompt:
+Keep quaynote row 2 in harbor-notes/quay.ts. Do not change the berth map.
+
+## Response:
+Updated quaynote row 2 in harbor-notes/quay.ts.
+
+## Highlights
+The quaynote row stays on one line.
+
+## Verification
+Checked harbor-notes/quay.ts for row 2.
+
+## Disclaimer
+Synthetic fixture only.
+
+## Category
+Parser
+
+## Root cause
+The heading leak came from the reply body.
+
+```ts
+export const quaynote = (hours: number) => hours * 12
+```
+
+```c#
+public class QuayNote { public int Hours = 2; }
+```
+
+Parser snippet: ```ts\nexport const inlineQuay = 1\n```
+New commit a1b2c3d records the quaynote change.
+Attachment left in the thread: screenshot.png and photo.jpg.
+
+## Prompt:
+Keep quaynote row 3 in harbor-notes/quay.ts. Do not change the berth map.
+
+## Response:
+Updated quaynote row 3 in harbor-notes/quay.ts.
+
+## Highlights
+The quaynote row stays on one line.
+
+## Verification
+Checked harbor-notes/quay.ts for row 3.
+
+## Disclaimer
+Synthetic fixture only.
+
+## Category
+Parser
+
+## Root cause
+The heading leak came from the reply body.
+
+```ts
+export const quaynote = (hours: number) => hours * 12
+```
+
+```c#
+public class QuayNote { public int Hours = 3; }
+```
+
+Parser snippet: ```ts\nexport const inlineQuay = 1\n```
+New commit a1b2c3d records the quaynote change.
+Attachment left in the thread: screenshot.png and photo.jpg.
+
+## Prompt:
+Keep quaynote row 4 in harbor-notes/quay.ts. Do not change the berth map.
+
+## Response:
+Updated quaynote row 4 in harbor-notes/quay.ts.
+
+## Highlights
+The quaynote row stays on one line.
+
+## Verification
+Checked harbor-notes/quay.ts for row 4.
+
+## Disclaimer
+Synthetic fixture only.
+
+## Category
+Parser
+
+## Root cause
+The heading leak came from the reply body.
+
+```ts
+export const quaynote = (hours: number) => hours * 12
+```
+
+```c#
+public class QuayNote { public int Hours = 4; }
+```
+
+Parser snippet: ```ts\nexport const inlineQuay = 1\n```
+New commit a1b2c3d records the quaynote change.
+Attachment left in the thread: screenshot.png and photo.jpg.
+
+## Prompt:
+Keep quaynote row 5 in harbor-notes/quay.ts. Do not change the berth map.
+
+## Response:
+Updated quaynote row 5 in harbor-notes/quay.ts.
+
+## Highlights
+The quaynote row stays on one line.
+
+## Verification
+Checked harbor-notes/quay.ts for row 5.
+
+## Disclaimer
+Synthetic fixture only.
+
+## Category
+Parser
+
+## Root cause
+The heading leak came from the reply body.
+
+```ts
+export const quaynote = (hours: number) => hours * 12
+```
+
+```c#
+public class QuayNote { public int Hours = 5; }
+```
+
+Parser snippet: ```ts\nexport const inlineQuay = 1\n```
+New commit a1b2c3d records the quaynote change.
+Attachment left in the thread: screenshot.png and photo.jpg.
+
+## Prompt:
+Keep quaynote row 6 in harbor-notes/quay.ts. Do not change the berth map.
+
+## Response:
+Updated quaynote row 6 in harbor-notes/quay.ts.
+
+## Highlights
+The quaynote row stays on one line.
+
+## Verification
+Checked harbor-notes/quay.ts for row 6.
+
+## Disclaimer
+Synthetic fixture only.
+
+## Category
+Parser
+
+## Root cause
+The heading leak came from the reply body.
+
+```ts
+export const quaynote = (hours: number) => hours * 12
+```
+
+```c#
+public class QuayNote { public int Hours = 6; }
+```
+
+Parser snippet: ```ts\nexport const inlineQuay = 1\n```
+New commit a1b2c3d records the quaynote change.
+Attachment left in the thread: screenshot.png and photo.jpg.
+
+## Prompt:
+Keep quaynote row 7 in harbor-notes/quay.ts. Do not change the berth map.
+
+## Response:
+Updated quaynote row 7 in harbor-notes/quay.ts.
+
+## Highlights
+The quaynote row stays on one line.
+
+## Verification
+Checked harbor-notes/quay.ts for row 7.
+
+## Disclaimer
+Synthetic fixture only.
+
+## Category
+Parser
+
+## Root cause
+The heading leak came from the reply body.
+
+```ts
+export const quaynote = (hours: number) => hours * 12
+```
+
+```c#
+public class QuayNote { public int Hours = 7; }
+```
+
+Parser snippet: ```ts\nexport const inlineQuay = 1\n```
+New commit a1b2c3d records the quaynote change.
+Attachment left in the thread: screenshot.png and photo.jpg.
+
+## Prompt:
+Done, applied
+
+## Response:
+Applied the quaynote change in harbor-notes/quay.ts. The list matches the ledger.
+Next: run the quay fixture before tagging.
+
+## Highlights
+The final reply still carries section headings.
+
+## Verification
+Row count matches.
+
+## Disclaimer
+Synthetic fixture only.
+
+## Category
+Parser
+
+## Root cause
+Root cause landed in the reply body only.
+
+```ts title="internal config"
+export const quayReady = true
+```
+
+```c#
+public class QuayReady { public int Hours = 9; }
+```

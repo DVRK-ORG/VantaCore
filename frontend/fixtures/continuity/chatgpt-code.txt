@@ -1,0 +1,308 @@
+## Prompt:
+
+Add note 0 to KeelLedger. The old thread is https://chatgpt.com/chrome https://chatgpt.com/security https://chatgpt.com/safety https://chatgpt.com/profile and the layout stays in keel-ledger/src/invoice.ts.
+
+## Response:
+
+Updated note 0 in keel-ledger. The invoice total stays on one line.
+
+```python
+def keelDraftOnly():
+    return 0
+```
+
+## Prompt:
+
+Add note 1 to KeelLedger. The old thread is https://chatgpt.com/chrome https://chatgpt.com/security https://chatgpt.com/safety https://chatgpt.com/profile and the layout stays in keel-ledger/src/invoice.ts.
+
+## Response:
+
+Updated note 1 in keel-ledger. The invoice total stays on one line.
+
+```python
+def keelDraft1():
+    return 1
+```
+
+```ts
+export const keelExtra1 = 1
+```
+
+## Prompt:
+
+Add note 2 to KeelLedger. The old thread is https://chatgpt.com/chrome https://chatgpt.com/security https://chatgpt.com/safety https://chatgpt.com/profile and the layout stays in keel-ledger/src/invoice.ts.
+
+## Response:
+
+Updated note 2 in keel-ledger. The invoice total stays on one line.
+
+```bash
+npm run keel:export
+```
+
+## Prompt:
+
+Add note 3 to KeelLedger. The old thread is https://chatgpt.com/chrome https://chatgpt.com/security https://chatgpt.com/safety https://chatgpt.com/profile and the layout stays in keel-ledger/src/invoice.ts.
+
+## Response:
+
+Updated note 3 in keel-ledger. The invoice total stays on one line.
+
+```python
+def keelDraft3():
+    return 3
+```
+
+```ts
+export const keelExtra3 = 3
+```
+
+## Prompt:
+
+Add note 4 to KeelLedger. The old thread is https://chatgpt.com/chrome https://chatgpt.com/security https://chatgpt.com/safety https://chatgpt.com/profile and the layout stays in keel-ledger/src/invoice.ts.
+
+## Response:
+
+Updated note 4 in keel-ledger. The invoice total stays on one line.
+
+Decision: keep the margin helper in keel-ledger/src/margin.ts.
+
+```ts
+export function keelMargin(pages: number) {
+  return pages * 12
+}
+```
+
+## Prompt:
+
+Add note 5 to KeelLedger. The old thread is https://chatgpt.com/chrome https://chatgpt.com/security https://chatgpt.com/safety https://chatgpt.com/profile and the layout stays in keel-ledger/src/invoice.ts.
+
+## Response:
+
+Updated note 5 in keel-ledger. The invoice total stays on one line.
+
+```python
+def keelDraft5():
+    return 5
+```
+
+```ts
+export const keelExtra5 = 5
+```
+
+## Prompt:
+
+Add note 6 to KeelLedger. The old thread is https://chatgpt.com/chrome https://chatgpt.com/security https://chatgpt.com/safety https://chatgpt.com/profile and the layout stays in keel-ledger/src/invoice.ts.
+
+## Response:
+
+Updated note 6 in keel-ledger. The invoice total stays on one line.
+
+```python
+def keel_tax(amount):
+    return round(amount * 0.05, 2)
+```
+
+## Prompt:
+
+Add note 7 to KeelLedger. The old thread is https://chatgpt.com/chrome https://chatgpt.com/security https://chatgpt.com/safety https://chatgpt.com/profile and the layout stays in keel-ledger/src/invoice.ts.
+
+## Response:
+
+Updated note 7 in keel-ledger. The invoice total stays on one line.
+
+```python
+def keelDraft7():
+    return 7
+```
+
+```ts
+export const keelExtra7 = 7
+```
+
+## Prompt:
+
+Add note 8 to KeelLedger. The old thread is https://chatgpt.com/chrome https://chatgpt.com/security https://chatgpt.com/safety https://chatgpt.com/profile and the layout stays in keel-ledger/src/invoice.ts.
+
+## Response:
+
+Updated note 8 in keel-ledger. The invoice total stays on one line.
+
+```bash
+npm run keel:export
+```
+
+## Prompt:
+
+Add note 9 to KeelLedger. The old thread is https://chatgpt.com/chrome https://chatgpt.com/security https://chatgpt.com/safety https://chatgpt.com/profile and the layout stays in keel-ledger/src/invoice.ts.
+
+## Response:
+
+Updated note 9 in keel-ledger. The invoice total stays on one line.
+
+```python
+def keelDraft9():
+    return 9
+```
+
+```ts
+export const keelExtra9 = 9
+```
+
+## Prompt:
+
+Add note 10 to KeelLedger. The old thread is https://chatgpt.com/chrome https://chatgpt.com/security https://chatgpt.com/safety https://chatgpt.com/profile and the layout stays in keel-ledger/src/invoice.ts.
+
+## Response:
+
+Updated note 10 in keel-ledger. The invoice total stays on one line.
+
+```bash
+npm run keel:lint
+```
+
+## Prompt:
+
+Add note 11 to KeelLedger. The old thread is https://chatgpt.com/chrome https://chatgpt.com/security https://chatgpt.com/safety https://chatgpt.com/profile and the layout stays in keel-ledger/src/invoice.ts.
+
+## Response:
+
+Updated note 11 in keel-ledger. The invoice total stays on one line.
+
+```python
+def keelDraft11():
+    return 11
+```
+
+```ts
+export const keelExtra11 = 11
+```
+
+## Prompt:
+
+Add note 12 to KeelLedger. The old thread is https://chatgpt.com/chrome https://chatgpt.com/security https://chatgpt.com/safety https://chatgpt.com/profile and the layout stays in keel-ledger/src/invoice.ts.
+
+## Response:
+
+Updated note 12 in keel-ledger. The invoice total stays on one line.
+
+```python
+def keel_tax(amount):
+    return round(amount * 0.05, 2)
+```
+
+## Prompt:
+
+Add note 13 to KeelLedger. The old thread is https://chatgpt.com/chrome https://chatgpt.com/security https://chatgpt.com/safety https://chatgpt.com/profile and the layout stays in keel-ledger/src/invoice.ts.
+
+## Response:
+
+Updated note 13 in keel-ledger. The invoice total stays on one line.
+
+```python
+def keelDraft13():
+    return 13
+```
+
+```ts
+export const keelExtra13 = 13
+```
+
+## Prompt:
+
+Add note 14 to KeelLedger. The old thread is https://chatgpt.com/chrome https://chatgpt.com/security https://chatgpt.com/safety https://chatgpt.com/profile and the layout stays in keel-ledger/src/invoice.ts.
+
+## Response:
+
+Updated note 14 in keel-ledger. The invoice total stays on one line.
+
+```bash
+npm run keel:export
+```
+
+## Prompt:
+
+Add note 15 to KeelLedger. The old thread is https://chatgpt.com/chrome https://chatgpt.com/security https://chatgpt.com/safety https://chatgpt.com/profile and the layout stays in keel-ledger/src/invoice.ts.
+
+## Response:
+
+Updated note 15 in keel-ledger. The invoice total stays on one line.
+
+```python
+def keelDraft15():
+    return 15
+```
+
+```ts
+export const keelExtra15 = 15
+```
+
+## Prompt:
+
+Add note 16 to KeelLedger. The old thread is https://chatgpt.com/chrome https://chatgpt.com/security https://chatgpt.com/safety https://chatgpt.com/profile and the layout stays in keel-ledger/src/invoice.ts.
+
+## Response:
+
+Updated note 16 in keel-ledger. The invoice total stays on one line.
+
+```python
+def keelDraft16():
+    return 16
+```
+
+```ts
+export const keelExtra16 = 16
+```
+
+## Prompt:
+
+Add note 17 to KeelLedger. The old thread is https://chatgpt.com/chrome https://chatgpt.com/security https://chatgpt.com/safety https://chatgpt.com/profile and the layout stays in keel-ledger/src/invoice.ts.
+
+## Response:
+
+Updated note 17 in keel-ledger. The invoice total stays on one line.
+
+```python
+def keelDraft17():
+    return 17
+```
+
+```ts
+export const keelExtra17 = 17
+```
+
+## Prompt:
+
+Add note 18 to KeelLedger. The old thread is https://chatgpt.com/chrome https://chatgpt.com/security https://chatgpt.com/safety https://chatgpt.com/profile and the layout stays in keel-ledger/src/invoice.ts.
+
+## Response:
+
+Updated note 18 in keel-ledger. The invoice total stays on one line.
+
+```python
+def keelDraft18():
+    return 18
+```
+
+```ts
+export const keelExtra18 = 18
+```
+
+## Prompt:
+
+Ship the exporter in keel-ledger/src/export.ts and run a real PDF export.
+
+## Response:
+
+The exporter key is `keel-export-key`.
+
+```ts
+export const keelExportKey = "keel-export-key"
+```
+
+```python
+def keel_pdf(pages):
+    return "real PDF export"
+```
+
+Next step: run a real PDF export.

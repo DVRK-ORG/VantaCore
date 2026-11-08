@@ -1,0 +1,43 @@
+{
+  "facts": [
+    "quaynote",
+    "harbor-notes/quay.ts",
+    "a1b2c3d",
+    "Done, applied",
+    "Nothing further was requested"
+  ],
+  "stopPointFacts": [
+    "Done, applied",
+    "none stated",
+    "a1b2c3d",
+    "harbor-notes/quay.ts"
+  ],
+  "topicTop3": "quaynote",
+  "secrets": [],
+  "absent": [
+    "## Prompt:",
+    "## Response:",
+    "## Highlights",
+    "## Root cause"
+  ],
+  "absentHeadings": [
+    "## Highlights",
+    "## Verification",
+    "## Disclaimer",
+    "## Category",
+    "## Root cause"
+  ],
+  "stopFields": {
+    "last user message:": ["Done, applied"],
+    "stated next step:": ["none stated"]
+  },
+  "stopFieldAbsent": {
+    "last user message:": ["Nothing further was requested", "No forward step"],
+    "last commits/files:": ["screenshot.png", "photo.jpg"],
+    "stated next step:": ["Next:"]
+  },
+  "codeBlocks": {
+    "minInput": 20,
+    "minFolded": 8
+  }
+}

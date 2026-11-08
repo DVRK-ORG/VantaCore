@@ -1,0 +1,27 @@
+{
+  "facts": [
+    "LumenQuill",
+    "kerning",
+    "c0ffee1",
+    "fix index.html quill sidebearing",
+    "run the kerning fixture",
+    "column widths"
+  ],
+  "stopPointFacts": [
+    "fix index.html quill sidebearing",
+    "c0ffee1",
+    "LumenQuill",
+    "run the kerning fixture"
+  ],
+  "topicTop3": "lumenquill",
+  "secrets": [
+    "lumenquillsecret99"
+  ],
+  "absent": [
+    "chatboxai.app",
+    "Result: {",
+    "\\r\\n",
+    "thanks babe",
+    "deadbeef"
+  ]
+}

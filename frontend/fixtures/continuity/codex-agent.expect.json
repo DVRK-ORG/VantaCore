@@ -1,0 +1,16 @@
+{
+  "facts": [
+    "cart",
+    "coupon",
+    "src/cart.ts",
+    "all 42 tests passed",
+    "fix coupon rounding"
+  ],
+  "stopPointFacts": [
+    "all 42 tests passed",
+    "fix coupon rounding",
+    "src/cart.ts"
+  ],
+  "topicTop3": "cart",
+  "secrets": []
+}

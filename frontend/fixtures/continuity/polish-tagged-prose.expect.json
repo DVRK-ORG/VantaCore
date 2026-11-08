@@ -1,0 +1,23 @@
+{
+  "facts": [
+    "Dana, hardening pass is verified clean and the quaynote list matches the ledger.",
+    "Harbor notes stay in harbor-notes/quay.ts until the berth map is checked again.",
+    "The quay flow is a prose description of harbor-notes/quay.ts until the ledger is updated.",
+    "Read the latest quay note from the harbor ledger before the release tag.",
+    "Dana, the middle hardening note is prose inside a text fence and still belongs with the ledger.",
+    "Dana, the final hardening note lands beside the quaynote ledger.",
+    "harbor-notes/quay.ts"
+  ],
+  "stopPointFacts": [
+    "Keep quaynote row 69",
+    "harbor-notes/quay.ts"
+  ],
+  "topicTop3": "quaynote",
+  "secrets": [],
+  "absent": [],
+  "codeBlocks": {
+    "minInput": 14,
+    "minKept": 1,
+    "minFolded": 13
+  }
+}

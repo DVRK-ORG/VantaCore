@@ -1,0 +1,26 @@
+{
+  "facts": [
+    "OrbitPress",
+    "f60718a",
+    "orbit-export-key",
+    "static/index.html",
+    "real PDF export"
+  ],
+  "stopPointFacts": [
+    "It's alive",
+    "orbit-export-key",
+    "last commits/files:\n- f60718a",
+    "d4e5f60 (dropped)",
+    "e5f6071 (dropped)",
+    "real PDF export"
+  ],
+  "topicTop3": "orbitpress",
+  "secrets": [],
+  "absent": [
+    "Always together",
+    "300 dpi",
+    "every syntax error, every broken backtick",
+    "Tool Call",
+    "chatboxai"
+  ]
+}

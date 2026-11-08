@@ -1,1 +1,5 @@
+# Pages pretty URLs 308 /security.html back to /security, so a rewrite to the
+# .html file loops. This 200 keeps the URL and serves public/security.html.
+/security /security 200
 /* /index.html 200
+

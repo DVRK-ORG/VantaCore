@@ -1,0 +1,3 @@
+User: rename the Button component to PrimaryButton.
+
+Assistant: Done, renamed in src/Button.tsx and 3 imports. Build passed.

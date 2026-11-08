@@ -12,6 +12,8 @@
 [![100% Client-Side](https://img.shields.io/badge/Privacy-100%25_Client--Side-c41e3a?style=for-the-badge)](https://vantacore.net)
 [![Open Core](https://img.shields.io/badge/Open_Core-Free_Demo-c41e3a?style=for-the-badge)](https://github.com/DVRK-ORG/VantaCore)
 
+Security & privacy: https://vantacore.net/security
+
 VantaCore turns long chats, dev logs, research notes, and knowledge-base material into LLM-ready memory capsules that preserve final state, decisions, open loops, commands, artifacts, and do-not-repeat constraints.
 
 [Live App](https://vantacore.net) - [Changelog](changelog.md) - [Upgrade Plan](VANTACORE_UPGRADE_PLAN_v1.md)
@@ -109,7 +111,7 @@ Open `http://localhost:5173`.
 
 ```powershell
 cd C:\Users\DARK\Desktop\Projects\VantaCore\frontend
-npm run validate:compression -- "C:\Users\DARK\Desktop\0Energy Check-in.md"
+npm run validate:compression -- "<path-to-your-session-export.md>"
 ```
 
 Expected current benchmark:

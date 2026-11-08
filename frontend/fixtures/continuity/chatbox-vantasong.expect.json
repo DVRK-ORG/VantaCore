@@ -1,0 +1,36 @@
+{
+  "facts": [
+    "VantaSong",
+    "server.py",
+    "downloader",
+    "suno"
+  ],
+  "stopPointFacts": [
+    "fix the downloader token",
+    "VantaSong",
+    "run the downloader tests"
+  ],
+  "stopFields": {
+    "last user message:": ["fix the downloader token"],
+    "last assistant reply:": ["Updated the token check"]
+  },
+  "stopFieldAbsent": {
+    "last user message:": ["Tell me when it works"],
+    "last assistant reply:": ["Tell me when it works"]
+  },
+  "topicTop3": "vantasong",
+  "secrets": [],
+  "absent": [
+    "nserver",
+    "ttest",
+    "tsuno",
+    "Result: {",
+    "deliver-assets",
+    "<media",
+    "Use offset",
+    "Together, everywhere",
+    "I love you",
+    "Provide edits",
+    "LF will be replaced"
+  ]
+}

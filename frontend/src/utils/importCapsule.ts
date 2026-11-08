@@ -38,7 +38,16 @@ type TrustedStats = Pick<CompressionResult,
   | NumericStatKey
   | 'tokenEstimationMethod'
   | 'codeBlocksIntegrityOk'
+  | 'codeBlocksKept'
+  | 'codeBlocksFolded'
+  | 'codeBlocksDropped'
 >
+
+const optionalCount = (stats: JsonRecord, key: string): number => {
+  const value = stats[key]
+  if (!isFiniteNumber(value) || value < 0) return 0
+  return value
+}
 
 const normalizeLineEndings = (content: string) => content.replace(/\r\n?/g, '\n')
 
@@ -70,6 +79,9 @@ const buildFallbackResult = (compressed: string): CompressionResult => {
     dictionaryReferencesCreated: 0,
     clustersDetected: clusterCount || 1,
     codeBlocksProtected: Math.floor(fenceMarkers / 2),
+    codeBlocksKept: 0,
+    codeBlocksFolded: 0,
+    codeBlocksDropped: 0,
     codeBlocksIntegrityOk: fenceMarkers % 2 === 0,
   }
 }
@@ -105,6 +117,9 @@ const readTrustedStats = (stats: unknown, actualCompressedLength: number): Trust
     dictionaryReferencesCreated: statNumber('dictionaryReferencesCreated'),
     clustersDetected: statNumber('clustersDetected'),
     codeBlocksProtected: statNumber('codeBlocksProtected'),
+    codeBlocksKept: optionalCount(stats, 'codeBlocksKept'),
+    codeBlocksFolded: optionalCount(stats, 'codeBlocksFolded'),
+    codeBlocksDropped: optionalCount(stats, 'codeBlocksDropped'),
     codeBlocksIntegrityOk: stats.codeBlocksIntegrityOk,
   }
 
@@ -143,8 +158,11 @@ const resultFromTrustedStats = (compressed: string, stats: TrustedStats): Compre
   dictionaryReferencesCreated: stats.dictionaryReferencesCreated,
   clustersDetected: stats.clustersDetected,
   codeBlocksProtected: stats.codeBlocksProtected,
+  codeBlocksKept: stats.codeBlocksKept,
+  codeBlocksFolded: stats.codeBlocksFolded,
+  codeBlocksDropped: stats.codeBlocksDropped,
   codeBlocksIntegrityOk: stats.codeBlocksIntegrityOk,
-})
+  })
 
 const detectFormat = (fileName: string, rawContent: string): ImportedCapsuleFormat => {
   const lower = fileName.toLowerCase()
