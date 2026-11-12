@@ -1093,7 +1093,7 @@ Suggested route:
 /memory-lab
 ```
 
-This should not be framed as a generic blog. It should feel like premium technical field notes from VantaCore / DVRK-ORG: benchmarks, field tests, practical guides, comparisons, and reports for LLM continuity, RAG prep, agent handoffs, token cost control, and Memory Capsule workflows.
+This should not be framed as a generic blog. It should feel like premium technical field notes from VantaCore / Vullki: benchmarks, field tests, practical guides, comparisons, and reports for LLM continuity, RAG prep, agent handoffs, token cost control, and Memory Capsule workflows.
 
 Deliverables:
 

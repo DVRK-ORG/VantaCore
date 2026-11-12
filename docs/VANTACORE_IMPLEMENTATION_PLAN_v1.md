@@ -185,7 +185,7 @@ Tasks:
 - [ ] Define SEO-friendly routes and metadata.
 - [ ] Add Article/schema JSON-LD later where appropriate.
 - [ ] Update sitemap later when pages exist.
-- [ ] Keep the design dark, premium, technical, and aligned with VantaCore / DVRK-ORG identity.
+- [ ] Keep the design dark, premium, technical, and aligned with VantaCore / Vullki identity.
 - [ ] Make articles educate users and lead naturally back to the compression tool.
 
 Hard boundaries:

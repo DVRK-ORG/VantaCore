@@ -109,7 +109,7 @@ export function Header({ onHistoryToggle, activePath = window.location.pathname 
           </button>
           {/* GitHub Button */}
           <a
-            href="https://github.com/DVRK-ORG/VantaCore"
+            href="https://github.com/Vullki/VantaCore"
             target="_blank"
             rel="noopener noreferrer"
             aria-label="Open VantaCore on GitHub"
