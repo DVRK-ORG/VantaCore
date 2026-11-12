@@ -10,7 +10,7 @@
 
 [![MIT License](https://img.shields.io/badge/License-MIT-c41e3a.svg?style=for-the-badge)](LICENSE)
 [![100% Client-Side](https://img.shields.io/badge/Privacy-100%25_Client--Side-c41e3a?style=for-the-badge)](https://vantacore.net)
-[![Open Core](https://img.shields.io/badge/Open_Core-Free_Demo-c41e3a?style=for-the-badge)](https://github.com/DVRK-ORG/VantaCore)
+[![Open Core](https://img.shields.io/badge/Open_Core-Free_Demo-c41e3a?style=for-the-badge)](https://github.com/Vullki/VantaCore)
 
 Security & privacy: https://vantacore.net/security
 
@@ -99,7 +99,7 @@ No signup, backend, cloud sync, payment, or API is required for the current free
 ## Run Locally
 
 ```bash
-git clone https://github.com/DVRK-ORG/VantaCore.git
+git clone https://github.com/Vullki/VantaCore.git
 cd VantaCore/frontend
 npm install
 npm run dev

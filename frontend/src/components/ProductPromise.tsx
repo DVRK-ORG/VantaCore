@@ -112,7 +112,7 @@ export function ProductPromise() {
               ))}
             </div>
             <a
-              href="https://github.com/DVRK-ORG/VantaCore"
+              href="https://github.com/Vullki/VantaCore"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex mt-7 font-orbitron text-[11px] font-semibold tracking-[2px] uppercase text-blood-ruby no-underline"

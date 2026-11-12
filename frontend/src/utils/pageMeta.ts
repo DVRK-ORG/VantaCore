@@ -35,7 +35,7 @@ const metadataByPath: Record<string, PageMeta> = {
         'A technical Memory Lab note explaining how VantaCore turns long LLM sessions into portable memory capsules for continuity and handoff.',
       author: {
         '@type': 'Organization',
-        name: 'DVRK-ORG',
+        name: 'Vullki',
       },
       publisher: {
         '@type': 'Organization',
